@@ -1,2 +1,3 @@
-# veterinary-surgery-case-tracker-with-csv-import-export-offline-sync-and-per-case
-Exported from Caffeine project: Veterinary surgery case tracker with CSV import/export, offline sync, and per-case tasks
+## 
+
+To run app build and run docker image: `docker build -t app . docker run -it --network host app`

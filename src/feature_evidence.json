@@ -1,0 +1,93 @@
+{
+  "kind": "feature_evidence_report",
+  "features": [
+    {
+      "featureId": "feature-expand-the-per-case-tasks-to-do-checklist-data-model-to-support-the-following-task-options-discharge-notes-default-required-pdvm-notified-default-required-labs-histo-surgery-report-imaging-and-culture-each-task-must-support-a-whether-it-is-required-for-that-case-selected-during-case-entry-and-b-whether-it-has-been-completed-toggled-on-the-case-card-and-these-values-must-persist-per-case-in-backend-storage-and-round-trip-correctly-to-the-frontend",
+      "featureTitle": "Expand the per-case tasks/to-do checklist data model to support the following task options: \"Discharge Notes\" (default required), \"pDVM Notified\" (default required), \"Labs\", \"Histo\", \"Surgery Report\", \"Imaging\", and \"Culture\". Each task must support (a) whether it is required for that case (selected during case entry) and (b) whether it has been completed (toggled on the case card), and these values must persist per case in backend storage and round-trip correctly to the frontend.",
+      "files": [
+        "frontend/src/hooks/useCasesStore.ts",
+        "frontend/src/hooks/useQueries.ts",
+        "frontend/src/types/cases.ts",
+        "frontend/src/utils/tasksChecklist.ts"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "camera@1.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-13"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-update-the-case-form-ui-so-that-while-creating-or-editing-a-case-the-user-can-select-which-task-options-are-required-for-that-case-using-checkboxes-with-discharge-notes-and-pdvm-notified-selected-by-default-and-the-other-options-unselected-by-default",
+      "featureTitle": "Update the Case Form UI so that while creating or editing a case, the user can select which task options are required for that case (using checkboxes), with \"Discharge Notes\" and \"pDVM Notified\" selected by default and the other options unselected by default.",
+      "files": [
+        "frontend/src/components/cases/CaseForm.tsx",
+        "frontend/src/utils/tasksChecklist.ts"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "camera@1.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-14"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-update-each-case-card-to-display-a-to-do-list-consisting-of-only-the-tasks-that-are-required-for-that-case-and-allow-the-user-to-toggle-completion-status-for-each-displayed-task-the-card-must-reflect-the-saved-completion-values-on-reload-and-after-sync",
+      "featureTitle": "Update each Case Card to display a to-do list consisting of only the tasks that are required for that case, and allow the user to toggle completion status for each displayed task. The card must reflect the saved completion values on reload and after sync.",
+      "files": [
+        "frontend/src/components/cases/CaseCard.tsx",
+        "frontend/src/components/cases/TasksChecklist.tsx",
+        "frontend/src/utils/tasksChecklist.ts"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "camera@1.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-15"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-update-csv-import-export-to-include-the-expanded-tasks-list-discharge-notes-pdvm-notified-labs-histo-surgery-report-imaging-culture-and-preserve-backward-compatibility-for-older-csvs-that-may-only-include-the-two-task-format-user-facing-warnings-during-import-preview-must-be-in-english",
+      "featureTitle": "Update CSV import/export to include the expanded tasks list (Discharge Notes, pDVM Notified, Labs, Histo, Surgery Report, Imaging, Culture) and preserve backward compatibility for older CSVs that may only include the two-task format. User-facing warnings during import preview must be in English.",
+      "files": [
+        "frontend/src/components/csv/CsvImportDialog.tsx",
+        "frontend/src/utils/csv.ts",
+        "frontend/src/utils/tasksChecklist.ts"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "camera@1.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-16"
+      ],
+      "confidence": "high"
+    }
+  ]
+}

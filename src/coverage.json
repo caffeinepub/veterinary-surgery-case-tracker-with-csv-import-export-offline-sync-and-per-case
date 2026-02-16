@@ -1,0 +1,107 @@
+{
+  "kind": "coverage_report",
+  "version": "1.0",
+  "generatedAt": "2026-02-16T05:49:44.064Z",
+  "sources": {
+    "buildRequest": true,
+    "implementationPlan": true
+  },
+  "requirements": {
+    "total": 5,
+    "implemented": 4,
+    "items": [
+      {
+        "id": "REQ-13",
+        "summary": "Expand the per-case tasks/to-do checklist data model to support the following task options: \"Discharge Notes\" (default required), \"pDVM Notified\" (default required), \"Labs\", \"Histo\", \"Surgery Report\", \"Imaging\", and \"Culture\". Each task must support (a) whether it is required for that case (selected during case entry) and (b) whether it has been completed (toggled on the case card), and these values must persist per case in backend storage and round-trip correctly to the frontend.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/utils/tasksChecklist.ts",
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/hooks/useCasesStore.ts",
+          "frontend/src/types/cases.ts"
+        ],
+        "matchedFiles": [
+          "frontend/src/utils/tasksChecklist.ts",
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/hooks/useCasesStore.ts",
+          "frontend/src/types/cases.ts"
+        ]
+      },
+      {
+        "id": "REQ-14",
+        "summary": "Update the Case Form UI so that while creating or editing a case, the user can select which task options are required for that case (using checkboxes), with \"Discharge Notes\" and \"pDVM Notified\" selected by default and the other options unselected by default.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/cases/CaseForm.tsx",
+          "frontend/src/utils/tasksChecklist.ts"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/cases/CaseForm.tsx",
+          "frontend/src/utils/tasksChecklist.ts"
+        ]
+      },
+      {
+        "id": "REQ-15",
+        "summary": "Update each Case Card to display a to-do list consisting of only the tasks that are required for that case, and allow the user to toggle completion status for each displayed task. The card must reflect the saved completion values on reload and after sync.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/cases/TasksChecklist.tsx",
+          "frontend/src/components/cases/CaseCard.tsx",
+          "frontend/src/utils/tasksChecklist.ts"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/cases/TasksChecklist.tsx",
+          "frontend/src/components/cases/CaseCard.tsx",
+          "frontend/src/utils/tasksChecklist.ts"
+        ]
+      },
+      {
+        "id": "REQ-16",
+        "summary": "Update CSV import/export to include the expanded tasks list (Discharge Notes, pDVM Notified, Labs, Histo, Surgery Report, Imaging, Culture) and preserve backward compatibility for older CSVs that may only include the two-task format. User-facing warnings during import preview must be in English.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/utils/csv.ts",
+          "frontend/src/components/csv/CsvImportDialog.tsx",
+          "frontend/src/utils/tasksChecklist.ts"
+        ],
+        "matchedFiles": [
+          "frontend/src/utils/csv.ts",
+          "frontend/src/components/csv/CsvImportDialog.tsx",
+          "frontend/src/utils/tasksChecklist.ts"
+        ]
+      },
+      {
+        "id": "REQ-17",
+        "summary": "Add conditional state migration for existing stored cases so that previously saved cases with the older tasks structure are upgraded to the new expanded structure without data loss or app crashes.",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
+      }
+    ]
+  },
+  "changedFiles": [
+    "backend/main.mo",
+    "backend/migration.mo",
+    "build-request.json",
+    "feature_evidence.json",
+    "frontend-file-summaries.txt",
+    "frontend-implementation-plan.json",
+    "frontend/src/backend.d.ts",
+    "frontend/src/backend.ts",
+    "frontend/src/components/cases/CaseCard.tsx",
+    "frontend/src/components/cases/CaseForm.tsx",
+    "frontend/src/components/cases/TasksChecklist.tsx",
+    "frontend/src/components/csv/CsvImportDialog.tsx",
+    "frontend/src/declarations/backend.did.d.ts",
+    "frontend/src/declarations/backend.did.js",
+    "frontend/src/hooks/useCasesStore.ts",
+    "frontend/src/hooks/useQueries.ts",
+    "frontend/src/types/cases.ts",
+    "frontend/src/utils/csv.ts",
+    "frontend/src/utils/tasksChecklist.ts",
+    "project_state.json",
+    "scratch/component-selection.json",
+    "spec.md",
+    "spec_vs_diff_report.json"
+  ]
+}

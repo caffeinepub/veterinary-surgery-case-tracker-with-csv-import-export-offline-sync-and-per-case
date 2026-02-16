@@ -1,0 +1,32 @@
+{
+  "kind": "spec_vs_diff_report",
+  "version": "1.0",
+  "generatedAt": "2026-02-16T05:49:44.061Z",
+  "summary": "Diff implements expanded 7-task checklist with per-task required+checked fields, adds backend migration, updates case form to select required tasks, updates case card to show only required tasks with completion toggles, and updates CSV utilities to export/import all 7 task columns with warnings for unrecognized columns.",
+  "missing_requirements": [],
+  "hallucinated_features": [
+    {
+      "description": "CSV import UX/semantics specify that empty task cells mean “task not required” and Yes/No indicates “task required and completion status”.",
+      "reason": "REQ-16 requires adding 7 task columns, backward compatibility, and English warnings for ignored columns, but does not specify the meaning/encoding of CSV task cell values or that empties explicitly imply not-required.",
+      "evidence": [
+        "frontend/src/components/csv/CsvImportDialog.tsx"
+      ]
+    }
+  ],
+  "confidence": 0.7,
+  "changed_files": [
+    "backend/main.mo",
+    "backend/migration.mo",
+    "frontend-file-summaries.txt",
+    "frontend/src/components/cases/CaseCard.tsx",
+    "frontend/src/components/cases/CaseForm.tsx",
+    "frontend/src/components/cases/TasksChecklist.tsx",
+    "frontend/src/components/csv/CsvImportDialog.tsx",
+    "frontend/src/hooks/useCasesStore.ts",
+    "frontend/src/hooks/useQueries.ts",
+    "frontend/src/types/cases.ts",
+    "frontend/src/utils/csv.ts",
+    "frontend/src/utils/tasksChecklist.ts",
+    "project_state.json"
+  ]
+}

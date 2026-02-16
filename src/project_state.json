@@ -1,0 +1,192 @@
+{
+  "schemaVersion": "1.0.0",
+  "projectStateVersion": 9,
+  "summary": "App to track veterinary surgery cases with CSV import/export, structured case fields with date pickers, per-case task checklist, and quick-add demographics via paste or camera.",
+  "architectural_notes": [
+    "Tasks/to-do checklist scope includes 7 items (Discharge Notes, pDVM Notified, Labs, Histo, Surgery Report, Imaging, Culture) with defaults checked for Discharge Notes and pDVM Notified; selections made on case entry drive which items appear on the case card as needing completion."
+  ],
+  "known_issues": [
+    "Build/deployment attempt failed with error: \"Unable to create your app\" (needs investigation/retry)."
+  ],
+  "isFixRequest": false,
+  "existing_features": [
+    {
+      "id": "feature-create-a-case-entry-and-editing-ui-that-captures-the-specified-case-fields-defaults-arrival-date-to-the-current-date-supports-manual-date-entry-and-calendar-based-selection-for-date-fields-and-validates-required-inputs-at-minimum-medical-record",
+      "title": "Create a case entry and editing UI that captures the specified case fields, defaults Arrival Date to the current date, supports manual date entry and calendar-based selection for date fields, and validates required inputs (at minimum: Medical Record #).",
+      "reqIds": [
+        "REQ-2"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-display-case-data-as-card-style-items-each-showing-key-demographics-and-arrival-information-and-include-an-embedded-per-case-tasks-to-do-checklist-with-the-specified-task-items-and-defaults",
+      "title": "Display case data as card-style items, each showing key demographics and arrival information, and include an embedded per-case tasks/to-do checklist with the specified task items and defaults.",
+      "reqIds": [
+        "REQ-3"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-sorting-controls-for-the-case-list-to-sort-by-arrival-date-and-by-medical-record-number-with-clear-ascending-descending-behavior",
+      "title": "Add sorting controls for the case list to sort by Arrival Date and by Medical Record Number, with clear ascending/descending behavior.",
+      "reqIds": [
+        "REQ-4"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-medical-record-number-match-prefill-when-a-user-enters-a-medical-record-that-already-exists-in-that-user-s-previously-saved-cases-prefill-relevant-demographics-fields-from-the-most-recent-matching-case-while-keeping-arrival-date-default-behavior-for-new-cases",
+      "title": "Implement Medical Record Number match prefill: when a user enters a Medical Record # that already exists in that user’s previously saved cases, prefill relevant demographics fields from the most recent matching case while keeping Arrival Date default behavior for new cases.",
+      "reqIds": [
+        "REQ-5"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-provide-quick-add-demographics-input-on-the-case-form-that-supports-pasting-demographics-as-text-and-capturing-an-image-via-device-camera-for-reference-store-the-pasted-text-and-if-implemented-the-captured-image-reference-in-the-case-record-without-relying-on-third-party-ocr-llm-services",
+      "title": "Provide Quick Add Demographics input on the case form that supports pasting demographics as text and capturing an image via device camera for reference; store the pasted text and (if implemented) the captured image reference in the case record without relying on third-party OCR/LLM services.",
+      "reqIds": [
+        "REQ-6"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-offline-capability-allow-viewing-and-editing-cases-while-offline-using-local-persistence-and-implement-a-clear-online-offline-status-indicator-with-an-explicit-user-action-to-sync-local-changes-to-the-backend-when-online",
+      "title": "Add offline capability: allow viewing and editing cases while offline using local persistence, and implement a clear online/offline status indicator with an explicit user action to sync local changes to the backend when online.",
+      "reqIds": [
+        "REQ-7"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-implement-csv-import-and-export-of-case-data-on-the-frontend-mapping-exactly-to-the-specified-fields-including-tasks-checklist-fields-with-clear-error-handling-for-malformed-csv-and-a-preview-confirmation-step-before-importing",
+      "title": "Implement CSV import and export of case data on the frontend, mapping exactly to the specified fields (including tasks checklist fields), with clear error handling for malformed CSV and a preview/confirmation step before importing.",
+      "reqIds": [
+        "REQ-8"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-apply-a-consistent-blue-color-scheme-across-the-app-ui-layout-buttons-accents-and-status-indicator-while-keeping-readability-and-accessibility-in-mind",
+      "title": "Apply a consistent blue color scheme across the app UI (layout, buttons, accents, and status indicator) while keeping readability and accessibility in mind.",
+      "reqIds": [
+        "REQ-9"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-the-per-case-tasks-to-do-checklist-data-model-to-include-only-the-following-boolean-items-and-no-others-1-discharge-notes-default-checked-true-and-2-pdvm-notified-default-checked-true-ensure-the-tasks-state-is-persisted-per-case-in-backend-storage-and-round-trips-correctly-to-the-frontend",
+      "title": "Update the per-case tasks/to-do checklist data model to include ONLY the following boolean items (and no others): (1) \"Discharge Notes\" (default: checked/true) and (2) \"pDVM Notified\" (default: checked/true). Ensure the tasks state is persisted per case in backend storage and round-trips correctly to the frontend.",
+      "reqIds": [
+        "REQ-10"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-render-the-per-case-tasks-to-do-checklist-on-each-case-card-showing-exactly-two-checkbox-rows-labeled-discharge-notes-and-pdvm-notified-the-ui-must-reflect-the-saved-per-case-values-and-allow-toggling-each-item-for-that-case",
+      "title": "Render the per-case tasks/to-do checklist on each case card, showing exactly two checkbox rows labeled \"Discharge Notes\" and \"pDVM Notified\". The UI must reflect the saved per-case values and allow toggling each item for that case.",
+      "reqIds": [
+        "REQ-11"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-csv-import-export-to-match-the-reduced-tasks-list-include-only-the-two-task-columns-discharge-notes-and-pdvm-notified-as-boolean-like-values-and-ignore-flag-any-other-task-columns-from-older-csvs-in-a-clear-user-visible-way-during-import-preview",
+      "title": "Update CSV import/export to match the reduced tasks list: include only the two task columns \"Discharge Notes\" and \"pDVM Notified\" (as boolean-like values) and ignore/flag any other task columns from older CSVs in a clear, user-visible way during import preview.",
+      "reqIds": [
+        "REQ-12"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-expand-the-per-case-tasks-to-do-checklist-data-model-to-support-the-following-task-options-discharge-notes-default-required-pdvm-notified-default-required-labs-histo-surgery-report-imaging-and-culture-each-task-must-support-a-whether-it-is-required-for-that-case-selected-during-case-entry-and-b-whether-it-has-been-completed-toggled-on-the-case-card-and-these-values-must-persist-per-case-in-backend-storage-and-round-trip-correctly-to-the-frontend",
+      "title": "Expand the per-case tasks/to-do checklist data model to support the following task options: \"Discharge Notes\" (default required), \"pDVM Notified\" (default required), \"Labs\", \"Histo\", \"Surgery Report\", \"Imaging\", and \"Culture\". Each task must support (a) whether it is required for that case (selected during case entry) and (b) whether it has been completed (toggled on the case card), and these values must persist per case in backend storage and round-trip correctly to the frontend.",
+      "reqIds": [
+        "REQ-13"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-the-case-form-ui-so-that-while-creating-or-editing-a-case-the-user-can-select-which-task-options-are-required-for-that-case-using-checkboxes-with-discharge-notes-and-pdvm-notified-selected-by-default-and-the-other-options-unselected-by-default",
+      "title": "Update the Case Form UI so that while creating or editing a case, the user can select which task options are required for that case (using checkboxes), with \"Discharge Notes\" and \"pDVM Notified\" selected by default and the other options unselected by default.",
+      "reqIds": [
+        "REQ-14"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-each-case-card-to-display-a-to-do-list-consisting-of-only-the-tasks-that-are-required-for-that-case-and-allow-the-user-to-toggle-completion-status-for-each-displayed-task-the-card-must-reflect-the-saved-completion-values-on-reload-and-after-sync",
+      "title": "Update each Case Card to display a to-do list consisting of only the tasks that are required for that case, and allow the user to toggle completion status for each displayed task. The card must reflect the saved completion values on reload and after sync.",
+      "reqIds": [
+        "REQ-15"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-csv-import-export-to-include-the-expanded-tasks-list-discharge-notes-pdvm-notified-labs-histo-surgery-report-imaging-culture-and-preserve-backward-compatibility-for-older-csvs-that-may-only-include-the-two-task-format-user-facing-warnings-during-import-preview-must-be-in-english",
+      "title": "Update CSV import/export to include the expanded tasks list (Discharge Notes, pDVM Notified, Labs, Histo, Surgery Report, Imaging, Culture) and preserve backward compatibility for older CSVs that may only include the two-task format. User-facing warnings during import preview must be in English.",
+      "reqIds": [
+        "REQ-16"
+      ],
+      "version": 1
+    }
+  ],
+  "new_feature_requests": [
+    {
+      "id": "AR-1",
+      "summary": "Support importing and exporting case data via CSV files",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-2",
+      "summary": "Case form fields: Medical Record #, Arrival Date (default today), Pet Name, Owner Last Name, Species (Canine/Feline/Other), Breed, Sex (Male/Male Neutered/Female/Female Spayed), Date of Birth, Presenting Complaint, Notes",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-3",
+      "summary": "Date fields can be entered manually or selected via a calendar date picker",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-4",
+      "summary": "Per-case tasks/to-do checklist: Discharge Notes (default checked), pDVM Notified (default checked), Labs, Histo, Surgery Report, Imaging, Culture",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-5",
+      "summary": "Quick Add Demographics: paste demographics from text or capture via camera (e.g., from a form/document)",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-6",
+      "summary": "Implement a veterinary surgery case data model and persistence layer that stores cases per authenticated user (Internet Identity principal) in the single Motoko backend actor, including all specified fields, per-case tasks checklist state, and timestamps needed for syncing.",
+      "reqIds": [
+        "REQ-1"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-7",
+      "summary": "Per-case to-do list: during case entry user selects checklist items that should appear on the case card as items needing completion. Options: Discharge Notes (default checked), pDVM Notified (default checked), Labs, Histo, Surgery Report, Imaging, Culture.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-12",
+      "summary": "Add conditional state migration for existing stored cases so that previously saved cases with the older tasks structure are upgraded to the new expanded structure without data loss or app crashes.",
+      "reqIds": [
+        "REQ-17"
+      ],
+      "status": "pending"
+    }
+  ],
+  "gameProjectType": "none",
+  "projectName": "Veterinary surgery case tracker with CSV import/export, offline sync, and per-case tasks",
+  "clarification_mode": "instant",
+  "clarification_rounds": 0
+}
