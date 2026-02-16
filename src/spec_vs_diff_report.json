@@ -1,76 +1,44 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-16T14:54:36.539Z",
-  "summary": "The diff adds a new wrapper hook (useActorWithError), token helpers, and backend error classification, and wires actor/probe errors into useBackendConnection and StartupRecoveryScreen. However, several acceptance criteria are only partially met (notably: useActor itself was not updated to expose an explicit error state and actor-init failures are inferred rather than captured from the real underlying failure). The diff summary also indicates multiple unrelated feature changes (case UI modal, date/csv/offline/sync logic changes) that were not requested and conflict with the stated non-goals.",
+  "generatedAt": "2026-02-16T18:52:08.090Z",
+  "summary": "The diff adds new error/retry wrapper logic around actor initialization and updates backend connection probing/error classification, but it does not show the required removal of the `_initializeAccessControlWithSecret` call or removal of `caffeineAdminToken` usage from `useActor.ts`. UI-side acceptance criteria for displaying the specific “Backend Connection Error: …” text is also not evidenced in the provided changes.",
   "missing_requirements": [
     {
-      "id": "REQ-45",
-      "requirement": "`useActor` returns an explicit error state (e.g., `error: string | null`) in addition to `actor` and `isFetching` so downstream hooks can distinguish loading vs failed actor creation.",
-      "reason": "The diff adds a new hook `useActorWithError` that wraps `useActor`, but there is no evidence that `useActor` itself was modified to return an `error` field as required.",
+      "id": "REQ-1",
+      "requirement": "Remove the frontend-only backend initialization call to the non-existent actor method `_initializeAccessControlWithSecret` so the backend actor can be created successfully in the live app.",
+      "reason": "No changes to `frontend/src/hooks/useActor.ts` are included in the diff summary, so there is no evidence that the call to `actor._initializeAccessControlWithSecret(...)` was removed during actor creation.",
       "evidence": [
-        "frontend/src/hooks/useActorWithError.ts (wraps `useActor()` which returns only `{ actor, isFetching }` per usage)"
+        "frontend/src/hooks/useActorWithError.ts (wraps useActor but does not modify it)",
+        "(No diff shown for) frontend/src/hooks/useActor.ts"
       ]
     },
     {
-      "id": "REQ-45",
-      "requirement": "When backend actor creation or `_initializeAccessControlWithSecret(...)` fails, capture and surface the specific underlying error message on StartupRecoveryScreen instead of only ending up with a null actor and a generic message.",
-      "reason": "`useActorWithError` infers an error when authenticated + not fetching + actor is null, and then sets either a missing-token message or a generic message. There is no evidence it captures the actual thrown error from actor creation or `_initializeAccessControlWithSecret(...)` failure and surfaces that specific cause.",
+      "id": "REQ-2",
+      "requirement": "Eliminate reliance on the `caffeineAdminToken` URL parameter for normal actor initialization.",
+      "reason": "The diff does not include any modifications to `frontend/src/hooks/useActor.ts`, so there is no evidence that `caffeineAdminToken` is no longer read/used as part of actor initialization.",
       "evidence": [
-        "frontend/src/hooks/useActorWithError.ts (sets generic 'Failed to initialize backend connection. Please try again.' when actor is null; does not receive/capture a thrown error from actor init)",
-        "frontend/src/utils/backendErrorMessages.ts (has helpers to classify errors, but `useActorWithError` does not use them for actor-init failures)"
+        "frontend/src/hooks/useActorWithError.ts (wraps useActor but does not modify it)",
+        "(No diff shown for) frontend/src/hooks/useActor.ts"
       ]
     },
     {
-      "id": "REQ-46",
-      "requirement": "If `caffeineAdminToken` is missing/empty at the moment `_initializeAccessControlWithSecret(...)` is attempted, show a clear guidance error (English) explaining Draft requires an admin token and instruct the user to open the Draft URL that contains the token.",
-      "reason": "The diff shows a missing-token check based on persisted URL parameter presence, but there is no evidence this check is performed specifically at the moment `_initializeAccessControlWithSecret(...)` is attempted (or that the initialization path is blocked with this specific message before the call). It is instead triggered after observing a null actor state.",
+      "id": "REQ-3",
+      "requirement": "Ensure the backend connection probing flow reports actionable errors and provides a working retry path, and SyncStatusBar shows “Backend Connection Error: …”.",
+      "reason": "While `useBackendConnection` now exposes an `error` string and a `retry()` that triggers actor + probe refetch, the diff summary does not include any changes to the UI component(s) (e.g., SyncStatusBar) to confirm it displays the exact required text “Backend Connection Error: …”.",
       "evidence": [
-        "frontend/src/hooks/useActorWithError.ts (missing-token error set only after actor is observed null post-fetch)",
-        "frontend/src/utils/draftAdminToken.ts (token helpers exist, but no evidence `_initializeAccessControlWithSecret(...)` call site uses them)"
-      ]
-    },
-    {
-      "id": "REQ-47",
-      "requirement": "Differentiate unauthorized vs unreachable backend failures during Draft startup, with accurate user-facing messages for each case (including authorization-specific messaging).",
-      "reason": "The diff classifies errors during the backend probe call (`actor.getCallerUserProfile()`), but there is no evidence actor initialization failures (creation / access control init) are classified into unauthorized vs network/unreachable messages. Those actor-init failures appear to remain generic.",
-      "evidence": [
-        "frontend/src/hooks/useBackendConnection.ts (classifies probe errors only; actor init error comes from `useActorWithError`)",
-        "frontend/src/hooks/useActorWithError.ts (does not call `classifyBackendError` for actor init failure; uses generic message)"
+        "frontend/src/hooks/useBackendConnection.ts",
+        "(No diff shown for) SyncStatusBar / related UI component file(s)"
       ]
     }
   ],
-  "hallucinated_features": [
-    {
-      "description": "Changed the case form UI to be shown in a modal dialog triggered by an \"Add Case\" button instead of inline.",
-      "reason": "This is unrelated to Draft startup/backend actor initialization and conflicts with the non-goal to avoid unrelated case-management changes except where necessary for backend connection initialization behavior.",
-      "evidence": [
-        "frontend-file-summaries.txt (App.tsx summary mentions case form now shown in a modal dialog)"
-      ]
-    },
-    {
-      "description": "Broad timezone-safe date handling refactor (types, date utilities, CSV import/export date behavior, date field component changes).",
-      "reason": "This is unrelated to fixing Draft startup actor initialization and conflicts with the non-goal to avoid unrelated CSV and case-management changes.",
-      "evidence": [
-        "frontend-file-summaries.txt (frontend/src/types/cases.ts, frontend/src/utils/dates.ts, frontend/src/utils/csv.ts, frontend/src/components/cases/DateField.tsx summaries)"
-      ]
-    },
-    {
-      "description": "Changes to offline/local persistence and sync logic (localPersistence normalization, sync union/merge behavior, cases store error exposure).",
-      "reason": "The BuildRequest explicitly lists offline/sync features as non-goals to change except where necessary for backend initialization behavior; the diff summary indicates substantial modifications in these areas.",
-      "evidence": [
-        "frontend-file-summaries.txt (frontend/src/utils/localPersistence.ts, frontend/src/hooks/useSync.ts, frontend/src/hooks/useCasesStore.ts summaries)"
-      ]
-    }
-  ],
-  "confidence": 0.72,
+  "hallucinated_features": [],
+  "confidence": 0.68,
   "changed_files": [
     "frontend-file-summaries.txt",
-    "frontend/src/components/startup/StartupRecoveryScreen.tsx",
     "frontend/src/hooks/useActorWithError.ts",
     "frontend/src/hooks/useBackendConnection.ts",
     "frontend/src/utils/backendErrorMessages.ts",
-    "frontend/src/utils/draftAdminToken.ts",
     "project_state.json"
   ]
 }

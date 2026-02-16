@@ -6,7 +6,7 @@ import { Button } from './components/ui/button';
 import { Input } from './components/ui/input';
 import { Label } from './components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './components/ui/dialog';
-import { Loader2, Plus } from 'lucide-react';
+import { Loader2, Plus, Search } from 'lucide-react';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 import CaseList from './components/cases/CaseList';
@@ -15,12 +15,12 @@ import SyncStatusBar from './components/sync/SyncStatusBar';
 import CsvImportDialog from './components/csv/CsvImportDialog';
 import CsvExportButton from './components/csv/CsvExportButton';
 import SortControls from './components/cases/SortControls';
-import StartupRecoveryScreen from './components/startup/StartupRecoveryScreen';
 import { Toaster } from './components/ui/sonner';
+import { ModalErrorBoundary } from './components/errors/ModalErrorBoundary';
 
 export default function App() {
   const { identity, loginStatus } = useInternetIdentity();
-  const { isConnected, isInitializing: backendInitializing, error: backendError, retry: retryBackend } = useBackendConnection();
+  const { isConnected } = useBackendConnection();
   const isAuthenticated = !!identity;
   const { data: userProfile, isLoading: profileLoading, isFetched } = useGetCallerUserProfile();
   const saveProfile = useSaveCallerUserProfile();
@@ -31,7 +31,8 @@ export default function App() {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [editingCaseId, setEditingCaseId] = useState<bigint | null>(null);
   const [showCaseFormModal, setShowCaseFormModal] = useState(false);
-  const [startupTimeout, setStartupTimeout] = useState(false);
+  const [modalSessionKey, setModalSessionKey] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Show profile setup only when authenticated, connected, and no profile exists
   useEffect(() => {
@@ -40,60 +41,40 @@ export default function App() {
     }
   }, [isAuthenticated, isConnected, profileLoading, isFetched, userProfile]);
 
-  // Detect startup timeout for authenticated users
-  useEffect(() => {
-    if (!isAuthenticated) {
-      setStartupTimeout(false);
-      return;
-    }
-
-    if (backendInitializing) {
-      const timer = setTimeout(() => {
-        setStartupTimeout(true);
-      }, 10000); // 10 second timeout
-
-      return () => clearTimeout(timer);
-    } else {
-      setStartupTimeout(false);
-    }
-  }, [backendInitializing, isAuthenticated]);
-
   const handleSaveProfile = async () => {
     if (!profileName.trim()) return;
     await saveProfile.mutateAsync({ name: profileName.trim() });
     setShowProfileSetup(false);
   };
 
-  const handleRetry = async () => {
-    setStartupTimeout(false);
-    await retryBackend();
-  };
-
-  const handleReload = () => {
-    window.location.reload();
-  };
-
-  const handleAddCase = () => {
+  const handleNewCase = () => {
     setEditingCaseId(null);
+    setModalSessionKey((prev) => prev + 1);
     setShowCaseFormModal(true);
   };
 
   const handleEditCase = (caseId: bigint) => {
     setEditingCaseId(caseId);
+    setModalSessionKey((prev) => prev + 1);
     setShowCaseFormModal(true);
   };
 
   const handleCloseCaseForm = () => {
     setShowCaseFormModal(false);
-    setEditingCaseId(null);
+    // Delay clearing editingCaseId to allow modal to close smoothly
+    setTimeout(() => {
+      setEditingCaseId(null);
+    }, 150);
   };
 
   const handleSaveComplete = () => {
     setShowCaseFormModal(false);
-    setEditingCaseId(null);
+    setTimeout(() => {
+      setEditingCaseId(null);
+    }, 150);
   };
 
-  // Only block on Internet Identity initialization, not backend
+  // Only block on Internet Identity initialization
   if (loginStatus === 'initializing') {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -102,7 +83,7 @@ export default function App() {
     );
   }
 
-  // Show unauthenticated UI immediately without blocking on backend
+  // Show unauthenticated UI
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -120,24 +101,8 @@ export default function App() {
     );
   }
 
-  // Show recovery screen if backend connection fails or times out
-  if (isAuthenticated && (backendError || startupTimeout) && !isConnected) {
-    return (
-      <div className="min-h-screen flex flex-col">
-        <Header />
-        <main className="flex-1 flex items-center justify-center px-4">
-          <StartupRecoveryScreen
-            error={backendError || 'Backend connection is taking longer than expected'}
-            onRetry={handleRetry}
-            onReload={handleReload}
-            isRetrying={backendInitializing}
-          />
-        </main>
-        <Footer />
-      </div>
-    );
-  }
-
+  // Authenticated users see the main UI with import/export and editing
+  // Backend connectivity issues are shown via SyncStatusBar, not blocking screens
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
@@ -147,16 +112,26 @@ export default function App() {
         <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <h1 className="text-3xl font-bold text-primary">Surgery Cases</h1>
           <div className="flex gap-2 flex-wrap">
-            <Button onClick={handleAddCase} className="gap-2">
+            <Button onClick={handleNewCase} className="gap-2">
               <Plus className="h-4 w-4" />
-              Add Case
+              New Case
             </Button>
             <CsvImportDialog />
             <CsvExportButton />
           </div>
         </div>
 
-        <div className="mb-4">
+        <div className="mb-4 flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Search cases by name, MRN, owner, species, breed, presenting complaint..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+            />
+          </div>
           <SortControls
             sortField={sortField}
             sortDirection={sortDirection}
@@ -168,6 +143,7 @@ export default function App() {
         <CaseList
           sortField={sortField}
           sortDirection={sortDirection}
+          searchQuery={searchQuery}
           onEditCase={handleEditCase}
         />
       </main>
@@ -213,16 +189,29 @@ export default function App() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showCaseFormModal} onOpenChange={setShowCaseFormModal}>
+      <Dialog open={showCaseFormModal} onOpenChange={(open) => {
+        if (!open) {
+          handleCloseCaseForm();
+        }
+      }}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingCaseId ? 'Edit Case' : 'Add New Case'}</DialogTitle>
+            <DialogTitle>{editingCaseId ? 'Edit Case' : 'New Case'}</DialogTitle>
           </DialogHeader>
-          <CaseForm 
-            editingCaseId={editingCaseId} 
-            onCancelEdit={handleCloseCaseForm}
-            onSaveComplete={handleSaveComplete}
-          />
+          <ModalErrorBoundary 
+            onClose={handleCloseCaseForm}
+            resetKey={`${modalSessionKey}-${editingCaseId ? editingCaseId.toString() : 'new'}`}
+            debugLabel={editingCaseId ? `Edit-${editingCaseId}` : 'New'}
+          >
+            {showCaseFormModal && (
+              <CaseForm 
+                key={modalSessionKey}
+                editingCaseId={editingCaseId} 
+                onCancelEdit={handleCloseCaseForm}
+                onSaveComplete={handleSaveComplete}
+              />
+            )}
+          </ModalErrorBoundary>
         </DialogContent>
       </Dialog>
 

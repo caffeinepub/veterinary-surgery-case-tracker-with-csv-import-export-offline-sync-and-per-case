@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useActor } from './useActor';
 import { useQueryClient } from '@tanstack/react-query';
-import { loadCasesLocally, saveCasesLocally, saveLastSyncTime } from '../utils/localPersistence';
+import { loadCasesFromLocal, saveCasesToLocal } from '../utils/localPersistence';
 import { mergeCases, prepareCasesForSync } from '../utils/mergeCases';
 import type { LocalSurgeryCase } from '../types/cases';
 import { normalizeTasksChecklist } from '../utils/tasksChecklist';
@@ -14,6 +14,16 @@ function normalizeDemographics(demographics: any) {
     breed: String(demographics?.breed || '').trim(),
     sex: String(demographics?.sex || '').trim(),
     dateOfBirth: String(demographics?.dateOfBirth || '').trim(),
+  };
+}
+
+function normalizeCase(c: LocalSurgeryCase): LocalSurgeryCase {
+  return {
+    ...c,
+    presentingComplaint: c.presentingComplaint ?? '',
+    demographicsRawText: c.demographicsRawText ?? '',
+    capturedImageUrl: c.capturedImageUrl ?? undefined,
+    pendingSync: c.pendingSync ?? false,
   };
 }
 
@@ -33,7 +43,7 @@ export function useSync() {
     setSyncError(null);
 
     try {
-      const localCases = loadCasesLocally();
+      const localCases = loadCasesFromLocal().map(normalizeCase);
       const pendingCases = localCases.filter((c) => c.pendingSync);
 
       // Fetch current server state first
@@ -56,14 +66,16 @@ export function useSync() {
         ...c,
         patientDemographics: normalizeDemographics(c.patientDemographics),
         tasksChecklist: normalizeTasksChecklist(c.tasksChecklist),
+        presentingComplaint: c.presentingComplaint ?? '',
         pendingSync: false, // Clear pending flag after successful sync
       }));
 
-      saveCasesLocally(normalizedMergedCases);
-      saveLastSyncTime(BigInt(Date.now()) * BigInt(1_000_000));
+      saveCasesToLocal(normalizedMergedCases);
 
-      queryClient.setQueryData(['surgeryCases'], normalizedMergedCases);
-      queryClient.invalidateQueries({ queryKey: ['surgeryCases'] });
+      // Update both query keys
+      queryClient.setQueryData(['mergedCases'], normalizedMergedCases);
+      queryClient.invalidateQueries({ queryKey: ['serverSurgeryCases'] });
+      queryClient.invalidateQueries({ queryKey: ['mergedCases'] });
 
       setIsSyncing(false);
       return true;

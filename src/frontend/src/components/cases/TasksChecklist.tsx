@@ -1,7 +1,7 @@
 import { Checkbox } from '../ui/checkbox';
 import { Label } from '../ui/label';
 import type { TasksChecklist } from '../../types/cases';
-import { getRequiredTasks, toggleTaskChecked } from '../../utils/tasksChecklist';
+import { getRequiredTasks, toggleTaskChecked, normalizeTasksChecklist } from '../../utils/tasksChecklist';
 
 interface TasksChecklistProps {
   tasks: TasksChecklist;
@@ -10,17 +10,19 @@ interface TasksChecklistProps {
 }
 
 export default function TasksChecklist({ tasks, onChange, disabled }: TasksChecklistProps) {
-  const requiredTasks = getRequiredTasks(tasks);
+  // Normalize the tasks to ensure all required fields are present
+  const normalizedTasks = normalizeTasksChecklist(tasks);
+  const requiredTasks = getRequiredTasks(normalizedTasks);
 
   const handleToggle = (taskKey: keyof TasksChecklist) => {
-    onChange(toggleTaskChecked(tasks, taskKey));
+    onChange(toggleTaskChecked(normalizedTasks, taskKey));
   };
 
   if (requiredTasks.length === 0) {
     return (
       <div className="space-y-3">
         <h4 className="text-sm font-semibold text-foreground">Tasks</h4>
-        <p className="text-xs text-muted-foreground">No tasks required for this case</p>
+        <p className="text-xs text-muted-foreground">All tasks completed</p>
       </div>
     );
   }
@@ -39,9 +41,7 @@ export default function TasksChecklist({ tasks, onChange, disabled }: TasksCheck
             />
             <Label
               htmlFor={`${task.key}-checkbox`}
-              className={`text-sm cursor-pointer ${
-                task.checked ? 'line-through text-muted-foreground' : ''
-              }`}
+              className="text-sm cursor-pointer"
             >
               {task.label}
             </Label>

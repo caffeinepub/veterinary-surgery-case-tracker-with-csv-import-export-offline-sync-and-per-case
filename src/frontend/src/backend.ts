@@ -92,6 +92,7 @@ export class ExternalBlob {
 export type Time = bigint;
 export interface SurgeryCaseUpdate {
     arrivalDate?: Time;
+    presentingComplaint?: string;
     medicalRecordNumber?: string;
     tasksChecklist?: TasksChecklist;
     patientDemographics?: CompletePatientDemographics;
@@ -102,6 +103,7 @@ export interface TaskItem {
 }
 export interface SurgeryCase {
     arrivalDate: Time;
+    presentingComplaint: string;
     medicalRecordNumber: string;
     isSynchronized: boolean;
     lastSyncTimestamp: Time;
@@ -137,7 +139,7 @@ export enum UserRole {
 export interface backendInterface {
     _initializeAccessControlWithSecret(userSecret: string): Promise<void>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
-    createSurgeryCase(medicalRecordNumber: string, patientDemographics: CompletePatientDemographics, arrivalDate: Time, tasksChecklist: TasksChecklist): Promise<bigint>;
+    createSurgeryCase(medicalRecordNumber: string, presentingComplaint: string, patientDemographics: CompletePatientDemographics, arrivalDate: Time, tasksChecklist: TasksChecklist): Promise<bigint>;
     getAllSurgeryCases(): Promise<Array<SurgeryCase>>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
@@ -180,17 +182,17 @@ export class Backend implements backendInterface {
             return result;
         }
     }
-    async createSurgeryCase(arg0: string, arg1: CompletePatientDemographics, arg2: Time, arg3: TasksChecklist): Promise<bigint> {
+    async createSurgeryCase(arg0: string, arg1: string, arg2: CompletePatientDemographics, arg3: Time, arg4: TasksChecklist): Promise<bigint> {
         if (this.processError) {
             try {
-                const result = await this.actor.createSurgeryCase(arg0, arg1, arg2, arg3);
+                const result = await this.actor.createSurgeryCase(arg0, arg1, arg2, arg3, arg4);
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.createSurgeryCase(arg0, arg1, arg2, arg3);
+            const result = await this.actor.createSurgeryCase(arg0, arg1, arg2, arg3, arg4);
             return result;
         }
     }
@@ -358,17 +360,20 @@ function to_candid_UserRole_n1(_uploadFile: (file: ExternalBlob) => Promise<Uint
 }
 function to_candid_record_n7(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     arrivalDate?: Time;
+    presentingComplaint?: string;
     medicalRecordNumber?: string;
     tasksChecklist?: TasksChecklist;
     patientDemographics?: CompletePatientDemographics;
 }): {
     arrivalDate: [] | [_Time];
+    presentingComplaint: [] | [string];
     medicalRecordNumber: [] | [string];
     tasksChecklist: [] | [_TasksChecklist];
     patientDemographics: [] | [_CompletePatientDemographics];
 } {
     return {
         arrivalDate: value.arrivalDate ? candid_some(value.arrivalDate) : candid_none(),
+        presentingComplaint: value.presentingComplaint ? candid_some(value.presentingComplaint) : candid_none(),
         medicalRecordNumber: value.medicalRecordNumber ? candid_some(value.medicalRecordNumber) : candid_none(),
         tasksChecklist: value.tasksChecklist ? candid_some(value.tasksChecklist) : candid_none(),
         patientDemographics: value.patientDemographics ? candid_some(value.patientDemographics) : candid_none()

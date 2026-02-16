@@ -30,14 +30,6 @@ export function classifyBackendError(error: unknown, context?: string): Classifi
     };
   }
 
-  // Check for missing admin token (Draft-specific)
-  if (lowerMessage.includes('admin token') || lowerMessage.includes('caffeineadmintoken')) {
-    return {
-      category: 'initialization',
-      message: 'Draft admin token is required. Please open the Draft URL that contains the admin token.',
-    };
-  }
-
   // Check for canister/service unavailability
   if (lowerMessage.includes('canister') || 
       lowerMessage.includes('service unavailable') ||
@@ -75,16 +67,6 @@ export function classifyBackendError(error: unknown, context?: string): Classifi
   return {
     category: 'unknown',
     message: errorMessage || 'An unexpected error occurred. Please try again.',
-  };
-}
-
-/**
- * Creates a user-friendly error message for missing Draft admin token.
- */
-export function createMissingTokenError(): ClassifiedError {
-  return {
-    category: 'initialization',
-    message: 'Draft admin token is required. Please open the Draft URL that contains the admin token in the URL parameters.',
   };
 }
 

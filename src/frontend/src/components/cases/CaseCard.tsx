@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
-import { Edit, Calendar, FileText, User, Stethoscope, Users, Heart } from 'lucide-react';
+import { Edit, Calendar, FileText, User, Stethoscope, Users, Heart, ClipboardList } from 'lucide-react';
 import { nanosecondsToDateOnlyString, formatDateOnlyString, formatDateOfBirth } from '../../utils/dates';
 import type { LocalSurgeryCase } from '../../types/cases';
 import TasksChecklist from './TasksChecklist';
@@ -72,6 +72,12 @@ export default function CaseCard({ case: surgeryCase, onEdit }: CaseCardProps) {
             <Calendar className="h-4 w-4 flex-shrink-0" />
             <span className="font-medium">Arrival:</span>
             <span>{formattedArrivalDate}</span>
+          </div>
+
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <ClipboardList className="h-4 w-4 flex-shrink-0" />
+            <span className="font-medium">Presenting Complaint:</span>
+            <span>{surgeryCase.presentingComplaint || '—'}</span>
           </div>
 
           <div className="flex items-center gap-2 text-muted-foreground">

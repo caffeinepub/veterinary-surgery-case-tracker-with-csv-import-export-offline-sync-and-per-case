@@ -7,8 +7,8 @@ export interface TaskDefinition {
 }
 
 export const TASK_DEFINITIONS: TaskDefinition[] = [
-  { key: 'dischargeNotes', label: 'Discharge Notes', defaultRequired: true },
-  { key: 'pdvmNotified', label: 'pDVM Notified', defaultRequired: true },
+  { key: 'dischargeNotes', label: 'Discharge Notes', defaultRequired: false },
+  { key: 'pdvmNotified', label: 'pDVM Notified', defaultRequired: false },
   { key: 'labs', label: 'Labs', defaultRequired: false },
   { key: 'histo', label: 'Histo', defaultRequired: false },
   { key: 'surgeryReport', label: 'Surgery Report', defaultRequired: false },
@@ -18,14 +18,14 @@ export const TASK_DEFINITIONS: TaskDefinition[] = [
 
 /**
  * Creates a default TasksChecklist with all 7 tasks
- * Discharge Notes and pDVM Notified are required by default
+ * All tasks start as not required (unchecked) for new cases
  */
 export function createDefaultTasksChecklist(): TasksChecklist {
   const checklist: any = {};
   
   TASK_DEFINITIONS.forEach((def) => {
     checklist[def.key] = {
-      required: def.defaultRequired,
+      required: false,
       checked: false,
     };
   });
@@ -36,6 +36,7 @@ export function createDefaultTasksChecklist(): TasksChecklist {
 /**
  * Normalizes a partial or legacy TasksChecklist to the full 7-task structure
  * Ensures all tasks have both required and checked fields
+ * Preserves existing required flags for saved cases
  */
 export function normalizeTasksChecklist(partial: Partial<TasksChecklist> | any): TasksChecklist {
   const normalized: any = {};
@@ -44,27 +45,27 @@ export function normalizeTasksChecklist(partial: Partial<TasksChecklist> | any):
     const existing = partial?.[def.key];
     
     if (existing && typeof existing === 'object') {
-      // If it exists and has the new structure
+      // If it exists and has the new structure, preserve the required flag
       normalized[def.key] = {
-        required: existing.required ?? def.defaultRequired,
+        required: existing.required ?? false,
         checked: existing.checked ?? false,
       };
     } else if (existing && typeof existing === 'boolean') {
       // Legacy format: just a boolean for checked
       normalized[def.key] = {
-        required: def.defaultRequired,
+        required: false,
         checked: existing,
       };
     } else if (existing && existing.checked !== undefined) {
       // Old format: { checked: boolean } without required
       normalized[def.key] = {
-        required: def.defaultRequired,
+        required: false,
         checked: existing.checked ?? false,
       };
     } else {
       // Missing entirely
       normalized[def.key] = {
-        required: def.defaultRequired,
+        required: false,
         checked: false,
       };
     }
@@ -74,11 +75,31 @@ export function normalizeTasksChecklist(partial: Partial<TasksChecklist> | any):
 }
 
 /**
- * Gets only the required tasks from a checklist
+ * Creates a TasksChecklist for a new case based on form selections
+ * Only tasks that are checked in the form will have required=true
+ * All other tasks will have required=false
+ */
+export function createTasksChecklistForNewCase(formTasks: TasksChecklist): TasksChecklist {
+  const checklist: any = {};
+  
+  TASK_DEFINITIONS.forEach((def) => {
+    const formTask = formTasks[def.key];
+    checklist[def.key] = {
+      required: formTask?.required === true,
+      checked: false, // New cases start with all tasks unchecked
+    };
+  });
+  
+  return checklist as TasksChecklist;
+}
+
+/**
+ * Gets only the required tasks that are NOT yet completed from a checklist
+ * This is used for patient card display - completed tasks are hidden
  */
 export function getRequiredTasks(checklist: TasksChecklist): Array<{ key: keyof TasksChecklist; label: string; checked: boolean }> {
   return TASK_DEFINITIONS
-    .filter((def) => checklist[def.key].required)
+    .filter((def) => checklist[def.key].required && !checklist[def.key].checked)
     .map((def) => ({
       key: def.key,
       label: def.label,

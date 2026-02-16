@@ -71,7 +71,7 @@ export function prepareCasesForSync(
     if (localCase.pendingSync) {
       const key = localCase.caseId.toString();
       // Convert LocalSurgeryCase to SurgeryCase (strip local-only fields)
-      const { pendingSync, demographicsRawText, capturedImageUrl, ...serverFields } = localCase;
+      const { pendingSync, demographicsRawText, capturedImageUrl, localId, ...serverFields } = localCase;
       syncMap.set(key, serverFields as SurgeryCase);
     }
   }

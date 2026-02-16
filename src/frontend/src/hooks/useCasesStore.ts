@@ -1,139 +1,132 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useActor } from './useActor';
-import { loadCasesLocally, saveCasesLocally } from '../utils/localPersistence';
-import { mergeCases } from '../utils/mergeCases';
 import type { LocalSurgeryCase } from '../types/cases';
-import { normalizeTasksChecklist } from '../utils/tasksChecklist';
-import { useState, useEffect } from 'react';
+import { loadCasesFromLocal, saveCasesToLocal } from '../utils/localPersistence';
+import { mergeCases } from '../utils/mergeCases';
+import { useGetAllSurgeryCases } from './useQueries';
 
-function normalizeDemographics(demographics: any) {
+/**
+ * Normalizes a case to ensure all expected fields are present
+ */
+function normalizeCase(c: LocalSurgeryCase): LocalSurgeryCase {
   return {
-    name: String(demographics?.name || '').trim(),
-    ownerLastName: String(demographics?.ownerLastName || '').trim(),
-    species: String(demographics?.species || '').trim(),
-    breed: String(demographics?.breed || '').trim(),
-    sex: String(demographics?.sex || '').trim(),
-    dateOfBirth: String(demographics?.dateOfBirth || '').trim(),
+    ...c,
+    presentingComplaint: c.presentingComplaint ?? '',
+    demographicsRawText: c.demographicsRawText ?? '',
+    capturedImageUrl: c.capturedImageUrl ?? undefined,
+    pendingSync: c.pendingSync ?? false,
   };
 }
 
+/**
+ * Unified cases store hook that manages both local and server state
+ */
 export function useCasesStore() {
-  const { actor, isFetching: actorFetching } = useActor();
   const queryClient = useQueryClient();
-  const [fetchError, setFetchError] = useState<string | null>(null);
+  const { data: serverCases = [], isLoading: serverLoading } = useGetAllSurgeryCases();
 
-  const casesQuery = useQuery<LocalSurgeryCase[]>({
-    queryKey: ['surgeryCases'],
-    queryFn: async () => {
-      const localCases = loadCasesLocally();
-      
-      // Normalize local cases to ensure all fields exist
-      const normalizedLocalCases = localCases.map((c) => ({
-        ...c,
-        patientDemographics: normalizeDemographics(c.patientDemographics),
-        tasksChecklist: normalizeTasksChecklist(c.tasksChecklist),
-      }));
-      
-      if (!actor) {
-        setFetchError(null);
-        return normalizedLocalCases;
-      }
-
-      try {
-        const serverCases = await actor.getAllSurgeryCases();
-        
-        // Merge server cases with local cases (preserving local-only cases and fields)
-        const mergedCases = mergeCases(normalizedLocalCases, serverCases);
-        
-        // Normalize merged cases
-        const normalizedMergedCases = mergedCases.map((c) => ({
-          ...c,
-          patientDemographics: normalizeDemographics(c.patientDemographics),
-          tasksChecklist: normalizeTasksChecklist(c.tasksChecklist),
-        }));
-        
-        saveCasesLocally(normalizedMergedCases);
-        setFetchError(null);
-        return normalizedMergedCases;
-      } catch (error: any) {
-        const errorMessage = error.message?.includes('Unauthorized')
-          ? 'Not authorized to access cases from backend'
-          : 'Failed to fetch cases from backend';
-        
-        console.error('Failed to fetch from server, using local:', error);
-        setFetchError(errorMessage);
-        return normalizedLocalCases;
-      }
+  // Load and merge local + server cases
+  const { data: cases = [], isLoading: localLoading } = useQuery<LocalSurgeryCase[]>({
+    queryKey: ['mergedCases'],
+    queryFn: () => {
+      const localCases = loadCasesFromLocal().map(normalizeCase);
+      return mergeCases(localCases, serverCases);
     },
-    enabled: !actorFetching,
-    retry: false,
+    enabled: !serverLoading,
   });
 
+  const isLoading = serverLoading || localLoading;
+
+  // Add case mutation
   const addCase = useMutation({
     mutationFn: async (newCase: LocalSurgeryCase) => {
-      const currentCases = casesQuery.data || [];
-      const normalizedCase = {
-        ...newCase,
-        patientDemographics: normalizeDemographics(newCase.patientDemographics),
-        tasksChecklist: normalizeTasksChecklist(newCase.tasksChecklist),
-        pendingSync: true,
-      };
-      const updatedCases = [...currentCases, normalizedCase];
-      saveCasesLocally(updatedCases);
-      return updatedCases;
+      const currentLocal = loadCasesFromLocal().map(normalizeCase);
+      const updatedLocal = [...currentLocal, normalizeCase(newCase)];
+      saveCasesToLocal(updatedLocal);
+      
+      // Verify save by reloading
+      const verified = loadCasesFromLocal().map(normalizeCase);
+      const savedCase = verified.find(c => c.caseId === newCase.caseId);
+      if (!savedCase) {
+        throw new Error('Failed to verify case was saved to local storage');
+      }
+      return verified;
     },
-    onSuccess: (updatedCases) => {
-      queryClient.setQueryData(['surgeryCases'], updatedCases);
+    onSuccess: (verifiedLocal) => {
+      const merged = mergeCases(verifiedLocal, serverCases);
+      queryClient.setQueryData(['mergedCases'], merged);
     },
   });
 
+  // Update case mutation
   const updateCase = useMutation({
     mutationFn: async ({ caseId, updates }: { caseId: bigint; updates: Partial<LocalSurgeryCase> }) => {
-      const currentCases = casesQuery.data || [];
-      const updatedCases = currentCases.map((c) => {
-        if (c.caseId === caseId) {
-          const updated = { ...c, ...updates, pendingSync: true };
-          if (updates.patientDemographics) {
-            updated.patientDemographics = normalizeDemographics(updates.patientDemographics);
-          }
-          if (updates.tasksChecklist) {
-            updated.tasksChecklist = normalizeTasksChecklist(updates.tasksChecklist);
-          }
-          return updated;
-        }
-        return c;
-      });
-      saveCasesLocally(updatedCases);
-      return updatedCases;
+      const currentLocal = loadCasesFromLocal().map(normalizeCase);
+      const updatedLocal = currentLocal.map((c) =>
+        c.caseId === caseId
+          ? normalizeCase({ ...c, ...updates, pendingSync: true })
+          : c
+      );
+      saveCasesToLocal(updatedLocal);
+      
+      // Verify save by reloading
+      const verified = loadCasesFromLocal().map(normalizeCase);
+      const updatedCase = verified.find(c => c.caseId === caseId);
+      if (!updatedCase) {
+        throw new Error('Failed to verify case update was saved to local storage');
+      }
+      return verified;
     },
-    onSuccess: (updatedCases) => {
-      queryClient.setQueryData(['surgeryCases'], updatedCases);
+    onSuccess: (verifiedLocal) => {
+      const merged = mergeCases(verifiedLocal, serverCases);
+      queryClient.setQueryData(['mergedCases'], merged);
     },
   });
 
-  const importCases = useMutation({
-    mutationFn: async (importedCases: LocalSurgeryCase[]) => {
-      const currentCases = casesQuery.data || [];
-      const normalizedImported = importedCases.map((c) => ({
-        ...c,
-        patientDemographics: normalizeDemographics(c.patientDemographics),
-        tasksChecklist: normalizeTasksChecklist(c.tasksChecklist),
-      }));
-      const updatedCases = [...currentCases, ...normalizedImported];
-      saveCasesLocally(updatedCases);
-      return updatedCases;
+  // Delete case mutation
+  const deleteCase = useMutation({
+    mutationFn: async (caseId: bigint) => {
+      const currentLocal = loadCasesFromLocal().map(normalizeCase);
+      const updatedLocal = currentLocal.filter((c) => c.caseId !== caseId);
+      saveCasesToLocal(updatedLocal);
+      
+      // Verify deletion
+      const verified = loadCasesFromLocal().map(normalizeCase);
+      const stillExists = verified.find(c => c.caseId === caseId);
+      if (stillExists) {
+        throw new Error('Failed to verify case deletion from local storage');
+      }
+      return verified;
     },
-    onSuccess: (updatedCases) => {
-      queryClient.setQueryData(['surgeryCases'], updatedCases);
+    onSuccess: (verifiedLocal) => {
+      const merged = mergeCases(verifiedLocal, serverCases);
+      queryClient.setQueryData(['mergedCases'], merged);
+    },
+  });
+
+  // Import cases mutation
+  const importCases = useMutation({
+    mutationFn: async (newCases: LocalSurgeryCase[]) => {
+      const currentLocal = loadCasesFromLocal().map(normalizeCase);
+      const normalizedNew = newCases.map(normalizeCase);
+      const updatedLocal = [...currentLocal, ...normalizedNew];
+      saveCasesToLocal(updatedLocal);
+      
+      // Verify save by reloading
+      const verified = loadCasesFromLocal().map(normalizeCase);
+      return verified;
+    },
+    onSuccess: (verifiedLocal) => {
+      const merged = mergeCases(verifiedLocal, serverCases);
+      queryClient.setQueryData(['mergedCases'], merged);
     },
   });
 
   return {
-    cases: casesQuery.data || [],
-    isLoading: casesQuery.isLoading,
-    fetchError,
+    cases,
+    isLoading,
     addCase,
     updateCase,
+    deleteCase,
     importCases,
   };
 }

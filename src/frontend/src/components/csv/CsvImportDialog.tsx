@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Alert, AlertDescription } from '../ui/alert';
-import { Upload, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Upload, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
 import { parseCsv, csvRowToCase } from '../../utils/csv';
 import { useCasesStore } from '../../hooks/useCasesStore';
 import { toast } from 'sonner';
@@ -36,12 +36,16 @@ export default function CsvImportDialog() {
 
       await importCases.mutateAsync(cases as LocalSurgeryCase[]);
       toast.success(`Imported ${cases.length} cases successfully`);
-      setOpen(false);
+      
+      // Reset state and close dialog on success
       setFile(null);
       setParseResult(null);
-    } catch (error) {
+      setOpen(false);
+    } catch (error: any) {
       console.error('Import failed:', error);
-      toast.error('Failed to import cases');
+      const errorMessage = error?.message || 'Failed to import cases. Please try again.';
+      toast.error(errorMessage);
+      // Keep dialog open and usable on error
     }
   };
 
@@ -122,14 +126,21 @@ export default function CsvImportDialog() {
           )}
 
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={handleClose}>
+            <Button variant="outline" onClick={handleClose} disabled={importCases.isPending}>
               Cancel
             </Button>
             <Button
               onClick={handleImport}
               disabled={!parseResult || parseResult.errors.length > 0 || importCases.isPending}
             >
-              {importCases.isPending ? 'Importing...' : 'Import'}
+              {importCases.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Importing...
+                </>
+              ) : (
+                'Import'
+              )}
             </Button>
           </div>
         </div>

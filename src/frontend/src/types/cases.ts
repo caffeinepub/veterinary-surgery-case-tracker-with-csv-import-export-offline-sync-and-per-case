@@ -19,6 +19,7 @@ export interface CaseFormData {
   presentingComplaint: string;
   notes: string;
   demographicsRawText: string;
+  capturedImageUrl?: string;
   requiredTasks: TasksChecklist;
 }
 

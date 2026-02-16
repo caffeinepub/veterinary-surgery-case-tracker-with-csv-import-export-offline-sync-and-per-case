@@ -1,106 +1,75 @@
 {
   "kind": "build_request",
-  "title": "Fix Draft startup: backend actor initialization fails even after logout/login",
+  "title": "Fix live backend connection initialization failure",
+  "projectName": "Surgery Case Tracker",
   "priority": "high",
   "requirements": [
     {
-      "id": "REQ-45",
-      "text": "Expose actor initialization failures to the UI instead of silently resulting in a null actor, so the Draft app does not get stuck showing the generic error \"Failed to initialize backend connection\" without actionable detail.",
+      "id": "REQ-1",
+      "text": "Remove the frontend-only backend initialization call to the non-existent actor method `_initializeAccessControlWithSecret` so the backend actor can be created successfully in the live app.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-4",
-          "msg-5"
+          "recent-messages-user-1"
         ],
         "quotes": [
-          "Failed to initialize backend connection",
-          "Logged out and back in; still happening in draft"
+          "failed to initialize backend connection in live app"
         ]
       },
       "acceptanceCriteria": [
-        "When backend actor creation or `_initializeAccessControlWithSecret(...)` fails, the error is captured and surfaced as a specific, user-visible message (English) on the StartupRecoveryScreen instead of only setting `actor` to null.",
-        "`useActor` returns an explicit error state (e.g., `error: string | null`) in addition to `actor` and `isFetching` so downstream hooks can distinguish 'still loading' vs 'failed to create actor'.",
-        "`useBackendConnection` uses the actor initialization error (when present) as the primary displayed error, rather than overwriting it with the generic \"Failed to initialize backend connection\" message."
+        "`frontend/src/hooks/useActor.ts` no longer calls `actor._initializeAccessControlWithSecret(...)` during actor creation.",
+        "The app can create an authenticated actor without throwing a runtime or TypeScript interface error in Live/production.",
+        "Backend connection status can reach “Backend Connected” for an authenticated user when the canister is available."
       ]
     },
     {
-      "id": "REQ-46",
-      "text": "Improve Draft admin-token handling for backend initialization: detect missing/empty admin token and show clear guidance, and persist/reuse the token across logout/login within the same browser session.",
+      "id": "REQ-2",
+      "text": "Eliminate reliance on the `caffeineAdminToken` URL parameter for normal actor initialization and ensure backend connection error messaging does not instruct users to provide a Draft admin token unless the app explicitly still supports a Draft-token-based flow.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-5"
+          "recent-messages-user-1"
         ],
         "quotes": [
-          "Logged out and back in; still happening in draft"
+          "failed to initialize backend connection in live app"
         ]
       },
       "acceptanceCriteria": [
-        "If `caffeineAdminToken` is missing/empty at the moment `_initializeAccessControlWithSecret(...)` is attempted, the UI displays an English error explaining that the Draft build requires an admin token and instructs the user to open the Draft URL that contains the token (do not display the token value).",
-        "The token retrieval logic uses the existing URL/session helpers in `frontend/src/utils/urlParams.ts` so that, once provided, the token is stored in `sessionStorage` and continues to work after the user logs out and logs back in (until the browser session ends).",
-        "Retrying from the recovery screen re-attempts actor initialization using the persisted token without requiring the user to re-enter it."
+        "`frontend/src/hooks/useActor.ts` does not read `caffeineAdminToken` as part of actor initialization.",
+        "`frontend/src/utils/backendErrorMessages.ts` does not surface “Draft admin token is required…” for standard Live connection failures.",
+        "When the backend is unreachable or the user is unauthorized, the UI displays an accurate English error message via existing connection UI (e.g., SyncStatusBar) without mentioning admin tokens."
       ]
     },
     {
-      "id": "REQ-47",
-      "text": "Differentiate unauthorized vs unreachable backend failures during Draft startup and display accurate, English user-facing messages for each case.",
+      "id": "REQ-3",
+      "text": "Ensure the backend connection probing flow (actor creation + `getCallerUserProfile` probe) reports actionable errors and provides a working retry path in the live app.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-4",
-          "msg-5"
+          "recent-messages-user-1"
         ],
         "quotes": [
-          "Failed to initialize backend connection",
-          "Logged out and back in; still happening in draft"
+          "failed to initialize backend connection in live app"
         ]
       },
       "acceptanceCriteria": [
-        "If the backend call fails due to authorization (e.g., traps containing \"Unauthorized\"), the recovery screen shows an authorization-specific message (English) rather than a generic connectivity message.",
-        "If the failure is due to network/canister unavailability, the recovery screen shows a network/service-unavailable specific message (English).",
-        "The displayed error path does not misclassify 'actor not available because it failed to initialize' as a network failure; it should be reported as initialization failure with the underlying cause included when available."
-      ]
-    },
-    {
-      "id": "REQ-48",
-      "text": "Ensure the \"Retry Connection\" action fully resets the failed startup state so that repeated retries can recover without requiring a full page reload.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-5"
-        ],
-        "quotes": [
-          "Logged out and back in; still happening in draft"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Clicking \"Retry Connection\" clears prior actor/probe errors and triggers a fresh actor initialization attempt, followed by a fresh backend probe, without requiring `window.location.reload()`.",
-        "If a retry succeeds, the app transitions into the authenticated main UI and does not continue to show the StartupRecoveryScreen.",
-        "If a retry fails, the user sees the latest failure reason (English), not a stale error from a previous attempt."
+        "If actor creation fails or the probe call fails, `useBackendConnection` surfaces a non-empty English error string and `SyncStatusBar` shows “Backend Connection Error: …”.",
+        "Clicking “Retry Connection” triggers the existing retry mechanism and re-runs both actor initialization and the probe call.",
+        "Successful retry clears the error and updates status to “Backend Connected” without requiring a page reload."
       ]
     }
   ],
   "constraints": [
-    "Do not modify any files under frontend/src/hooks/useInternetIdentity.ts or other paths listed in SYSTEM_CONTEXT.frontend.immutablePaths; compose behavior by changing non-immutable hooks/components instead.",
-    "Keep all user-facing text in English."
+    "Do not edit any files under `frontend/src/components/ui` (read-only components).",
+    "Do not edit immutable paths listed in SYSTEM_CONTEXT (e.g., `frontend/src/hooks/useInternetIdentity.ts(x)`, `frontend/src/hooks/useActor.ts`, `frontend/src/main.tsx`) beyond what is necessary to fix the reported initialization failure; prefer adding new wrapper logic/files when feasible."
   ],
   "nonGoals": [
-    "Do not add new authentication providers; Internet Identity remains the only auth mechanism.",
-    "Do not introduce new backend services or external databases.",
-    "Do not change unrelated case-management, CSV, tasks checklist, or offline/sync features except where necessary to restore backend connection initialization behavior."
+    "Do not add new authentication providers (Internet Identity remains the only supported auth).",
+    "Do not introduce external databases or third-party backend services.",
+    "Do not change backend authorization semantics or roles unless required to resolve the connection initialization error."
   ],
   "imageRequirements": {
     "required": [],
     "edits": []
-  },
-  "userProfileUpdate": {
-    "goalsToAdd": [],
-    "goalsToRemove": [],
-    "preferencesToAdd": [],
-    "preferencesToRemove": [],
-    "miscToAdd": [],
-    "miscToRemove": [],
-    "fieldsToSet": {},
-    "fieldsToDelete": []
   }
 }

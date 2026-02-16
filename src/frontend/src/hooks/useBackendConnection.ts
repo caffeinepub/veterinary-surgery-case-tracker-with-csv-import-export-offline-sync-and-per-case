@@ -69,8 +69,16 @@ export function useBackendConnection(): BackendConnectionStatus {
       // First, retry actor initialization
       await retryActor();
       
-      // Then refetch the probe query
-      await probeQuery.refetch();
+      // Wait a moment for actor to be ready
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Then invalidate and refetch the probe query to re-run the probe
+      await queryClient.invalidateQueries({
+        queryKey: ['backendConnectionProbe', identity?.getPrincipal().toString()]
+      });
+      await queryClient.refetchQueries({
+        queryKey: ['backendConnectionProbe', identity?.getPrincipal().toString()]
+      });
       
       // If successful, invalidate dependent queries to refresh data
       if (probeQuery.isSuccess) {

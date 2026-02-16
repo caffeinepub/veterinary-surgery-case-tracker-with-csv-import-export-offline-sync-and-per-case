@@ -4,7 +4,7 @@ import { useEnvironmentLabel } from '../../hooks/useEnvironmentLabel';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Loader2, Stethoscope } from 'lucide-react';
-import { clearLocalStorage } from '../../utils/localPersistence';
+import { clearLocalCases } from '../../utils/localPersistence';
 
 export default function Header() {
   const { login, clear, loginStatus, identity } = useInternetIdentity();
@@ -18,7 +18,7 @@ export default function Header() {
   const handleAuth = async () => {
     if (isAuthenticated) {
       await clear();
-      clearLocalStorage();
+      clearLocalCases();
       queryClient.clear();
     } else {
       try {

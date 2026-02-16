@@ -10,6 +10,7 @@ export type Option<T> = Some<T> | None;
 export type Time = bigint;
 export interface SurgeryCaseUpdate {
     arrivalDate?: Time;
+    presentingComplaint?: string;
     medicalRecordNumber?: string;
     tasksChecklist?: TasksChecklist;
     patientDemographics?: CompletePatientDemographics;
@@ -20,6 +21,7 @@ export interface TaskItem {
 }
 export interface SurgeryCase {
     arrivalDate: Time;
+    presentingComplaint: string;
     medicalRecordNumber: string;
     isSynchronized: boolean;
     lastSyncTimestamp: Time;
@@ -54,7 +56,7 @@ export enum UserRole {
 }
 export interface backendInterface {
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
-    createSurgeryCase(medicalRecordNumber: string, patientDemographics: CompletePatientDemographics, arrivalDate: Time, tasksChecklist: TasksChecklist): Promise<bigint>;
+    createSurgeryCase(medicalRecordNumber: string, presentingComplaint: string, patientDemographics: CompletePatientDemographics, arrivalDate: Time, tasksChecklist: TasksChecklist): Promise<bigint>;
     getAllSurgeryCases(): Promise<Array<SurgeryCase>>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;

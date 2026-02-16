@@ -1,68 +1,46 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-16T14:54:36.543Z",
+  "generatedAt": "2026-02-16T18:52:08.092Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 4,
-    "implemented": 4,
+    "total": 3,
+    "implemented": 2,
     "items": [
       {
-        "id": "REQ-45",
-        "summary": "Expose actor initialization failures to the UI instead of silently resulting in a null actor, so the Draft app does not get stuck showing the generic error \"Failed to initialize backend connection\" without actionable detail.",
+        "id": "REQ-1",
+        "summary": "Remove the frontend-only backend initialization call to the non-existent actor method `_initializeAccessControlWithSecret` so the backend actor can be created successfully in the live app.",
+        "status": "missing",
+        "plannedFiles": [
+          "frontend/src/hooks/useActor.ts"
+        ],
+        "matchedFiles": []
+      },
+      {
+        "id": "REQ-2",
+        "summary": "Eliminate reliance on the `caffeineAdminToken` URL parameter for normal actor initialization and ensure backend connection error messaging does not instruct users to provide a Draft admin token unless the app explicitly still supports a Draft-token-based flow.",
         "status": "implemented",
         "plannedFiles": [
           "frontend/src/hooks/useActor.ts",
-          "frontend/src/hooks/useBackendConnection.ts",
-          "frontend/src/components/startup/StartupRecoveryScreen.tsx"
+          "frontend/src/utils/backendErrorMessages.ts"
         ],
         "matchedFiles": [
-          "frontend/src/hooks/useBackendConnection.ts",
-          "frontend/src/components/startup/StartupRecoveryScreen.tsx"
+          "frontend/src/utils/backendErrorMessages.ts"
         ]
       },
       {
-        "id": "REQ-46",
-        "summary": "Improve Draft admin-token handling for backend initialization: detect missing/empty admin token and show clear guidance, and persist/reuse the token across logout/login within the same browser session.",
+        "id": "REQ-3",
+        "summary": "Ensure the backend connection probing flow (actor creation + `getCallerUserProfile` probe) reports actionable errors and provides a working retry path in the live app.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/utils/draftAdminToken.ts",
-          "frontend/src/hooks/useActor.ts",
-          "frontend/src/components/startup/StartupRecoveryScreen.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/utils/draftAdminToken.ts",
-          "frontend/src/components/startup/StartupRecoveryScreen.tsx"
-        ]
-      },
-      {
-        "id": "REQ-47",
-        "summary": "Differentiate unauthorized vs unreachable backend failures during Draft startup and display accurate, English user-facing messages for each case.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/utils/backendErrorMessages.ts",
-          "frontend/src/hooks/useActor.ts",
+          "frontend/src/hooks/useActorWithError.ts",
           "frontend/src/hooks/useBackendConnection.ts"
         ],
         "matchedFiles": [
-          "frontend/src/utils/backendErrorMessages.ts",
-          "frontend/src/hooks/useBackendConnection.ts"
-        ]
-      },
-      {
-        "id": "REQ-48",
-        "summary": "Ensure the \"Retry Connection\" action fully resets the failed startup state so that repeated retries can recover without requiring a full page reload.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/hooks/useActor.ts",
-          "frontend/src/hooks/useBackendConnection.ts",
-          "frontend/src/App.tsx",
-          "frontend/src/components/sync/SyncStatusBar.tsx"
-        ],
-        "matchedFiles": [
+          "frontend/src/hooks/useActorWithError.ts",
           "frontend/src/hooks/useBackendConnection.ts"
         ]
       }
@@ -73,11 +51,9 @@
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/components/startup/StartupRecoveryScreen.tsx",
     "frontend/src/hooks/useActorWithError.ts",
     "frontend/src/hooks/useBackendConnection.ts",
     "frontend/src/utils/backendErrorMessages.ts",
-    "frontend/src/utils/draftAdminToken.ts",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

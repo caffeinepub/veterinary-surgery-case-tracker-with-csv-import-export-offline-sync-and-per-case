@@ -10,10 +10,11 @@ import type { LocalSurgeryCase } from '../../types/cases';
 interface CaseListProps {
   sortField: 'arrivalDate' | 'medicalRecordNumber';
   sortDirection: 'asc' | 'desc';
+  searchQuery: string;
   onEditCase: (caseId: bigint) => void;
 }
 
-export default function CaseList({ sortField, sortDirection, onEditCase }: CaseListProps) {
+export default function CaseList({ sortField, sortDirection, searchQuery, onEditCase }: CaseListProps) {
   const { cases, isLoading } = useCasesStore();
   const { identity } = useInternetIdentity();
   const { isConnected } = useBackendConnection();
@@ -21,7 +22,29 @@ export default function CaseList({ sortField, sortDirection, onEditCase }: CaseL
 
   const isAuthenticated = !!identity;
 
-  const sortedCases = [...cases].sort((a, b) => {
+  // Filter cases by search query
+  const filteredCases = cases.filter((surgeryCase) => {
+    if (!searchQuery.trim()) return true;
+
+    const query = searchQuery.toLowerCase();
+    const demographics = surgeryCase.patientDemographics;
+    const presentingComplaint = surgeryCase.presentingComplaint || '';
+
+    // Search across multiple fields including presenting complaint
+    return (
+      demographics.name.toLowerCase().includes(query) ||
+      surgeryCase.medicalRecordNumber.toLowerCase().includes(query) ||
+      demographics.ownerLastName.toLowerCase().includes(query) ||
+      demographics.species.toLowerCase().includes(query) ||
+      demographics.breed.toLowerCase().includes(query) ||
+      demographics.sex.toLowerCase().includes(query) ||
+      demographics.dateOfBirth.toLowerCase().includes(query) ||
+      presentingComplaint.toLowerCase().includes(query)
+    );
+  });
+
+  // Sort the filtered cases
+  const sortedCases = [...filteredCases].sort((a, b) => {
     let comparison = 0;
 
     if (sortField === 'arrivalDate') {
@@ -49,7 +72,22 @@ export default function CaseList({ sortField, sortDirection, onEditCase }: CaseL
     // - Case list is empty
     const showMigrationGuidance = isAuthenticated && isConnected && isOnline !== false;
     
-    return <EmptyCasesState showMigrationGuidance={showMigrationGuidance} />;
+    return (
+      <EmptyCasesState 
+        showMigrationGuidance={showMigrationGuidance}
+        isConnected={isConnected}
+        isAuthenticated={isAuthenticated}
+      />
+    );
+  }
+
+  if (sortedCases.length === 0 && searchQuery.trim()) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-muted-foreground">No cases found matching "{searchQuery}"</p>
+        <p className="text-sm text-muted-foreground mt-2">Try a different search term</p>
+      </div>
+    );
   }
 
   return (

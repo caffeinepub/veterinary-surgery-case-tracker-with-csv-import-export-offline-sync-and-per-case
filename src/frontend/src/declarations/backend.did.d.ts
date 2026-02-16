@@ -20,6 +20,7 @@ export interface CompletePatientDemographics {
 }
 export interface SurgeryCase {
   'arrivalDate' : Time,
+  'presentingComplaint' : string,
   'medicalRecordNumber' : string,
   'isSynchronized' : boolean,
   'lastSyncTimestamp' : Time,
@@ -29,6 +30,7 @@ export interface SurgeryCase {
 }
 export interface SurgeryCaseUpdate {
   'arrivalDate' : [] | [Time],
+  'presentingComplaint' : [] | [string],
   'medicalRecordNumber' : [] | [string],
   'tasksChecklist' : [] | [TasksChecklist],
   'patientDemographics' : [] | [CompletePatientDemographics],
@@ -52,7 +54,7 @@ export interface _SERVICE {
   '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
   'createSurgeryCase' : ActorMethod<
-    [string, CompletePatientDemographics, Time, TasksChecklist],
+    [string, string, CompletePatientDemographics, Time, TasksChecklist],
     bigint
   >,
   'getAllSurgeryCases' : ActorMethod<[], Array<SurgeryCase>>,

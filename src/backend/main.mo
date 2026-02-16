@@ -7,9 +7,12 @@ import Runtime "mo:core/Runtime";
 import List "mo:core/List";
 import MixinAuthorization "authorization/MixinAuthorization";
 import AccessControl "authorization/access-control";
+
+
 import Order "mo:core/Order";
 import Int "mo:core/Int";
 import Nat "mo:core/Nat";
+
 
 actor {
   let accessControlState = AccessControl.initState();
@@ -37,7 +40,7 @@ actor {
     culture : TaskItem;
   };
 
-  // Complete patient demographics definition with extended fields
+  // Complete patient demographics definition
   public type CompletePatientDemographics = {
     name : Text;
     ownerLastName : Text;
@@ -47,10 +50,11 @@ actor {
     dateOfBirth : Text;
   };
 
-  // Surgery case definition
+  // Surgery case definition (updated with presentingComplaint)
   public type SurgeryCase = {
     caseId : Nat;
     medicalRecordNumber : Text;
+    presentingComplaint : Text;
     patientDemographics : CompletePatientDemographics;
     arrivalDate : Time.Time;
     tasksChecklist : TasksChecklist;
@@ -71,9 +75,10 @@ actor {
     };
   };
 
-  // Surgery case update definition
+  // Surgery case update definition (now includes presentingComplaint)
   public type SurgeryCaseUpdate = {
     medicalRecordNumber : ?Text;
+    presentingComplaint : ?Text;
     patientDemographics : ?CompletePatientDemographics;
     arrivalDate : ?Time.Time;
     tasksChecklist : ?TasksChecklist;
@@ -106,8 +111,8 @@ actor {
     userProfiles.add(caller, profile);
   };
 
-  // Surgery case creation
-  public shared ({ caller }) func createSurgeryCase(medicalRecordNumber : Text, patientDemographics : CompletePatientDemographics, arrivalDate : Time.Time, tasksChecklist : TasksChecklist) : async Nat {
+  // Surgery case creation with presentingComplaint
+  public shared ({ caller }) func createSurgeryCase(medicalRecordNumber : Text, presentingComplaint : Text, patientDemographics : CompletePatientDemographics, arrivalDate : Time.Time, tasksChecklist : TasksChecklist) : async Nat {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can create surgery cases");
     };
@@ -123,6 +128,7 @@ actor {
     let newCase : SurgeryCase = {
       caseId;
       medicalRecordNumber;
+      presentingComplaint;
       patientDemographics;
       arrivalDate;
       tasksChecklist;
@@ -135,7 +141,7 @@ actor {
     caseId;
   };
 
-  // Update surgery case
+  // Update surgery case (with presentingComplaint)
   public shared ({ caller }) func updateSurgeryCase(caseId : Nat, updates : SurgeryCaseUpdate) : async Bool {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can update surgery cases");
@@ -154,6 +160,10 @@ actor {
               medicalRecordNumber = switch (updates.medicalRecordNumber) {
                 case (null) { surgeryCase.medicalRecordNumber };
                 case (?mrn) { mrn };
+              };
+              presentingComplaint = switch (updates.presentingComplaint) {
+                case (null) { surgeryCase.presentingComplaint };
+                case (?complaint) { complaint };
               };
               patientDemographics = switch (updates.patientDemographics) {
                 case (null) { surgeryCase.patientDemographics };
@@ -240,7 +250,18 @@ actor {
       };
     };
 
+    updateNextCaseId(mergedCases, nextCaseId);
     cases.add(caller, mergedCases);
+  };
+
+  func updateNextCaseId(mergedCases : List.List<SurgeryCase>, startingId : Nat) {
+    let casesArray = mergedCases.toArray();
+    let maxId = casesArray.foldLeft<Nat, Nat>(startingId, maxNat);
+    nextCaseId := maxId + 1;
+  };
+
+  func maxNat(x : Nat, y : Nat) : Nat {
+    if (x >= y) { x } else { y };
   };
 
   // Check for unsynchronized changes

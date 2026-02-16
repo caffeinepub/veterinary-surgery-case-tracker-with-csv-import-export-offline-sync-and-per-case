@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useCamera } from '../../camera/useCamera';
 import { Button } from '../ui/button';
 import { Alert, AlertDescription } from '../ui/alert';
@@ -6,10 +6,11 @@ import { Camera, Loader2, RotateCw } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface CameraCaptureProps {
-  onCaptureComplete: () => void;
+  onCaptureComplete: (imageUrl: string) => void;
 }
 
 export default function CameraCapture({ onCaptureComplete }: CameraCaptureProps) {
+  const isMountedRef = useRef(true);
   const {
     isActive,
     isSupported,
@@ -22,27 +23,101 @@ export default function CameraCapture({ onCaptureComplete }: CameraCaptureProps)
     retry,
     videoRef,
     canvasRef,
-    currentFacingMode,
   } = useCamera({
     facingMode: 'environment',
     quality: 0.9,
   });
 
   useEffect(() => {
+    isMountedRef.current = true;
+    
     return () => {
+      isMountedRef.current = false;
+      // Cleanup camera on unmount
       if (isActive) {
-        stopCamera();
+        stopCamera().catch((err) => {
+          console.error('Error stopping camera on unmount:', err);
+        });
       }
     };
   }, [isActive, stopCamera]);
 
   const handleCapture = async () => {
-    const photo = await capturePhoto();
-    if (photo) {
-      toast.success('Photo captured successfully');
-      onCaptureComplete();
-    } else {
+    if (!isMountedRef.current) return;
+    
+    try {
+      const photo = await capturePhoto();
+      if (!isMountedRef.current) return;
+      
+      if (photo) {
+        // Convert File to data URL for local storage
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          if (!isMountedRef.current) return;
+          const dataUrl = reader.result as string;
+          if (dataUrl && typeof dataUrl === 'string') {
+            toast.success('Photo captured successfully');
+            onCaptureComplete(dataUrl);
+          } else {
+            toast.error('Failed to process captured photo');
+          }
+        };
+        reader.onerror = () => {
+          if (!isMountedRef.current) return;
+          toast.error('Failed to process captured photo');
+        };
+        reader.readAsDataURL(photo);
+      } else {
+        toast.error('Failed to capture photo');
+      }
+    } catch (err) {
+      if (!isMountedRef.current) return;
+      console.error('Error capturing photo:', err);
       toast.error('Failed to capture photo');
+    }
+  };
+
+  const handleStartCamera = async () => {
+    if (!isMountedRef.current) return;
+    try {
+      await startCamera();
+    } catch (err) {
+      if (!isMountedRef.current) return;
+      console.error('Error starting camera:', err);
+      toast.error('Failed to start camera');
+    }
+  };
+
+  const handleStopCamera = async () => {
+    if (!isMountedRef.current) return;
+    try {
+      await stopCamera();
+    } catch (err) {
+      if (!isMountedRef.current) return;
+      console.error('Error stopping camera:', err);
+      toast.error('Failed to stop camera');
+    }
+  };
+
+  const handleSwitchCamera = async () => {
+    if (!isMountedRef.current) return;
+    try {
+      await switchCamera();
+    } catch (err) {
+      if (!isMountedRef.current) return;
+      console.error('Error switching camera:', err);
+      toast.error('Failed to switch camera');
+    }
+  };
+
+  const handleRetry = async () => {
+    if (!isMountedRef.current) return;
+    try {
+      await retry();
+    } catch (err) {
+      if (!isMountedRef.current) return;
+      console.error('Error retrying camera:', err);
+      toast.error('Failed to retry camera');
     }
   };
 
@@ -56,7 +131,10 @@ export default function CameraCapture({ onCaptureComplete }: CameraCaptureProps)
 
   return (
     <div className="space-y-4">
-      <div className="relative bg-black rounded-lg overflow-hidden" style={{ minHeight: '400px', aspectRatio: '4/3' }}>
+      <div 
+        className="relative bg-black rounded-lg overflow-hidden" 
+        style={{ minHeight: '400px', height: '400px', aspectRatio: '4/3' }}
+      >
         <video
           ref={videoRef}
           autoPlay
@@ -84,7 +162,7 @@ export default function CameraCapture({ onCaptureComplete }: CameraCaptureProps)
 
       <div className="flex gap-2 flex-wrap">
         {!isActive && !error && (
-          <Button onClick={startCamera} disabled={isLoading}>
+          <Button type="button" onClick={handleStartCamera} disabled={isLoading}>
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -101,15 +179,15 @@ export default function CameraCapture({ onCaptureComplete }: CameraCaptureProps)
 
         {isActive && (
           <>
-            <Button onClick={handleCapture} disabled={isLoading}>
+            <Button type="button" onClick={handleCapture} disabled={isLoading}>
               <Camera className="mr-2 h-4 w-4" />
               Capture Photo
             </Button>
-            <Button onClick={stopCamera} variant="outline" disabled={isLoading}>
+            <Button type="button" onClick={handleStopCamera} variant="outline" disabled={isLoading}>
               Stop Camera
             </Button>
             {typeof window !== 'undefined' && !window.navigator.userAgent.includes('Mobile') && (
-              <Button onClick={() => switchCamera()} variant="outline" disabled={isLoading}>
+              <Button type="button" onClick={handleSwitchCamera} variant="outline" disabled={isLoading}>
                 <RotateCw className="mr-2 h-4 w-4" />
                 Switch Camera
               </Button>
@@ -118,7 +196,7 @@ export default function CameraCapture({ onCaptureComplete }: CameraCaptureProps)
         )}
 
         {error && (
-          <Button onClick={retry} variant="outline">
+          <Button type="button" onClick={handleRetry} variant="outline">
             <RotateCw className="mr-2 h-4 w-4" />
             Retry
           </Button>

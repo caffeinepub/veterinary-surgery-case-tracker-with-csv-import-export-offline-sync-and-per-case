@@ -1,11 +1,23 @@
-import { FolderOpen, AlertCircle, FileDown, FileUp, ArrowRight } from 'lucide-react';
+import { FolderOpen, AlertCircle, ArrowRight } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 
 interface EmptyCasesStateProps {
   showMigrationGuidance: boolean;
+  isConnected: boolean;
+  isAuthenticated: boolean;
 }
 
-export default function EmptyCasesState({ showMigrationGuidance }: EmptyCasesStateProps) {
+export default function EmptyCasesState({ showMigrationGuidance, isConnected, isAuthenticated }: EmptyCasesStateProps) {
+  // Determine data source message
+  let dataSourceMessage = '';
+  if (isAuthenticated && isConnected) {
+    dataSourceMessage = 'Connected—no cases found on server yet';
+  } else if (isAuthenticated && !isConnected) {
+    dataSourceMessage = 'Showing locally saved cases';
+  } else {
+    dataSourceMessage = 'No cases yet';
+  }
+
   if (!showMigrationGuidance) {
     return (
       <div className="text-center py-16">
@@ -15,68 +27,61 @@ export default function EmptyCasesState({ showMigrationGuidance }: EmptyCasesSta
           </div>
         </div>
         <h3 className="text-lg font-semibold mb-2">No cases yet</h3>
-        <p className="text-muted-foreground">Click the "Add Case" button to create your first case.</p>
+        <p className="text-muted-foreground mb-1">Import a CSV file to get started</p>
+        <p className="text-sm text-muted-foreground/70 mt-2">{dataSourceMessage}</p>
       </div>
     );
   }
 
   return (
     <div className="max-w-2xl mx-auto py-12">
-      <Alert className="border-blue-200 bg-blue-50 dark:bg-blue-950/20 dark:border-blue-900">
-        <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-        <AlertTitle className="text-blue-900 dark:text-blue-100 text-lg font-semibold mb-3">
-          Draft and Live environments use separate storage
-        </AlertTitle>
-        <AlertDescription className="text-blue-800 dark:text-blue-200 space-y-4">
-          <p>
-            Your cases from the Draft environment are not automatically available in the Live environment. 
-            Each environment maintains its own independent data storage.
+      <Alert>
+        <AlertCircle className="h-5 w-5" />
+        <AlertTitle className="text-lg font-semibold mb-3">Moving from Draft to Live?</AlertTitle>
+        <AlertDescription className="space-y-4">
+          <p className="text-sm">
+            Draft and Live environments maintain separate data. If you have cases in your Draft environment
+            that you'd like to bring to Live, follow these steps:
           </p>
           
-          <div className="bg-white dark:bg-gray-900 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
-            <h4 className="font-semibold mb-3 text-blue-900 dark:text-blue-100">
-              To migrate your cases from Draft to Live:
-            </h4>
-            <ol className="space-y-3 text-sm">
-              <li className="flex items-start gap-2">
-                <span className="flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-semibold text-xs">
-                  1
-                </span>
-                <span className="pt-0.5">
-                  Open the <strong>Draft app</strong> in your browser
-                </span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-semibold text-xs">
-                  2
-                </span>
-                <span className="pt-0.5 flex items-center gap-1.5">
-                  Click the <FileDown className="h-4 w-4 inline" /> <strong>CSV Export</strong> button to download your cases
-                </span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-semibold text-xs">
-                  3
-                </span>
-                <span className="pt-0.5">
-                  Return to the <strong>Live app</strong> (this environment)
-                </span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="flex-shrink-0 flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-semibold text-xs">
-                  4
-                </span>
-                <span className="pt-0.5 flex items-center gap-1.5">
-                  Click the <FileUp className="h-4 w-4 inline" /> <strong>CSV Import</strong> button and select your exported file
-                </span>
-              </li>
-            </ol>
+          <div className="space-y-3 text-sm">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-xs">
+                1
+              </div>
+              <div>
+                <p className="font-medium mb-1">Export from Draft</p>
+                <p className="text-muted-foreground">
+                  Open your Draft environment and click the "Export CSV" button to download all your cases
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-center py-2">
+              <ArrowRight className="h-5 w-5 text-muted-foreground" />
+            </div>
+
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold text-xs">
+                2
+              </div>
+              <div>
+                <p className="font-medium mb-1">Import to Live</p>
+                <p className="text-muted-foreground">
+                  Return here (Live) and click "Import CSV" to upload the file you just exported
+                </p>
+              </div>
+            </div>
           </div>
 
-          <p className="text-sm italic">
-            <ArrowRight className="h-4 w-4 inline mr-1" />
-            After importing, your cases will be available in this Live environment.
-          </p>
+          <div className="pt-3 border-t">
+            <p className="text-xs text-muted-foreground">
+              <strong>Note:</strong> This is a one-time migration. After importing, you can edit existing cases
+              or import additional CSV files as needed.
+            </p>
+          </div>
+
+          <p className="text-sm text-muted-foreground/70 pt-2">{dataSourceMessage}</p>
         </AlertDescription>
       </Alert>
     </div>

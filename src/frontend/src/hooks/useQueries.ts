@@ -56,7 +56,7 @@ export function useGetAllSurgeryCases() {
   const { actor, isFetching: actorFetching } = useActor();
 
   return useQuery<SurgeryCase[]>({
-    queryKey: ['surgeryCases'],
+    queryKey: ['serverSurgeryCases'],
     queryFn: async () => {
       if (!actor) throw new Error('Backend connection not available');
       try {
@@ -80,18 +80,26 @@ export function useCreateSurgeryCase() {
   return useMutation({
     mutationFn: async ({
       medicalRecordNumber,
+      presentingComplaint,
       patientDemographics,
       arrivalDate,
       tasksChecklist,
     }: {
       medicalRecordNumber: string;
+      presentingComplaint: string;
       patientDemographics: CompletePatientDemographics;
       arrivalDate: bigint;
       tasksChecklist: TasksChecklist;
     }) => {
       if (!actor) throw new Error('Backend connection not available');
       try {
-        return await actor.createSurgeryCase(medicalRecordNumber, patientDemographics, arrivalDate, tasksChecklist);
+        return await actor.createSurgeryCase(
+          medicalRecordNumber,
+          presentingComplaint,
+          patientDemographics,
+          arrivalDate,
+          tasksChecklist
+        );
       } catch (error: any) {
         if (error.message?.includes('Unauthorized')) {
           throw new Error('Not authorized to create cases');
@@ -100,7 +108,8 @@ export function useCreateSurgeryCase() {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['surgeryCases'] });
+      queryClient.invalidateQueries({ queryKey: ['serverSurgeryCases'] });
+      queryClient.invalidateQueries({ queryKey: ['mergedCases'] });
     },
   });
 }
@@ -122,7 +131,8 @@ export function useUpdateSurgeryCase() {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['surgeryCases'] });
+      queryClient.invalidateQueries({ queryKey: ['serverSurgeryCases'] });
+      queryClient.invalidateQueries({ queryKey: ['mergedCases'] });
     },
   });
 }
@@ -144,7 +154,8 @@ export function useSyncLocalChanges() {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['surgeryCases'] });
+      queryClient.invalidateQueries({ queryKey: ['serverSurgeryCases'] });
+      queryClient.invalidateQueries({ queryKey: ['mergedCases'] });
     },
   });
 }
@@ -159,7 +170,7 @@ export function useGetUpdatedCases() {
         return await actor.getUpdatedCases(since);
       } catch (error: any) {
         if (error.message?.includes('Unauthorized')) {
-          throw new Error('Not authorized to access updated cases');
+          throw new Error('Not authorized to fetch updated cases');
         }
         throw error;
       }
