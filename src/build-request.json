@@ -1,71 +1,36 @@
 {
   "kind": "build_request",
-  "title": "Fix Quick Add Demographics not extracting patient information",
+  "title": "Fix Quick Add paste so Pet Name auto-fills reliably",
   "projectName": "Surgery Case Tracker",
-  "priority": "high",
+  "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Fix the Quick Add Demographics paste handler so demographics extraction reliably runs on pasted content and correctly populates the CaseForm fields.",
+      "text": "Fix the Quick Add demographics paste flow so that when a user pastes demographics text that contains a pet/patient name, the CaseForm \"Pet Name\" field is populated (as long as the field is currently empty and has not been touched). Investigate and correct the root cause, which may be in the pet-name parsing logic in `extractDemographics` and/or how the extracted value is applied in `CaseForm.handlePasteExtraction`.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-6"
+          "recent-messages-5"
         ],
         "quotes": [
-          "quick add demographics is not extracting patient information"
+          "Pet name is not populating when text is pasted in quick add box"
         ]
       },
       "acceptanceCriteria": [
-        "When the user pastes text into the \"Quick Add Demographics\" textarea, extraction runs and the form auto-fills any eligible fields (MRN, Pet Name, Owner Last Name, Species, Breed, Sex, Date of Birth) based on the pasted text.",
-        "Extraction must not depend on reading clipboardData asynchronously after the paste event (i.e., it must still work even if the paste event object is no longer valid).",
-        "The pasted text must remain visible in the Quick Add Demographics textarea after paste, and the user can still edit it normally."
-      ]
-    },
-    {
-      "id": "REQ-2",
-      "text": "Improve the demographics extraction rules to better match common real-world pasted demographics formats so that patient information is extracted more consistently.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-6"
-        ],
-        "quotes": [
-          "quick add demographics is not extracting patient information"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Extraction correctly handles pet/patient names that include mixed case and common characters (e.g., hyphen/apostrophe) instead of only matching a single lowercase token.",
-        "Extraction correctly handles MRN/record identifiers that may include prefixes and separators (e.g., \"MRN: A-12345\").",
-        "Extraction does not overwrite fields in the CaseForm that the user has already touched, consistent with the existing touchedFields behavior in CaseForm."
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "text": "Add clear user-facing feedback when no usable demographics can be extracted from the pasted text.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-6"
-        ],
-        "quotes": [
-          "quick add demographics is not extracting patient information"
-        ]
-      },
-      "acceptanceCriteria": [
-        "If the user pastes text and extraction yields no fields, show a non-blocking message (e.g., toast) indicating that no demographics were detected.",
-        "If at least one field is auto-filled, the existing success feedback remains (or equivalent) and indicates how many fields were filled."
+        "Given the CaseForm is open for creating a new case and the Pet Name field is empty and untouched, pasting demographics text into the Quick Add textarea auto-fills the Pet Name field when the pasted text includes a pet/patient name.",
+        "If the Pet Name field has already been typed into (touched) or is non-empty, a Quick Add paste does not overwrite the Pet Name field.",
+        "A Quick Add paste that includes other demographics continues to behave as before (no regressions to MRN/owner/species/breed/sex/DOB/arrival date/presenting complaint extraction and auto-fill behavior).",
+        "User-facing messages/toasts related to Quick Add remain in English."
       ]
     }
   ],
   "constraints": [
-    "Do not edit any files under frontend/src/components/ui (Shadcn components are read-only and must be composed, not modified).",
-    "Do not modify frontend immutable paths listed in SYSTEM_CONTEXT (e.g., frontend/src/hooks/useInternetIdentity.ts(x), frontend/src/hooks/useActor.ts, frontend/src/main.tsx)."
+    "Do not modify files under `frontend/src/components/ui` (compose existing UI components instead).",
+    "Do not edit frontend immutable hook/bootstrap files listed in SYSTEM_CONTEXT (e.g., `frontend/src/main.tsx`, `frontend/src/hooks/useActor.ts`, `frontend/src/hooks/useInternetIdentity.ts`)."
   ],
   "nonGoals": [
-    "Adding OCR/image-based demographics extraction.",
-    "Adding backend parsing or storing additional extracted fields beyond what the CaseForm already supports.",
-    "Integrating third-party parsing services or AI extraction."
+    "No backend (Motoko) changes.",
+    "No changes to case persistence/sync logic beyond what is necessary to fix Quick Add Pet Name auto-fill."
   ],
   "imageRequirements": {
     "required": [],

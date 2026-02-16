@@ -7,8 +7,8 @@ export interface TaskDefinition {
 }
 
 export const TASK_DEFINITIONS: TaskDefinition[] = [
-  { key: 'dischargeNotes', label: 'Discharge Notes', defaultRequired: false },
-  { key: 'pdvmNotified', label: 'pDVM Notified', defaultRequired: false },
+  { key: 'dischargeNotes', label: 'Discharge Notes', defaultRequired: true },
+  { key: 'pdvmNotified', label: 'pDVM Notified', defaultRequired: true },
   { key: 'labs', label: 'Labs', defaultRequired: false },
   { key: 'histo', label: 'Histo', defaultRequired: false },
   { key: 'surgeryReport', label: 'Surgery Report', defaultRequired: false },
@@ -18,14 +18,14 @@ export const TASK_DEFINITIONS: TaskDefinition[] = [
 
 /**
  * Creates a default TasksChecklist with all 7 tasks
- * All tasks start as not required (unchecked) for new cases
+ * Discharge Notes and pDVM Notified start as required (checked) for new cases
  */
 export function createDefaultTasksChecklist(): TasksChecklist {
   const checklist: any = {};
   
   TASK_DEFINITIONS.forEach((def) => {
     checklist[def.key] = {
-      required: false,
+      required: def.defaultRequired,
       checked: false,
     };
   });

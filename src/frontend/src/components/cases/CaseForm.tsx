@@ -145,6 +145,11 @@ export default function CaseForm({ editingCaseId, onCancelEdit, onSaveComplete }
     setTouchedFields((prev) => new Set(prev).add(field));
   };
 
+  // Helper to check if a field is effectively empty (null, undefined, or whitespace-only)
+  const isFieldEmpty = (value: any): boolean => {
+    return value === null || value === undefined || (typeof value === 'string' && value.trim() === '');
+  };
+
   const handlePasteExtraction = (extracted: ExtractedDemographics) => {
     if (!extracted || Object.keys(extracted).length === 0) {
       toast.info('No demographics detected in pasted text');
@@ -154,16 +159,16 @@ export default function CaseForm({ editingCaseId, onCancelEdit, onSaveComplete }
     const updates: Partial<CaseFormData> = {};
     let filledCount = 0;
 
-    // Only fill fields that are empty and not touched
-    if (extracted.medicalRecordNumber && !formData.medicalRecordNumber && !touchedFields.has('medicalRecordNumber')) {
+    // Only fill fields that are empty (including whitespace-only) and not touched
+    if (extracted.medicalRecordNumber && isFieldEmpty(formData.medicalRecordNumber) && !touchedFields.has('medicalRecordNumber')) {
       updates.medicalRecordNumber = extracted.medicalRecordNumber;
       filledCount++;
     }
-    if (extracted.petName && !formData.petName && !touchedFields.has('petName')) {
+    if (extracted.petName && isFieldEmpty(formData.petName) && !touchedFields.has('petName')) {
       updates.petName = extracted.petName;
       filledCount++;
     }
-    if (extracted.ownerLastName && !formData.ownerLastName && !touchedFields.has('ownerLastName')) {
+    if (extracted.ownerLastName && isFieldEmpty(formData.ownerLastName) && !touchedFields.has('ownerLastName')) {
       updates.ownerLastName = extracted.ownerLastName;
       filledCount++;
     }
@@ -171,7 +176,7 @@ export default function CaseForm({ editingCaseId, onCancelEdit, onSaveComplete }
       updates.species = extracted.species;
       filledCount++;
     }
-    if (extracted.breed && !formData.breed && !touchedFields.has('breed')) {
+    if (extracted.breed && isFieldEmpty(formData.breed) && !touchedFields.has('breed')) {
       updates.breed = extracted.breed;
       filledCount++;
     }
@@ -179,8 +184,16 @@ export default function CaseForm({ editingCaseId, onCancelEdit, onSaveComplete }
       updates.sex = extracted.sex;
       filledCount++;
     }
-    if (extracted.dateOfBirth && !formData.dateOfBirth && !touchedFields.has('dateOfBirth')) {
+    if (extracted.dateOfBirth && isFieldEmpty(formData.dateOfBirth) && !touchedFields.has('dateOfBirth')) {
       updates.dateOfBirth = extracted.dateOfBirth;
+      filledCount++;
+    }
+    if (extracted.arrivalDate && !touchedFields.has('arrivalDate')) {
+      updates.arrivalDate = extracted.arrivalDate;
+      filledCount++;
+    }
+    if (extracted.presentingComplaint && isFieldEmpty(formData.presentingComplaint) && !touchedFields.has('presentingComplaint')) {
+      updates.presentingComplaint = extracted.presentingComplaint;
       filledCount++;
     }
 
@@ -302,11 +315,7 @@ export default function CaseForm({ editingCaseId, onCancelEdit, onSaveComplete }
         </Alert>
       )}
 
-      <DemographicsQuickAdd
-        value={formData.demographicsRawText}
-        onChange={(value) => handleFieldChange('demographicsRawText', value)}
-        onPaste={handlePasteExtraction}
-      />
+      <DemographicsQuickAdd onPaste={handlePasteExtraction} />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
@@ -316,7 +325,6 @@ export default function CaseForm({ editingCaseId, onCancelEdit, onSaveComplete }
             value={formData.medicalRecordNumber}
             onChange={(e) => handleFieldChange('medicalRecordNumber', e.target.value)}
             required
-            placeholder="e.g., A-12345"
           />
         </div>
 
@@ -337,7 +345,6 @@ export default function CaseForm({ editingCaseId, onCancelEdit, onSaveComplete }
             value={formData.petName}
             onChange={(e) => handleFieldChange('petName', e.target.value)}
             required
-            placeholder="e.g., Buddy"
           />
         </div>
 
@@ -348,7 +355,6 @@ export default function CaseForm({ editingCaseId, onCancelEdit, onSaveComplete }
             value={formData.ownerLastName}
             onChange={(e) => handleFieldChange('ownerLastName', e.target.value)}
             required
-            placeholder="e.g., Smith"
           />
         </div>
       </div>
@@ -375,7 +381,6 @@ export default function CaseForm({ editingCaseId, onCancelEdit, onSaveComplete }
             value={formData.breed}
             onChange={(e) => handleFieldChange('breed', e.target.value)}
             required
-            placeholder="e.g., Labrador"
           />
         </div>
 
@@ -400,7 +405,6 @@ export default function CaseForm({ editingCaseId, onCancelEdit, onSaveComplete }
         <DateField
           value={formData.dateOfBirth}
           onChange={(value) => handleFieldChange('dateOfBirth', value)}
-          placeholder="Optional"
         />
       </div>
 
@@ -410,29 +414,26 @@ export default function CaseForm({ editingCaseId, onCancelEdit, onSaveComplete }
           id="presentingComplaint"
           value={formData.presentingComplaint}
           onChange={(e) => handleFieldChange('presentingComplaint', e.target.value)}
-          placeholder="Brief description of the case"
+          placeholder="Brief description of the patient's condition..."
           rows={3}
         />
       </div>
 
       <div className="space-y-3">
         <Label>Required Tasks</Label>
-        <div className="space-y-2">
-          {TASK_DEFINITIONS.map((def) => (
-            <label key={def.key} className="flex items-center gap-2 cursor-pointer">
+        <div className="space-y-2 pl-1">
+          {TASK_DEFINITIONS.map((task) => (
+            <label key={task.key} className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
-                checked={formData.requiredTasks[def.key].required}
-                onChange={() => handleTaskToggle(def.key)}
-                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                checked={formData.requiredTasks[task.key].required}
+                onChange={() => handleTaskToggle(task.key)}
+                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
               />
-              <span className="text-sm">{def.label}</span>
+              <span className="text-sm">{task.label}</span>
             </label>
           ))}
         </div>
-        <p className="text-xs text-muted-foreground">
-          Select which tasks are required for this case
-        </p>
       </div>
 
       <div className="flex justify-end gap-3 pt-4">

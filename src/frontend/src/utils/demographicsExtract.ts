@@ -11,6 +11,8 @@ export interface ExtractedDemographics {
   breed?: string;
   sex?: 'Male' | 'Male Neutered' | 'Female' | 'Female Spayed';
   dateOfBirth?: string; // YYYY-MM-DD format
+  arrivalDate?: string; // YYYY-MM-DD format
+  presentingComplaint?: string;
 }
 
 /**
@@ -41,31 +43,40 @@ export function extractDemographics(text: string): ExtractedDemographics {
   }
 
   // Extract Pet Name
-  // Patterns: "Name: Buddy", "Pet: Buddy-Bear", "Patient: O'Malley", mixed case with common punctuation
+  // Patterns: "Name: Buddy", "Pet: Buddy-Bear", "Patient: O'Malley", "Pet Name: Max", mixed case with common punctuation
   const namePatterns = [
-    /(?:pet\s*name|patient\s*name|name)[:\s]+([a-z][\w\s'-]+?)(?:\n|$|,|\||owner|species|breed)/i,
-    /(?:pet|patient)[:\s]+([a-z][\w\s'-]+?)(?:\n|$|,|\||owner|species|breed)/i,
+    /(?:pet\s*name|patient\s*name|name)[:\s]+([a-z][\w\s'-]+?)(?:\s*\n|$|,|\||owner|species|breed|sex|dob|date|mrn|medical)/i,
+    /(?:pet|patient)[:\s]+([a-z][\w\s'-]+?)(?:\s*\n|$|,|\||owner|species|breed|sex|dob|date|mrn|medical)/i,
   ];
   for (const pattern of namePatterns) {
     const match = text.match(pattern);
     if (match && match[1]) {
-      result.petName = match[1].trim();
-      break;
+      const extracted = match[1].trim();
+      // Filter out common false positives
+      const lowerExtracted = extracted.toLowerCase();
+      if (!['name', 'patient', 'pet', 'owner', 'species', 'breed', 'sex', 'male', 'female', 'canine', 'feline'].includes(lowerExtracted)) {
+        result.petName = extracted;
+        break;
+      }
     }
   }
+  
   // Fallback: first capitalized word sequence that's not a common label
   if (!result.petName) {
     const words = text.split(/\s+/);
-    const excludeWords = ['name', 'pet', 'owner', 'species', 'breed', 'sex', 'male', 'female', 'canine', 'feline', 'date', 'birth', 'dob', 'mrn', 'record', 'medical'];
+    const excludeWords = ['name', 'pet', 'owner', 'species', 'breed', 'sex', 'male', 'female', 'canine', 'feline', 'date', 'birth', 'dob', 'mrn', 'record', 'medical', 'arrival', 'presenting', 'complaint', 'patient'];
     for (let i = 0; i < words.length; i++) {
-      const word = words[i];
-      if (/^[A-Z][\w'-]*$/.test(word) && !excludeWords.includes(word.toLowerCase())) {
+      const word = words[i].replace(/[,:;|]/g, ''); // Strip trailing punctuation
+      if (/^[A-Z][\w'-]*$/.test(word) && word.length > 1 && !excludeWords.includes(word.toLowerCase())) {
         // Check if next word is also capitalized (multi-word name)
-        if (i + 1 < words.length && /^[A-Z][\w'-]*$/.test(words[i + 1])) {
-          result.petName = `${word} ${words[i + 1]}`;
-        } else {
-          result.petName = word;
+        if (i + 1 < words.length) {
+          const nextWord = words[i + 1].replace(/[,:;|]/g, '');
+          if (/^[A-Z][\w'-]*$/.test(nextWord) && !excludeWords.includes(nextWord.toLowerCase())) {
+            result.petName = `${word} ${nextWord}`;
+            break;
+          }
         }
+        result.petName = word;
         break;
       }
     }
@@ -74,8 +85,8 @@ export function extractDemographics(text: string): ExtractedDemographics {
   // Extract Owner Last Name
   // Patterns: "Owner: Smith", "Owner Last Name: O'Brien", "Last Name: Van Der Berg"
   const ownerPatterns = [
-    /(?:owner\s*last\s*name|owner\s*name|owner)[:\s]+([a-z][\w\s'-]+?)(?:\n|$|,|\||species|breed|sex)/i,
-    /(?:last\s*name)[:\s]+([a-z][\w\s'-]+?)(?:\n|$|,|\||species|breed|sex)/i,
+    /(?:owner\s*last\s*name|owner\s*name|owner)[:\s]+([a-z][\w\s'-]+?)(?:\s*\n|$|,|\||species|breed|sex|dob|date|mrn|medical)/i,
+    /(?:last\s*name)[:\s]+([a-z][\w\s'-]+?)(?:\s*\n|$|,|\||species|breed|sex|dob|date|mrn|medical)/i,
   ];
   for (const pattern of ownerPatterns) {
     const match = text.match(pattern);
@@ -97,7 +108,7 @@ export function extractDemographics(text: string): ExtractedDemographics {
   // Extract Breed
   // Patterns: "Breed: Labrador Retriever", common breed names with spaces
   const breedPatterns = [
-    /(?:breed)[:\s]+([a-z][\w\s'-]+?)(?:\n|$|,|\||sex|male|female|dob|date)/i,
+    /(?:breed)[:\s]+([a-z][\w\s'-]+?)(?:\s*\n|$|,|\||sex|male|female|dob|date|mrn|medical)/i,
   ];
   for (const pattern of breedPatterns) {
     const match = text.match(pattern);
@@ -139,7 +150,6 @@ export function extractDemographics(text: string): ExtractedDemographics {
   const dobPatterns = [
     /(?:dob|date\s*of\s*birth|born)[:\s]+(\d{4}[-/]\d{1,2}[-/]\d{1,2})/i,
     /(?:dob|date\s*of\s*birth|born)[:\s]+(\d{1,2}[-/]\d{1,2}[-/]\d{4})/i,
-    /\b(\d{4}[-/]\d{1,2}[-/]\d{1,2})\b/, // Standalone date
   ];
   for (const pattern of dobPatterns) {
     const match = text.match(pattern);
@@ -150,6 +160,37 @@ export function extractDemographics(text: string): ExtractedDemographics {
         result.dateOfBirth = normalized;
         break;
       }
+    }
+  }
+
+  // Extract Arrival Date
+  // Patterns: "Arrival: 2024-01-15", "Arrival Date: 01/15/2024", "Admitted: 2024-01-15"
+  const arrivalPatterns = [
+    /(?:arrival\s*date|arrival|admitted|admission\s*date)[:\s]+(\d{4}[-/]\d{1,2}[-/]\d{1,2})/i,
+    /(?:arrival\s*date|arrival|admitted|admission\s*date)[:\s]+(\d{1,2}[-/]\d{1,2}[-/]\d{4})/i,
+  ];
+  for (const pattern of arrivalPatterns) {
+    const match = text.match(pattern);
+    if (match && match[1]) {
+      const dateStr = match[1];
+      const normalized = normalizeDateString(dateStr);
+      if (normalized) {
+        result.arrivalDate = normalized;
+        break;
+      }
+    }
+  }
+
+  // Extract Presenting Complaint
+  // Patterns: "Presenting Complaint: ...", "Complaint: ...", "Reason: ...", "Chief Complaint: ..."
+  const complaintPatterns = [
+    /(?:presenting\s*complaint|chief\s*complaint|complaint|reason\s*for\s*visit|reason)[:\s]+(.+?)(?:\n|$)/i,
+  ];
+  for (const pattern of complaintPatterns) {
+    const match = text.match(pattern);
+    if (match && match[1]) {
+      result.presentingComplaint = match[1].trim();
+      break;
     }
   }
 

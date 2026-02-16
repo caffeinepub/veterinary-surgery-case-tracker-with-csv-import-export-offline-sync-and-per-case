@@ -1,15 +1,24 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-16T23:00:24.983Z",
-  "summary": "Diff appears to implement the requested Quick Add Demographics fixes: paste handling captures text synchronously and triggers extraction, extraction rules are expanded (MRN formats, names with mixed case and punctuation), and CaseForm is described as providing toast feedback for both no-detection and success counts. Some key CaseForm logic is truncated, so verification of touched-fields protection and toast behavior relies partly on file summary text.",
-  "missing_requirements": [],
+  "generatedAt": "2026-02-16T23:20:50.336Z",
+  "summary": "Diff updates pet-name parsing in `extractDemographics` and appears to adjust CaseForm auto-fill emptiness checks, but the provided (truncated) evidence does not clearly show that Quick Add paste will only set Pet Name when the field is empty *and untouched*, nor that it will never overwrite a touched/non-empty Pet Name.",
+  "missing_requirements": [
+    {
+      "id": "REQ-1",
+      "requirement": "Ensure Quick Add paste auto-fills CaseForm \"Pet Name\" only when the field is currently empty and has not been touched, and does not overwrite when non-empty or touched.",
+      "reason": "While `touchedFields` state exists in `CaseForm.tsx` and `extractDemographics` now extracts `petName`, the truncated diff does not include `CaseForm.handlePasteExtraction` (or equivalent) logic showing a guard that checks both (a) empty and (b) untouched before applying extracted `petName`, nor explicit prevention of overwriting when touched/non-empty.",
+      "evidence": [
+        "frontend/src/components/cases/CaseForm.tsx (truncated)",
+        "frontend-file-summaries.txt (mentions auto-fill uses an `isFieldEmpty` helper, but does not mention touched-field guard specifically)"
+      ]
+    }
+  ],
   "hallucinated_features": [],
-  "confidence": 0.7,
+  "confidence": 0.58,
   "changed_files": [
     "frontend-file-summaries.txt",
     "frontend/src/components/cases/CaseForm.tsx",
-    "frontend/src/components/cases/DemographicsQuickAdd.tsx",
     "frontend/src/utils/demographicsExtract.ts",
     "project_state.json"
   ]

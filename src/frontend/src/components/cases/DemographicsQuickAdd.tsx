@@ -1,47 +1,50 @@
+import { useRef } from 'react';
 import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
-import { extractDemographics } from '../../utils/demographicsExtract';
+import { extractDemographics, type ExtractedDemographics } from '../../utils/demographicsExtract';
 
 interface DemographicsQuickAddProps {
-  value: string;
-  onChange: (value: string) => void;
-  onPaste?: (extractedData: any) => void;
+  onPaste: (extracted: ExtractedDemographics) => void;
 }
 
-export default function DemographicsQuickAdd({ 
-  value, 
-  onChange,
-  onPaste
-}: DemographicsQuickAddProps) {
+export default function DemographicsQuickAdd({ onPaste }: DemographicsQuickAddProps) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
   const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
-    // Synchronously capture the pasted text during the paste event
+    // Get pasted text synchronously during the paste event
     const pastedText = e.clipboardData.getData('text');
     
-    // Allow default paste behavior to continue
-    // Then trigger extraction with the captured text
-    if (pastedText && onPaste) {
-      // Use setTimeout to allow the textarea value to update first
+    if (pastedText) {
+      // Extract demographics from pasted text
+      const extracted = extractDemographics(pastedText);
+      
+      // Trigger callback with extracted data
+      onPaste(extracted);
+      
+      // Clear the textarea after extraction
       setTimeout(() => {
-        const extracted = extractDemographics(pastedText);
-        onPaste(extracted);
-      }, 0);
+        if (textareaRef.current) {
+          textareaRef.current.value = '';
+        }
+      }, 100);
     }
   };
 
   return (
-    <div className="space-y-2">
-      <Label htmlFor="demographics">Quick Add Demographics</Label>
+    <div className="space-y-2 p-4 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
+      <Label htmlFor="quickAdd" className="text-blue-900 dark:text-blue-100">
+        Quick Add Demographics
+      </Label>
       <Textarea
-        id="demographics"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
+        ref={textareaRef}
+        id="quickAdd"
+        placeholder="Paste patient demographics here (MRN, name, owner, species, breed, sex, DOB, arrival date, presenting complaint)..."
         onPaste={handlePaste}
-        placeholder="Paste patient demographics here - fields will auto-fill from the text"
-        rows={4}
-        className="font-mono text-sm"
+        rows={3}
+        className="bg-white dark:bg-gray-900"
       />
-      <p className="text-xs text-muted-foreground">
-        Paste demographics text and the form will automatically extract patient information
+      <p className="text-xs text-blue-700 dark:text-blue-300">
+        Paste demographics text to auto-fill form fields
       </p>
     </div>
   );

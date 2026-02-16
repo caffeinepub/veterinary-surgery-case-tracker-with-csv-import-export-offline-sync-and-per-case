@@ -4,31 +4,15 @@
   "summary": "New project",
   "architectural_notes": [],
   "known_issues": [
-    "Quick add demographics is not extracting patient information (patient info not being pulled/populated)."
+    "Pet name is not populating when text is pasted into the quick add box."
   ],
   "isFixRequest": true,
   "existing_features": [
     {
-      "id": "feature-fix-the-quick-add-demographics-paste-handler-so-demographics-extraction-reliably-runs-on-pasted-content-and-correctly-populates-the-caseform-fields",
-      "title": "Fix the Quick Add Demographics paste handler so demographics extraction reliably runs on pasted content and correctly populates the CaseForm fields.",
+      "id": "feature-fix-the-quick-add-demographics-paste-flow-so-that-when-a-user-pastes-demographics-text-that-contains-a-pet-patient-name-the-caseform-pet-name-field-is-populated-as-long-as-the-field-is-currently-empty-and-has-not-been-touched-investigate-and-correct-the-root-cause-which-may-be-in-the-pet-name-parsing-logic-in-extractdemographics-and-or-how-the-extracted-value-is-applied-in-caseform-handlepasteextraction",
+      "title": "Fix the Quick Add demographics paste flow so that when a user pastes demographics text that contains a pet/patient name, the CaseForm \"Pet Name\" field is populated (as long as the field is currently empty and has not been touched). Investigate and correct the root cause, which may be in the pet-name parsing logic in `extractDemographics` and/or how the extracted value is applied in `CaseForm.handlePasteExtraction`.",
       "reqIds": [
         "REQ-1"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-improve-the-demographics-extraction-rules-to-better-match-common-real-world-pasted-demographics-formats-so-that-patient-information-is-extracted-more-consistently",
-      "title": "Improve the demographics extraction rules to better match common real-world pasted demographics formats so that patient information is extracted more consistently.",
-      "reqIds": [
-        "REQ-2"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-add-clear-user-facing-feedback-when-no-usable-demographics-can-be-extracted-from-the-pasted-text",
-      "title": "Add clear user-facing feedback when no usable demographics can be extracted from the pasted text.",
-      "reqIds": [
-        "REQ-3"
       ],
       "version": 1
     }
