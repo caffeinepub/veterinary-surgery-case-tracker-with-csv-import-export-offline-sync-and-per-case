@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useInternetIdentity } from './hooks/useInternetIdentity';
+import { useBackendConnection } from './hooks/useBackendConnection';
 import { useGetCallerUserProfile, useSaveCallerUserProfile } from './hooks/useQueries';
 import { Button } from './components/ui/button';
 import { Input } from './components/ui/input';
@@ -18,6 +19,7 @@ import { Toaster } from './components/ui/sonner';
 
 export default function App() {
   const { identity, loginStatus } = useInternetIdentity();
+  const { isConnected, isInitializing: backendInitializing } = useBackendConnection();
   const isAuthenticated = !!identity;
   const { data: userProfile, isLoading: profileLoading, isFetched } = useGetCallerUserProfile();
   const saveProfile = useSaveCallerUserProfile();
@@ -28,11 +30,12 @@ export default function App() {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [editingCaseId, setEditingCaseId] = useState<bigint | null>(null);
 
+  // Show profile setup only when authenticated, connected, and no profile exists
   useEffect(() => {
-    if (isAuthenticated && !profileLoading && isFetched && userProfile === null) {
+    if (isAuthenticated && isConnected && !profileLoading && isFetched && userProfile === null) {
       setShowProfileSetup(true);
     }
-  }, [isAuthenticated, profileLoading, isFetched, userProfile]);
+  }, [isAuthenticated, isConnected, profileLoading, isFetched, userProfile]);
 
   const handleSaveProfile = async () => {
     if (!profileName.trim()) return;
@@ -40,7 +43,7 @@ export default function App() {
     setShowProfileSetup(false);
   };
 
-  if (loginStatus === 'initializing') {
+  if (loginStatus === 'initializing' || backendInitializing) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />

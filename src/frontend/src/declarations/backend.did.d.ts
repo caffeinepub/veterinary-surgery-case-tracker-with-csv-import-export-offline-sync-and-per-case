@@ -10,9 +10,11 @@ import type { ActorMethod } from '@icp-sdk/core/agent';
 import type { IDL } from '@icp-sdk/core/candid';
 import type { Principal } from '@icp-sdk/core/principal';
 
-export interface PatientDemographics {
-  'age' : bigint,
+export interface CompletePatientDemographics {
+  'sex' : string,
+  'dateOfBirth' : string,
   'name' : string,
+  'ownerLastName' : string,
   'breed' : string,
   'species' : string,
 }
@@ -23,13 +25,13 @@ export interface SurgeryCase {
   'lastSyncTimestamp' : Time,
   'caseId' : bigint,
   'tasksChecklist' : TasksChecklist,
-  'patientDemographics' : PatientDemographics,
+  'patientDemographics' : CompletePatientDemographics,
 }
 export interface SurgeryCaseUpdate {
   'arrivalDate' : [] | [Time],
   'medicalRecordNumber' : [] | [string],
   'tasksChecklist' : [] | [TasksChecklist],
-  'patientDemographics' : [] | [PatientDemographics],
+  'patientDemographics' : [] | [CompletePatientDemographics],
 }
 export interface TaskItem { 'checked' : boolean, 'required' : boolean }
 export interface TasksChecklist {
@@ -50,7 +52,7 @@ export interface _SERVICE {
   '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
   'createSurgeryCase' : ActorMethod<
-    [string, PatientDemographics, Time, TasksChecklist],
+    [string, CompletePatientDemographics, Time, TasksChecklist],
     bigint
   >,
   'getAllSurgeryCases' : ActorMethod<[], Array<SurgeryCase>>,

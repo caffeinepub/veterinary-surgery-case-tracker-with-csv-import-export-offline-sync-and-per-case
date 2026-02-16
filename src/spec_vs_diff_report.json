@@ -1,32 +1,60 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-16T05:49:44.061Z",
-  "summary": "Diff implements expanded 7-task checklist with per-task required+checked fields, adds backend migration, updates case form to select required tasks, updates case card to show only required tasks with completion toggles, and updates CSV utilities to export/import all 7 task columns with warnings for unrecognized columns.",
-  "missing_requirements": [],
-  "hallucinated_features": [
+  "generatedAt": "2026-02-16T06:47:24.356Z",
+  "summary": "The diff adds a new `useBackendConnection` hook that probes backend connectivity via a read call and surfaces a connection error + retry, and updates UI (notably `SyncStatusBar`) to show online/offline vs backend connected/disconnected states. However, the request to harden `useActor` error propagation (REQ-34) is not evidenced in the diff, and parts of the app still appear to fall back to local data on backend failures (potentially violating the “no silent fallback” expectation in REQ-33 unless the UI clearly displays those errors, which is not shown in the provided diff snippets). Several unrelated changes (timezone-safe date handling, footer attribution/UTM, camera/csv enhancements) appear beyond the stated scope.",
+  "missing_requirements": [
     {
-      "description": "CSV import UX/semantics specify that empty task cells mean “task not required” and Yes/No indicates “task required and completion status”.",
-      "reason": "REQ-16 requires adding 7 task columns, backward compatibility, and English warnings for ignored columns, but does not specify the meaning/encoding of CSV task cell values or that empties explicitly imply not-required.",
+      "id": "REQ-34",
+      "requirement": "Harden actor initialization in `frontend/src/hooks/useActor.ts` so failures during `createActorWithConfig(...)` and/or `_initializeAccessControlWithSecret(...)` are captured and exposed to the UI as an English error string, keeping `actor: null` stable and avoiding uncaught render-breaking errors.",
+      "reason": "The diff does not show any changes to `frontend/src/hooks/useActor.ts` nor any explicit propagation of actor-creation / access-control initialization errors from that hook. The new wrapper hook (`useBackendConnection`) infers failure when `actor` is null, but it does not demonstrate capturing the underlying initialization error coming from `useActor` as required.",
       "evidence": [
-        "frontend/src/components/csv/CsvImportDialog.tsx"
+        "frontend/src/hooks/useBackendConnection.ts (uses `useActor()` but no evidence `useActor` exposes an error string)",
+        "file diff summary shows no modification entry for `frontend/src/hooks/useActor.ts`"
+      ]
+    },
+    {
+      "id": "REQ-33",
+      "requirement": "If backend calls fail, the failure is surfaced as a clear error state (not silent fallback) indicating the app could not connect or is unauthorized.",
+      "reason": "Some hooks still return local data on backend failures (e.g., cases query in `useCasesStore`) while only logging to console and storing an internal `fetchError` state. The diff snippet does not show any UI consuming/displaying that `fetchError`, so it’s not evidenced that failures are always surfaced (as opposed to silently falling back).",
+      "evidence": [
+        "frontend/src/hooks/useCasesStore.ts (catch: logs error, sets `fetchError`, returns `normalizedLocalCases`)"
       ]
     }
   ],
-  "confidence": 0.7,
+  "hallucinated_features": [
+    {
+      "description": "Timezone-safe date-only refactor (e.g., representing arrivalDate/dateOfBirth as YYYY-MM-DD strings; new/updated date utilities; CSV import/export changes for date handling).",
+      "reason": "Not requested by REQ-33/34/35 and explicitly outside the scope of “backend connectivity and diagnostics”.",
+      "evidence": [
+        "frontend-file-summaries.txt (mentions changes to `frontend/src/types/cases.ts`, `frontend/src/utils/dates.ts`, `frontend/src/utils/csv.ts`, `frontend/src/components/cases/DateField.tsx`, `frontend/src/components/cases/CaseForm.tsx`)"
+      ]
+    },
+    {
+      "description": "Footer attribution link changes with UTM tracking parameters.",
+      "reason": "Not requested; unrelated to backend connectivity/diagnostics.",
+      "evidence": [
+        "frontend-file-summaries.txt (mentions `frontend/src/components/layout/Footer.tsx` attribution link with UTM tracking)"
+      ]
+    },
+    {
+      "description": "Camera capture / quick-add demographics enhancements beyond connectivity diagnostics.",
+      "reason": "Not requested in this BuildRequest; scope is backend connectivity and diagnostics.",
+      "evidence": [
+        "frontend-file-summaries.txt (mentions `frontend/src/components/cases/DemographicsQuickAdd.tsx`, `frontend/src/components/cases/CameraCapture.tsx`)"
+      ]
+    }
+  ],
+  "confidence": 0.64,
   "changed_files": [
-    "backend/main.mo",
-    "backend/migration.mo",
     "frontend-file-summaries.txt",
-    "frontend/src/components/cases/CaseCard.tsx",
-    "frontend/src/components/cases/CaseForm.tsx",
-    "frontend/src/components/cases/TasksChecklist.tsx",
-    "frontend/src/components/csv/CsvImportDialog.tsx",
+    "frontend/src/App.tsx",
+    "frontend/src/components/sync/SyncStatusBar.tsx",
+    "frontend/src/hooks/useBackendConnection.ts",
     "frontend/src/hooks/useCasesStore.ts",
+    "frontend/src/hooks/useOnlineStatus.ts",
     "frontend/src/hooks/useQueries.ts",
-    "frontend/src/types/cases.ts",
-    "frontend/src/utils/csv.ts",
-    "frontend/src/utils/tasksChecklist.ts",
+    "frontend/src/hooks/useSync.ts",
     "project_state.json"
   ]
 }

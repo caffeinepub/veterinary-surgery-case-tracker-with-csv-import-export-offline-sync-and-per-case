@@ -12,7 +12,7 @@ export interface SurgeryCaseUpdate {
     arrivalDate?: Time;
     medicalRecordNumber?: string;
     tasksChecklist?: TasksChecklist;
-    patientDemographics?: PatientDemographics;
+    patientDemographics?: CompletePatientDemographics;
 }
 export interface TaskItem {
     checked: boolean;
@@ -25,13 +25,7 @@ export interface SurgeryCase {
     lastSyncTimestamp: Time;
     caseId: bigint;
     tasksChecklist: TasksChecklist;
-    patientDemographics: PatientDemographics;
-}
-export interface PatientDemographics {
-    age: bigint;
-    name: string;
-    breed: string;
-    species: string;
+    patientDemographics: CompletePatientDemographics;
 }
 export interface TasksChecklist {
     pdvmNotified: TaskItem;
@@ -41,6 +35,14 @@ export interface TasksChecklist {
     surgeryReport: TaskItem;
     imaging: TaskItem;
     dischargeNotes: TaskItem;
+}
+export interface CompletePatientDemographics {
+    sex: string;
+    dateOfBirth: string;
+    name: string;
+    ownerLastName: string;
+    breed: string;
+    species: string;
 }
 export interface UserProfile {
     name: string;
@@ -52,7 +54,7 @@ export enum UserRole {
 }
 export interface backendInterface {
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
-    createSurgeryCase(medicalRecordNumber: string, patientDemographics: PatientDemographics, arrivalDate: Time, tasksChecklist: TasksChecklist): Promise<bigint>;
+    createSurgeryCase(medicalRecordNumber: string, patientDemographics: CompletePatientDemographics, arrivalDate: Time, tasksChecklist: TasksChecklist): Promise<bigint>;
     getAllSurgeryCases(): Promise<Array<SurgeryCase>>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;

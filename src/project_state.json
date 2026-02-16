@@ -1,14 +1,19 @@
 {
   "schemaVersion": "1.0.0",
-  "projectStateVersion": 9,
+  "projectStateVersion": 21,
   "summary": "App to track veterinary surgery cases with CSV import/export, structured case fields with date pickers, per-case task checklist, and quick-add demographics via paste or camera.",
   "architectural_notes": [
     "Tasks/to-do checklist scope includes 7 items (Discharge Notes, pDVM Notified, Labs, Histo, Surgery Report, Imaging, Culture) with defaults checked for Discharge Notes and pDVM Notified; selections made on case entry drive which items appear on the case card as needing completion."
   ],
   "known_issues": [
-    "Build/deployment attempt failed with error: \"Unable to create your app\" (needs investigation/retry)."
+    "Build/deployment attempt failed with error: \"Unable to create your app\" (needs investigation/retry).",
+    "MRN match auto-prefill is not filling Owner Last Name, Sex, and Date of Birth as expected.",
+    "Owner Last Name, Sex, and Date of Birth are not appearing on the case card UI as expected.",
+    "Some previously entered cases (user reported 2) are not being displayed in the case list UI.",
+    "Arrival Date and Date of Birth are displayed one day earlier than the date entered (likely date/timezone handling issue).",
+    "User reports the app is not connected to the backend (backend connectivity/integration issue)."
   ],
-  "isFixRequest": false,
+  "isFixRequest": true,
   "existing_features": [
     {
       "id": "feature-create-a-case-entry-and-editing-ui-that-captures-the-specified-case-fields-defaults-arrival-date-to-the-current-date-supports-manual-date-entry-and-calendar-based-selection-for-date-fields-and-validates-required-inputs-at-minimum-medical-record",
@@ -129,6 +134,134 @@
         "REQ-16"
       ],
       "version": 1
+    },
+    {
+      "id": "feature-persist-the-following-case-demographics-fields-in-the-backend-so-they-can-be-retrieved-later-and-used-for-medical-record-match-prefill-medical-record-pet-name-owner-last-name-species-breed-sex-date-of-birth",
+      "title": "Persist the following case demographics fields in the backend so they can be retrieved later and used for Medical Record # match prefill: Medical Record #, Pet Name, Owner Last Name, Species, Breed, Sex, Date of Birth.",
+      "reqIds": [
+        "REQ-18"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-the-mrn-match-prefill-implementation-so-that-when-a-user-enters-a-medical-record-that-matches-an-existing-case-the-form-prefills-exactly-these-fields-from-the-most-recent-matching-case-medical-record-pet-name-owner-last-name-species-breed-sex-date-of-birth",
+      "title": "Update the MRN-match prefill implementation so that when a user enters a Medical Record # that matches an existing case, the form prefills exactly these fields from the most recent matching case: Medical Record #, Pet Name, Owner Last Name, Species, Breed, Sex, Date of Birth.",
+      "reqIds": [
+        "REQ-19"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-fix-the-medical-record-match-auto-prefill-so-that-when-a-user-enters-an-mrn-that-matches-an-existing-case-the-form-prefills-owner-last-name-sex-and-date-of-birth-in-addition-to-the-other-already-prefilled-demographics-from-the-most-recent-matching-case",
+      "title": "Fix the Medical Record # match auto-prefill so that when a user enters an MRN that matches an existing case, the form prefills Owner Last Name, Sex, and Date of Birth (in addition to the other already-prefilled demographics) from the most recent matching case.",
+      "reqIds": [
+        "REQ-21"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-ensure-locally-persisted-cases-and-in-memory-case-data-used-for-mrn-prefill-always-include-the-demographics-keys-ownerlastname-sex-and-dateofbirth-under-patientdemographics-defaulting-missing-values-safely-so-that-older-locally-saved-data-does-not-break-or-block-prefill-behavior",
+      "title": "Ensure locally persisted cases and in-memory case data used for MRN prefill always include the demographics keys ownerLastName, sex, and dateOfBirth under patientDemographics (defaulting missing values safely) so that older locally saved data does not break or block prefill behavior.",
+      "reqIds": [
+        "REQ-22"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-the-case-card-ui-to-display-owner-last-name-sex-and-date-of-birth-along-with-the-existing-demographics-arrival-information-for-each-case",
+      "title": "Update the case card UI to display Owner Last Name, Sex, and Date of Birth along with the existing demographics/arrival information for each case.",
+      "reqIds": [
+        "REQ-23"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-fix-the-medical-record-match-auto-prefill-so-that-owner-last-name-sex-and-date-of-birth-reliably-populate-on-the-new-case-form-when-the-entered-mrn-matches-the-most-recent-saved-case-for-that-mrn",
+      "title": "Fix the Medical Record # match auto-prefill so that Owner Last Name, Sex, and Date of Birth reliably populate on the New Case form when the entered MRN matches the most recent saved case for that MRN.",
+      "reqIds": [
+        "REQ-24"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-harden-demographics-normalization-so-that-locally-persisted-cases-and-server-fetched-cases-always-provide-patientdemographics-ownerlastname-patientdemographics-sex-and-patientdemographics-dateofbirth-to-the-rest-of-the-app-including-mrn-prefill-and-case-card-rendering-even-when-older-stored-data-uses-missing-or-legacy-keys",
+      "title": "Harden demographics normalization so that locally persisted cases and server-fetched cases always provide patientDemographics.ownerLastName, patientDemographics.sex, and patientDemographics.dateOfBirth to the rest of the app (including MRN prefill and case card rendering), even when older stored data uses missing or legacy keys.",
+      "reqIds": [
+        "REQ-25"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-ensure-the-case-card-displays-owner-last-name-sex-and-date-of-birth-for-each-case-when-those-values-are-present-in-the-case-s-patientdemographics-and-make-missing-values-visually-explicit-rather-than-silently-hiding-rows",
+      "title": "Ensure the Case Card displays Owner Last Name, Sex, and Date of Birth for each case when those values are present in the case’s patientDemographics, and make missing values visually explicit rather than silently hiding rows.",
+      "reqIds": [
+        "REQ-26"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-prevent-locally-saved-cases-from-disappearing-in-the-case-list-when-the-app-successfully-fetches-cases-from-the-backend-when-usecasesstore-has-both-a-locally-persisted-cases-and-b-server-fetched-cases-merge-them-instead-of-overwriting-local-storage-with-only-the-server-list",
+      "title": "Prevent locally saved cases from disappearing in the case list when the app successfully fetches cases from the backend: when `useCasesStore` has both (a) locally persisted cases and (b) server-fetched cases, merge them instead of overwriting local storage with only the server list.",
+      "reqIds": [
+        "REQ-27"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-fix-sync-behavior-so-syncing-pending-local-changes-cannot-delete-existing-server-cases-update-the-frontend-sync-flow-to-avoid-sending-only-a-subset-of-cases-to-synclocalchanges-in-a-way-that-overwrites-server-state",
+      "title": "Fix sync behavior so syncing pending local changes cannot delete existing server cases: update the frontend sync flow to avoid sending only a subset of cases to `syncLocalChanges` in a way that overwrites server state.",
+      "reqIds": [
+        "REQ-28"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-fix-frontend-date-parsing-formatting-so-that-date-only-values-arrival-date-and-date-of-birth-round-trip-without-shifting-by-one-day-across-time-zones-manual-entry-calendar-selection-save-reload-and-sync-replace-usage-of-new-date-yyyy-mm-dd-and-toisostring-split-t-0-for-date-only-fields-with-a-timezone-safe-date-only-approach",
+      "title": "Fix frontend date parsing/formatting so that date-only values (Arrival Date and Date of Birth) round-trip without shifting by one day across time zones (manual entry, calendar selection, save, reload, and sync). Replace usage of `new Date('YYYY-MM-DD')` and `toISOString().split('T')[0]` for date-only fields with a timezone-safe date-only approach.",
+      "reqIds": [
+        "REQ-30"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-all-ui-display-locations-that-render-arrival-date-and-date-of-birth-to-use-the-same-timezone-safe-date-only-formatting-including-casecard-arrival-date-rendering-via-date-fns-and-formatdateofbirth-in-frontend-src-utils-dates-ts",
+      "title": "Update all UI display locations that render Arrival Date and Date of Birth to use the same timezone-safe date-only formatting (including `CaseCard` arrival date rendering via `date-fns` and `formatDateOfBirth` in `frontend/src/utils/dates.ts`).",
+      "reqIds": [
+        "REQ-31"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-csv-export-and-csv-import-date-handling-so-that-exported-arrival-date-values-and-imported-arrival-date-values-do-not-shift-by-one-day-due-to-timezone-parsing-serialization-remove-toisostring-split-t-0-from-export-and-avoid-new-date-row-arrival-date-on-import-for-date-only-parsing",
+      "title": "Update CSV export and CSV import date handling so that exported \"Arrival Date\" values and imported \"Arrival Date\" values do not shift by one day due to timezone parsing/serialization (remove `toISOString().split('T')[0]` from export and avoid `new Date(row['Arrival Date'])` on import for date-only parsing).",
+      "reqIds": [
+        "REQ-32"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-fix-the-frontend-to-backend-connection-so-authenticated-users-can-successfully-create-an-actor-and-call-backend-methods-e-g-getcalleruserprofile-getallsurgerycases-without-the-app-behaving-as-if-it-is-disconnected",
+      "title": "Fix the frontend-to-backend connection so authenticated users can successfully create an actor and call backend methods (e.g., `getCallerUserProfile`, `getAllSurgeryCases`) without the app behaving as if it is disconnected.",
+      "reqIds": [
+        "REQ-33"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-harden-actor-initialization-in-frontend-src-hooks-useactor-ts-so-that-failures-during-createactorwithconfig-and-or-initializeaccesscontrolwithsecret-do-not-leave-the-ui-in-an-ambiguous-state-instead-capture-the-error-and-expose-it-to-the-ui-as-a-backend-connection-initialization-error",
+      "title": "Harden actor initialization in `frontend/src/hooks/useActor.ts` so that failures during `createActorWithConfig(...)` and/or `_initializeAccessControlWithSecret(...)` do not leave the UI in an ambiguous state; instead, capture the error and expose it to the UI as a backend connection/initialization error.",
+      "reqIds": [
+        "REQ-34"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-a-visible-user-facing-backend-connection-status-and-error-message-in-the-ui-english-including-a-simple-retry-action-so-users-can-tell-the-difference-between-offline-mode-and-backend-not-connected-unauthorized",
+      "title": "Add a visible, user-facing backend connection status and error message in the UI (English), including a simple retry action, so users can tell the difference between Offline mode and Backend not connected/unauthorized.",
+      "reqIds": [
+        "REQ-35"
+      ],
+      "version": 1
     }
   ],
   "new_feature_requests": [
@@ -181,6 +314,34 @@
       "summary": "Add conditional state migration for existing stored cases so that previously saved cases with the older tasks structure are upgraded to the new expanded structure without data loss or app crashes.",
       "reqIds": [
         "REQ-17"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-13",
+      "summary": "When entering a Medical Record # that matches a previously saved case, prefill: Medical Record #, Pet Name, Owner Last Name, Species, Breed, Sex, Date of Birth (from the most recent matching case).",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-16",
+      "summary": "Add conditional state migration for existing stored cases so that older cases missing Owner Last Name, Sex, and Date of Birth are upgraded safely with sensible defaults, without data loss or crashes on canister upgrade.",
+      "reqIds": [
+        "REQ-20"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-17",
+      "summary": "Update the case card UI to display Owner Last Name, Sex, and Date of Birth alongside existing demographics/arrival info",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-20",
+      "summary": "Update the Motoko `syncLocalChanges(localCases : [SurgeryCase])` implementation so it merges incoming cases into the caller’s existing stored cases instead of replacing the caller’s entire case list with the passed array.",
+      "reqIds": [
+        "REQ-29"
       ],
       "status": "pending"
     }

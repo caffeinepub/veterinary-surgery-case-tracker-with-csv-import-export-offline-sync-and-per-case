@@ -13,9 +13,11 @@ export const UserRole = IDL.Variant({
   'user' : IDL.Null,
   'guest' : IDL.Null,
 });
-export const PatientDemographics = IDL.Record({
-  'age' : IDL.Nat,
+export const CompletePatientDemographics = IDL.Record({
+  'sex' : IDL.Text,
+  'dateOfBirth' : IDL.Text,
   'name' : IDL.Text,
+  'ownerLastName' : IDL.Text,
   'breed' : IDL.Text,
   'species' : IDL.Text,
 });
@@ -40,21 +42,21 @@ export const SurgeryCase = IDL.Record({
   'lastSyncTimestamp' : Time,
   'caseId' : IDL.Nat,
   'tasksChecklist' : TasksChecklist,
-  'patientDemographics' : PatientDemographics,
+  'patientDemographics' : CompletePatientDemographics,
 });
 export const UserProfile = IDL.Record({ 'name' : IDL.Text });
 export const SurgeryCaseUpdate = IDL.Record({
   'arrivalDate' : IDL.Opt(Time),
   'medicalRecordNumber' : IDL.Opt(IDL.Text),
   'tasksChecklist' : IDL.Opt(TasksChecklist),
-  'patientDemographics' : IDL.Opt(PatientDemographics),
+  'patientDemographics' : IDL.Opt(CompletePatientDemographics),
 });
 
 export const idlService = IDL.Service({
   '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
   'createSurgeryCase' : IDL.Func(
-      [IDL.Text, PatientDemographics, Time, TasksChecklist],
+      [IDL.Text, CompletePatientDemographics, Time, TasksChecklist],
       [IDL.Nat],
       [],
     ),
@@ -82,9 +84,11 @@ export const idlFactory = ({ IDL }) => {
     'user' : IDL.Null,
     'guest' : IDL.Null,
   });
-  const PatientDemographics = IDL.Record({
-    'age' : IDL.Nat,
+  const CompletePatientDemographics = IDL.Record({
+    'sex' : IDL.Text,
+    'dateOfBirth' : IDL.Text,
     'name' : IDL.Text,
+    'ownerLastName' : IDL.Text,
     'breed' : IDL.Text,
     'species' : IDL.Text,
   });
@@ -106,21 +110,21 @@ export const idlFactory = ({ IDL }) => {
     'lastSyncTimestamp' : Time,
     'caseId' : IDL.Nat,
     'tasksChecklist' : TasksChecklist,
-    'patientDemographics' : PatientDemographics,
+    'patientDemographics' : CompletePatientDemographics,
   });
   const UserProfile = IDL.Record({ 'name' : IDL.Text });
   const SurgeryCaseUpdate = IDL.Record({
     'arrivalDate' : IDL.Opt(Time),
     'medicalRecordNumber' : IDL.Opt(IDL.Text),
     'tasksChecklist' : IDL.Opt(TasksChecklist),
-    'patientDemographics' : IDL.Opt(PatientDemographics),
+    'patientDemographics' : IDL.Opt(CompletePatientDemographics),
   });
   
   return IDL.Service({
     '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
     'createSurgeryCase' : IDL.Func(
-        [IDL.Text, PatientDemographics, Time, TasksChecklist],
+        [IDL.Text, CompletePatientDemographics, Time, TasksChecklist],
         [IDL.Nat],
         [],
       ),

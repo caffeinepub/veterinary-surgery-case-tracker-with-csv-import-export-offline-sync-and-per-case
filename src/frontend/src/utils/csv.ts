@@ -1,5 +1,5 @@
 import type { LocalSurgeryCase } from '../types/cases';
-import { nanosecondsToDate, dateToNanoseconds } from './dates';
+import { nanosecondsToDateOnlyString, dateOnlyToNanoseconds, validateDateOnlyString } from './dates';
 import { TASK_DEFINITIONS, getTaskKeyFromCsvColumn, normalizeTasksChecklist } from './tasksChecklist';
 
 export interface CsvRow {
@@ -34,7 +34,7 @@ export function casesToCsv(cases: LocalSurgeryCase[]): string {
   ];
 
   const rows = cases.map((c) => {
-    const arrivalDate = nanosecondsToDate(c.arrivalDate);
+    const arrivalDateStr = nanosecondsToDateOnlyString(c.arrivalDate);
     const taskValues = TASK_DEFINITIONS.map((task) => {
       const taskItem = c.tasksChecklist[task.key];
       if (!taskItem.required) return '';
@@ -43,7 +43,7 @@ export function casesToCsv(cases: LocalSurgeryCase[]): string {
 
     return [
       c.medicalRecordNumber,
-      arrivalDate.toISOString().split('T')[0],
+      arrivalDateStr,
       c.patientDemographics.name,
       c.patientDemographics.species,
       c.patientDemographics.breed,
@@ -159,9 +159,14 @@ function parseTaskValue(value: string): boolean {
 }
 
 export function csvRowToCase(row: CsvRow, tempId: bigint): Partial<LocalSurgeryCase> {
-  const arrivalDate = row['Arrival Date']
-    ? dateToNanoseconds(new Date(row['Arrival Date']))
-    : dateToNanoseconds(new Date());
+  // Parse arrival date safely
+  let arrivalDate: bigint;
+  if (row['Arrival Date'] && validateDateOnlyString(row['Arrival Date'].trim())) {
+    arrivalDate = dateOnlyToNanoseconds(row['Arrival Date'].trim());
+  } else {
+    // Fallback to current date
+    arrivalDate = BigInt(Date.now()) * BigInt(1_000_000);
+  }
 
   // Build tasks checklist from CSV columns
   const tasksChecklist: any = {};
@@ -190,9 +195,11 @@ export function csvRowToCase(row: CsvRow, tempId: bigint): Partial<LocalSurgeryC
     arrivalDate,
     patientDemographics: {
       name: row['Pet Name'] || '',
+      ownerLastName: '',
       species: row['Species'] || 'Other',
       breed: row['Breed'] || '',
-      age: BigInt(0),
+      sex: '',
+      dateOfBirth: '',
     },
     tasksChecklist: normalizeTasksChecklist(tasksChecklist),
     lastSyncTimestamp: BigInt(Date.now()) * BigInt(1_000_000),

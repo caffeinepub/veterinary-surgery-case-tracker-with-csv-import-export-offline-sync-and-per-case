@@ -1,4 +1,4 @@
-import type { SurgeryCase as BackendSurgeryCase, TasksChecklist, PatientDemographics } from '../backend';
+import type { SurgeryCase as BackendSurgeryCase, TasksChecklist, CompletePatientDemographics } from '../backend';
 
 export interface LocalSurgeryCase extends BackendSurgeryCase {
   localId?: string;
@@ -9,17 +9,17 @@ export interface LocalSurgeryCase extends BackendSurgeryCase {
 
 export interface CaseFormData {
   medicalRecordNumber: string;
-  arrivalDate: Date;
+  arrivalDate: string; // YYYY-MM-DD date-only string
   petName: string;
   ownerLastName: string;
   species: 'Canine' | 'Feline' | 'Other';
   breed: string;
   sex: 'Male' | 'Male Neutered' | 'Female' | 'Female Spayed';
-  dateOfBirth: Date | null;
+  dateOfBirth: string; // YYYY-MM-DD date-only string (empty if not set)
   presentingComplaint: string;
   notes: string;
   demographicsRawText: string;
   requiredTasks: TasksChecklist;
 }
 
-export type { TasksChecklist, PatientDemographics };
+export type { TasksChecklist, CompletePatientDemographics };

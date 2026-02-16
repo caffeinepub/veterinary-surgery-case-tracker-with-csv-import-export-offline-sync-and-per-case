@@ -1,113 +1,72 @@
 {
   "kind": "build_request",
-  "title": "Expand per-case to-do list options and support selecting required tasks at case entry",
-  "priority": "normal",
+  "title": "Fix backend connectivity and add clear connection diagnostics",
+  "priority": "high",
   "requirements": [
     {
-      "id": "REQ-13",
-      "text": "Expand the per-case tasks/to-do checklist data model to support the following task options: \"Discharge Notes\" (default required), \"pDVM Notified\" (default required), \"Labs\", \"Histo\", \"Surgery Report\", \"Imaging\", and \"Culture\". Each task must support (a) whether it is required for that case (selected during case entry) and (b) whether it has been completed (toggled on the case card), and these values must persist per case in backend storage and round-trip correctly to the frontend.",
+      "id": "REQ-33",
+      "text": "Fix the frontend-to-backend connection so authenticated users can successfully create an actor and call backend methods (e.g., `getCallerUserProfile`, `getAllSurgeryCases`) without the app behaving as if it is disconnected.",
       "target": "both",
       "source": {
         "messageIds": [
           "msg-4"
         ],
         "quotes": [
-          "Add a to list for each case  which will be used to generate items that need to be completed on the card with the following options. While adding the case a checkmark indicates the item should be list on the completed card as something that needs to be done:\nDischarge notes - default check yes\npDVM Notified - default check yes\nLabs\nHisto\nSurgery ReportImaging; Culture"
+          "App not connected on backend"
         ]
       },
       "acceptanceCriteria": [
-        "Backend types for a surgery case include all 7 task options listed above.",
-        "For each task option, the stored data includes both: required/selected-for-this-case AND completed/not-completed state.",
-        "Newly created cases default to required=true for Discharge Notes and pDVM Notified; all other tasks default to required=false; all tasks default to completed=false unless explicitly set otherwise.",
-        "Existing CRUD/sync flows continue to work with the expanded task structure (create, update, getAll, syncLocalChanges)."
+        "When logged in with Internet Identity, the app successfully loads the user profile (or prompts for profile setup) and fetches cases from the backend without requiring manual refreshes.",
+        "If backend calls fail, the failure is surfaced as a clear error state (not silent fallback) indicating the app could not connect or is unauthorized.",
+        "A successful backend connection is confirmed by at least one successful read call (e.g., `getCallerUserProfile` or `getAllSurgeryCases`) after login."
       ]
     },
     {
-      "id": "REQ-14",
-      "text": "Update the Case Form UI so that while creating or editing a case, the user can select which task options are required for that case (using checkboxes), with \"Discharge Notes\" and \"pDVM Notified\" selected by default and the other options unselected by default.",
+      "id": "REQ-34",
+      "text": "Harden actor initialization in `frontend/src/hooks/useActor.ts` so that failures during `createActorWithConfig(...)` and/or `_initializeAccessControlWithSecret(...)` do not leave the UI in an ambiguous state; instead, capture the error and expose it to the UI as a backend connection/initialization error.",
       "target": "frontend",
       "source": {
         "messageIds": [
           "msg-4"
         ],
         "quotes": [
-          "While adding the case a checkmark indicates the item should be list on the completed card as something that needs to be done"
+          "App not connected on backend"
         ]
       },
       "acceptanceCriteria": [
-        "The case form shows checkboxes for exactly these labels: Discharge Notes, pDVM Notified, Labs, Histo, Surgery Report, Imaging, Culture.",
-        "When starting a new case, Discharge Notes and pDVM Notified are checked by default; the other five are unchecked by default.",
-        "Saving a case persists the selected required tasks to the case record.",
-        "Editing an existing case loads and displays the saved required-task selections."
+        "If actor creation fails (network, canister ID/host misconfiguration, agent error), `useActor` exposes a non-null error string describing the failure in English.",
+        "If `_initializeAccessControlWithSecret` fails (e.g., missing/invalid token), the error is captured and surfaced; the app does not silently proceed as if connected.",
+        "`useActor` continues to return a stable `actor: null` state when initialization fails, and dependent queries/mutations do not throw uncaught errors that break rendering."
       ]
     },
     {
-      "id": "REQ-15",
-      "text": "Update each Case Card to display a to-do list consisting of only the tasks that are required for that case, and allow the user to toggle completion status for each displayed task. The card must reflect the saved completion values on reload and after sync.",
+      "id": "REQ-35",
+      "text": "Add a visible, user-facing backend connection status and error message in the UI (English), including a simple retry action, so users can tell the difference between Offline mode and Backend not connected/unauthorized.",
       "target": "frontend",
       "source": {
         "messageIds": [
           "msg-4"
         ],
         "quotes": [
-          "which will be used to generate items that need to be completed on the card"
+          "App not connected on backend"
         ]
       },
       "acceptanceCriteria": [
-        "On each case card, only tasks marked required=true for that case are rendered in the to-do list.",
-        "Each rendered required task has a completion toggle (checkbox) on the case card.",
-        "Toggling a task updates the case’s saved completion state and remains correct after refreshing/reopening the app and after syncing with the backend.",
-        "The task labels match exactly: Discharge Notes, pDVM Notified, Labs, Histo, Surgery Report, Imaging, Culture."
-      ]
-    },
-    {
-      "id": "REQ-16",
-      "text": "Update CSV import/export to include the expanded tasks list (Discharge Notes, pDVM Notified, Labs, Histo, Surgery Report, Imaging, Culture) and preserve backward compatibility for older CSVs that may only include the two-task format. User-facing warnings during import preview must be in English.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-4"
-        ],
-        "quotes": [
-          "with the following options... Labs Histo Surgery Report Imaging Culture"
-        ]
-      },
-      "acceptanceCriteria": [
-        "CSV export includes columns for all 7 task options.",
-        "CSV import preview can ingest CSVs containing only the legacy two columns (Discharge Notes, pDVM Notified) without failing.",
-        "CSV import preview can ingest CSVs containing any/all of the 7 task columns without failing.",
-        "If the CSV contains unrecognized task columns, the import preview shows an English warning listing the ignored columns."
-      ]
-    },
-    {
-      "id": "REQ-17",
-      "text": "Add conditional state migration for existing stored cases so that previously saved cases with the older tasks structure are upgraded to the new expanded structure without data loss or app crashes.",
-      "target": "backend",
-      "source": {
-        "messageIds": [
-          "msg-4"
-        ],
-        "quotes": [
-          "Add a to list for each case ... with the following options..."
-        ]
-      },
-      "acceptanceCriteria": [
-        "On upgrade, existing cases are readable and editable without trapping due to missing new task fields.",
-        "Migrated cases contain all 7 task options in the stored structure.",
-        "For migrated cases, Discharge Notes and pDVM Notified retain their prior completion values where possible, and all newly introduced tasks (Labs, Histo, Surgery Report, Imaging, Culture) default to required=false and completed=false unless determinable from prior data.",
-        "Migration is implemented following the project’s conditional migration policy (only run when upgrading existing state)."
+        "When the actor is not available due to initialization failure, the UI shows a clear message such as \"Not connected to backend\" or a more specific error in English.",
+        "The status UI distinguishes: (1) browser offline, vs (2) browser online but backend connection/authorization failed.",
+        "A retry control is available that re-attempts actor initialization and/or refetches backend queries; on success, the error/status clears and backend data loads."
       ]
     }
   ],
   "constraints": [
-    "Backend must remain a single Motoko actor with all logic in backend/main.mo (add/adjust backend/migration.mo only if required for state upgrade).",
-    "Do not edit any frontend files under frontend/src/components/ui or any paths listed as immutable in SYSTEM_CONTEXT.",
+    "Backend must remain a single Motoko actor in `backend/main.mo`; do not introduce additional canisters/services.",
+    "Do not edit files under `frontend/src/hooks/useInternetIdentity.ts` / `.tsx`, `frontend/src/hooks/useActor.ts`, `frontend/src/main.tsx`, or `frontend/src/components/ui` beyond composing/using them as allowed by immutable path rules (note: `frontend/src/hooks/useActor.ts` is listed as immutable in system context, so implement actor error propagation and connection diagnostics without modifying this file directly—e.g., by adding a new wrapper hook or higher-level connection manager).",
     "Use English for all user-facing text."
   ],
   "nonGoals": [
-    "Investigating or resolving the separate deployment error \"Unable to create your app\" unless it directly blocks implementing the tasks changes.",
-    "Adding any third-party integrations or external databases.",
-    "Adding new task options beyond: Discharge Notes, pDVM Notified, Labs, Histo, Surgery Report, Imaging, Culture."
+    "Adding third-party authentication providers (only Internet Identity is supported).",
+    "Implementing real-time connectivity via WebSockets or push notifications.",
+    "Changing case/task features unrelated to backend connectivity."
   ],
   "imageRequirements": {
     "required": [],

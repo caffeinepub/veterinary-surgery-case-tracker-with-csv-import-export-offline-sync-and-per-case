@@ -9,9 +9,8 @@ import MixinAuthorization "authorization/MixinAuthorization";
 import AccessControl "authorization/access-control";
 import Order "mo:core/Order";
 import Int "mo:core/Int";
-import Migration "migration";
+import Nat "mo:core/Nat";
 
-(with migration = Migration.run)
 actor {
   let accessControlState = AccessControl.initState();
   include MixinAuthorization(accessControlState);
@@ -38,19 +37,21 @@ actor {
     culture : TaskItem;
   };
 
-  // Patient demographics definition
-  public type PatientDemographics = {
+  // Complete patient demographics definition with extended fields
+  public type CompletePatientDemographics = {
     name : Text;
+    ownerLastName : Text;
     species : Text;
     breed : Text;
-    age : Nat;
+    sex : Text;
+    dateOfBirth : Text;
   };
 
   // Surgery case definition
   public type SurgeryCase = {
     caseId : Nat;
     medicalRecordNumber : Text;
-    patientDemographics : PatientDemographics;
+    patientDemographics : CompletePatientDemographics;
     arrivalDate : Time.Time;
     tasksChecklist : TasksChecklist;
     lastSyncTimestamp : Time.Time;
@@ -73,7 +74,7 @@ actor {
   // Surgery case update definition
   public type SurgeryCaseUpdate = {
     medicalRecordNumber : ?Text;
-    patientDemographics : ?PatientDemographics;
+    patientDemographics : ?CompletePatientDemographics;
     arrivalDate : ?Time.Time;
     tasksChecklist : ?TasksChecklist;
   };
@@ -106,12 +107,11 @@ actor {
   };
 
   // Surgery case creation
-  public shared ({ caller }) func createSurgeryCase(medicalRecordNumber : Text, patientDemographics : PatientDemographics, arrivalDate : Time.Time, tasksChecklist : TasksChecklist) : async Nat {
+  public shared ({ caller }) func createSurgeryCase(medicalRecordNumber : Text, patientDemographics : CompletePatientDemographics, arrivalDate : Time.Time, tasksChecklist : TasksChecklist) : async Nat {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can create surgery cases");
     };
 
-    // Handle possible null value for user cases
     let userCases = switch (cases.get(caller)) {
       case (null) { List.empty<SurgeryCase>() };
       case (?existing) { existing };
@@ -209,8 +209,38 @@ actor {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can sync surgery cases");
     };
-    let userCases = List.fromArray<SurgeryCase>(localCases);
-    cases.add(caller, userCases);
+
+    let mergedCases = List.empty<SurgeryCase>();
+    let currentCases = switch (cases.get(caller)) {
+      case (null) { List.empty<SurgeryCase>() };
+      case (?userCases) { userCases };
+    };
+
+    // Add or update cases from incoming localChanges
+    for (newCase in localCases.values()) {
+      var found = false;
+      for (c in currentCases.values()) {
+        if (c.caseId == newCase.caseId) {
+          found := true;
+        };
+      };
+      mergedCases.add(newCase);
+    };
+
+    // Add cases from the current persistent list that are not in the localChanges
+    for (persistentCase in currentCases.values()) {
+      var found = false;
+      for (c in localCases.values()) {
+        if (c.caseId == persistentCase.caseId) {
+          found := true;
+        };
+      };
+      if (not found) {
+        mergedCases.add(persistentCase);
+      };
+    };
+
+    cases.add(caller, mergedCases);
   };
 
   // Check for unsynchronized changes

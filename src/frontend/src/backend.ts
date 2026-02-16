@@ -94,7 +94,7 @@ export interface SurgeryCaseUpdate {
     arrivalDate?: Time;
     medicalRecordNumber?: string;
     tasksChecklist?: TasksChecklist;
-    patientDemographics?: PatientDemographics;
+    patientDemographics?: CompletePatientDemographics;
 }
 export interface TaskItem {
     checked: boolean;
@@ -107,13 +107,7 @@ export interface SurgeryCase {
     lastSyncTimestamp: Time;
     caseId: bigint;
     tasksChecklist: TasksChecklist;
-    patientDemographics: PatientDemographics;
-}
-export interface PatientDemographics {
-    age: bigint;
-    name: string;
-    breed: string;
-    species: string;
+    patientDemographics: CompletePatientDemographics;
 }
 export interface TasksChecklist {
     pdvmNotified: TaskItem;
@@ -123,6 +117,14 @@ export interface TasksChecklist {
     surgeryReport: TaskItem;
     imaging: TaskItem;
     dischargeNotes: TaskItem;
+}
+export interface CompletePatientDemographics {
+    sex: string;
+    dateOfBirth: string;
+    name: string;
+    ownerLastName: string;
+    breed: string;
+    species: string;
 }
 export interface UserProfile {
     name: string;
@@ -135,7 +137,7 @@ export enum UserRole {
 export interface backendInterface {
     _initializeAccessControlWithSecret(userSecret: string): Promise<void>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
-    createSurgeryCase(medicalRecordNumber: string, patientDemographics: PatientDemographics, arrivalDate: Time, tasksChecklist: TasksChecklist): Promise<bigint>;
+    createSurgeryCase(medicalRecordNumber: string, patientDemographics: CompletePatientDemographics, arrivalDate: Time, tasksChecklist: TasksChecklist): Promise<bigint>;
     getAllSurgeryCases(): Promise<Array<SurgeryCase>>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
@@ -147,7 +149,7 @@ export interface backendInterface {
     syncLocalChanges(localCases: Array<SurgeryCase>): Promise<void>;
     updateSurgeryCase(caseId: bigint, updates: SurgeryCaseUpdate): Promise<boolean>;
 }
-import type { PatientDemographics as _PatientDemographics, SurgeryCaseUpdate as _SurgeryCaseUpdate, TasksChecklist as _TasksChecklist, Time as _Time, UserProfile as _UserProfile, UserRole as _UserRole } from "./declarations/backend.did.d.ts";
+import type { CompletePatientDemographics as _CompletePatientDemographics, SurgeryCaseUpdate as _SurgeryCaseUpdate, TasksChecklist as _TasksChecklist, Time as _Time, UserProfile as _UserProfile, UserRole as _UserRole } from "./declarations/backend.did.d.ts";
 export class Backend implements backendInterface {
     constructor(private actor: ActorSubclass<_SERVICE>, private _uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, private _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, private processError?: (error: unknown) => never){}
     async _initializeAccessControlWithSecret(arg0: string): Promise<void> {
@@ -178,7 +180,7 @@ export class Backend implements backendInterface {
             return result;
         }
     }
-    async createSurgeryCase(arg0: string, arg1: PatientDemographics, arg2: Time, arg3: TasksChecklist): Promise<bigint> {
+    async createSurgeryCase(arg0: string, arg1: CompletePatientDemographics, arg2: Time, arg3: TasksChecklist): Promise<bigint> {
         if (this.processError) {
             try {
                 const result = await this.actor.createSurgeryCase(arg0, arg1, arg2, arg3);
@@ -358,12 +360,12 @@ function to_candid_record_n7(_uploadFile: (file: ExternalBlob) => Promise<Uint8A
     arrivalDate?: Time;
     medicalRecordNumber?: string;
     tasksChecklist?: TasksChecklist;
-    patientDemographics?: PatientDemographics;
+    patientDemographics?: CompletePatientDemographics;
 }): {
     arrivalDate: [] | [_Time];
     medicalRecordNumber: [] | [string];
     tasksChecklist: [] | [_TasksChecklist];
-    patientDemographics: [] | [_PatientDemographics];
+    patientDemographics: [] | [_CompletePatientDemographics];
 } {
     return {
         arrivalDate: value.arrivalDate ? candid_some(value.arrivalDate) : candid_none(),

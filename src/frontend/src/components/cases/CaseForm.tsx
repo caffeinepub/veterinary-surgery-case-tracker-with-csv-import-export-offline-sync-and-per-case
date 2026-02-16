@@ -5,13 +5,12 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Checkbox } from '../ui/checkbox';
 import { Loader2, X, Sparkles } from 'lucide-react';
 import DateField from './DateField';
 import DemographicsQuickAdd from './DemographicsQuickAdd';
 import { useCreateSurgeryCase, useUpdateSurgeryCase } from '../../hooks/useQueries';
 import { useCasesStore } from '../../hooks/useCasesStore';
-import { dateToNanoseconds, getTodayDate, nanosecondsToDate } from '../../utils/dates';
+import { dateOnlyToNanoseconds, nanosecondsToDateOnlyString, getTodayDateOnlyString } from '../../utils/dates';
 import { findLatestMatchingCase, getPrefillData } from '../../utils/prefill';
 import type { CaseFormData } from '../../types/cases';
 import { toast } from 'sonner';
@@ -33,13 +32,13 @@ export default function CaseForm({ editingCaseId, onCancelEdit, onSaveComplete }
 
   const [formData, setFormData] = useState<CaseFormData>({
     medicalRecordNumber: '',
-    arrivalDate: getTodayDate(),
+    arrivalDate: getTodayDateOnlyString(),
     petName: '',
     ownerLastName: '',
     species: 'Canine',
     breed: '',
     sex: 'Male',
-    dateOfBirth: null,
+    dateOfBirth: '',
     presentingComplaint: '',
     notes: '',
     demographicsRawText: '',
@@ -57,13 +56,13 @@ export default function CaseForm({ editingCaseId, onCancelEdit, onSaveComplete }
       if (caseToEdit) {
         setFormData({
           medicalRecordNumber: caseToEdit.medicalRecordNumber,
-          arrivalDate: nanosecondsToDate(caseToEdit.arrivalDate),
+          arrivalDate: nanosecondsToDateOnlyString(caseToEdit.arrivalDate),
           petName: caseToEdit.patientDemographics.name,
-          ownerLastName: '',
+          ownerLastName: caseToEdit.patientDemographics.ownerLastName,
           species: caseToEdit.patientDemographics.species as any,
           breed: caseToEdit.patientDemographics.breed,
-          sex: 'Male',
-          dateOfBirth: null,
+          sex: caseToEdit.patientDemographics.sex as any,
+          dateOfBirth: caseToEdit.patientDemographics.dateOfBirth || '',
           presentingComplaint: '',
           notes: '',
           demographicsRawText: '',
@@ -82,8 +81,11 @@ export default function CaseForm({ editingCaseId, onCancelEdit, onSaveComplete }
         setPrefillCase(matching);
         setShowPrefillSuggestion(true);
         
-        // Auto-prefill if no fields have been touched yet (except MRN)
-        if (!hasAutoPrefilled && touchedFields.size <= 1) {
+        // Auto-prefill only if no demographic fields have been touched yet
+        const demographicFields = ['petName', 'ownerLastName', 'species', 'breed', 'sex', 'dateOfBirth'];
+        const hasTouchedDemographics = demographicFields.some(field => touchedFields.has(field));
+        
+        if (!hasAutoPrefilled && !hasTouchedDemographics) {
           handlePrefill(matching);
           setHasAutoPrefilled(true);
         }
@@ -97,7 +99,7 @@ export default function CaseForm({ editingCaseId, onCancelEdit, onSaveComplete }
       setPrefillCase(null);
       setHasAutoPrefilled(false);
     }
-  }, [formData.medicalRecordNumber, editingCaseId, cases]);
+  }, [formData.medicalRecordNumber, editingCaseId, cases, touchedFields, hasAutoPrefilled]);
 
   const handlePrefill = (caseToUse?: any) => {
     const sourceCase = caseToUse || prefillCase;
@@ -106,8 +108,9 @@ export default function CaseForm({ editingCaseId, onCancelEdit, onSaveComplete }
     const prefillData = getPrefillData(sourceCase);
     const newFormData = { ...formData };
 
+    // Only prefill fields that haven't been touched by the user
     Object.entries(prefillData).forEach(([key, value]) => {
-      if (!touchedFields.has(key) && value !== undefined) {
+      if (!touchedFields.has(key) && value !== undefined && value !== null) {
         (newFormData as any)[key] = value;
       }
     });
@@ -147,9 +150,11 @@ export default function CaseForm({ editingCaseId, onCancelEdit, onSaveComplete }
     try {
       const patientDemographics = {
         name: formData.petName,
+        ownerLastName: formData.ownerLastName,
         species: formData.species,
         breed: formData.breed,
-        age: BigInt(0),
+        sex: formData.sex,
+        dateOfBirth: formData.dateOfBirth,
       };
 
       if (editingCaseId) {
@@ -158,7 +163,7 @@ export default function CaseForm({ editingCaseId, onCancelEdit, onSaveComplete }
           updates: {
             medicalRecordNumber: formData.medicalRecordNumber,
             patientDemographics,
-            arrivalDate: dateToNanoseconds(formData.arrivalDate),
+            arrivalDate: dateOnlyToNanoseconds(formData.arrivalDate),
             tasksChecklist: formData.requiredTasks,
           },
         });
@@ -168,7 +173,7 @@ export default function CaseForm({ editingCaseId, onCancelEdit, onSaveComplete }
         await createCase.mutateAsync({
           medicalRecordNumber: formData.medicalRecordNumber,
           patientDemographics,
-          arrivalDate: dateToNanoseconds(formData.arrivalDate),
+          arrivalDate: dateOnlyToNanoseconds(formData.arrivalDate),
           tasksChecklist: formData.requiredTasks,
         });
         toast.success('Case created successfully');
@@ -176,13 +181,13 @@ export default function CaseForm({ editingCaseId, onCancelEdit, onSaveComplete }
 
       setFormData({
         medicalRecordNumber: '',
-        arrivalDate: getTodayDate(),
+        arrivalDate: getTodayDateOnlyString(),
         petName: '',
         ownerLastName: '',
         species: 'Canine',
         breed: '',
         sex: 'Male',
-        dateOfBirth: null,
+        dateOfBirth: '',
         presentingComplaint: '',
         notes: '',
         demographicsRawText: '',
@@ -199,13 +204,13 @@ export default function CaseForm({ editingCaseId, onCancelEdit, onSaveComplete }
   const handleCancel = () => {
     setFormData({
       medicalRecordNumber: '',
-      arrivalDate: getTodayDate(),
+      arrivalDate: getTodayDateOnlyString(),
       petName: '',
       ownerLastName: '',
       species: 'Canine',
       breed: '',
       sex: 'Male',
-      dateOfBirth: null,
+      dateOfBirth: '',
       presentingComplaint: '',
       notes: '',
       demographicsRawText: '',
@@ -276,7 +281,7 @@ export default function CaseForm({ editingCaseId, onCancelEdit, onSaveComplete }
               <Label htmlFor="arrivalDate">Arrival Date *</Label>
               <DateField
                 value={formData.arrivalDate}
-                onChange={(date) => handleFieldChange('arrivalDate', date || getTodayDate())}
+                onChange={(dateStr) => handleFieldChange('arrivalDate', dateStr || getTodayDateOnlyString())}
               />
             </div>
 
@@ -336,7 +341,7 @@ export default function CaseForm({ editingCaseId, onCancelEdit, onSaveComplete }
               <Label htmlFor="dateOfBirth">Date of Birth</Label>
               <DateField
                 value={formData.dateOfBirth}
-                onChange={(date) => handleFieldChange('dateOfBirth', date)}
+                onChange={(dateStr) => handleFieldChange('dateOfBirth', dateStr)}
                 placeholder="Optional"
               />
             </div>
@@ -364,26 +369,22 @@ export default function CaseForm({ editingCaseId, onCancelEdit, onSaveComplete }
 
           <DemographicsQuickAdd
             value={formData.demographicsRawText}
-            onChange={(value) => handleFieldChange('demographicsRawText', value)}
+            onChange={(val) => handleFieldChange('demographicsRawText', val)}
           />
 
-          <div className="space-y-3 p-4 border rounded-lg bg-muted/30">
-            <Label className="text-base font-semibold">Required Tasks</Label>
-            <p className="text-sm text-muted-foreground">
-              Select which tasks need to be completed for this case
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+          <div className="space-y-3">
+            <Label>Required Tasks</Label>
+            <div className="space-y-2">
               {TASK_DEFINITIONS.map((task) => (
                 <div key={task.key} className="flex items-center space-x-2">
-                  <Checkbox
+                  <input
+                    type="checkbox"
                     id={`task-${task.key}`}
                     checked={formData.requiredTasks[task.key].required}
-                    onCheckedChange={() => handleTaskRequiredToggle(task.key)}
+                    onChange={() => handleTaskRequiredToggle(task.key)}
+                    className="h-4 w-4 rounded border-gray-300"
                   />
-                  <Label
-                    htmlFor={`task-${task.key}`}
-                    className="text-sm font-normal cursor-pointer"
-                  >
+                  <Label htmlFor={`task-${task.key}`} className="font-normal cursor-pointer">
                     {task.label}
                   </Label>
                 </div>

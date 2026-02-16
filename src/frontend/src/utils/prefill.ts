@@ -1,32 +1,41 @@
 import type { LocalSurgeryCase } from '../types/cases';
-import type { CaseFormData } from '../types/cases';
 
+/**
+ * Finds the most recent case matching the given MRN
+ */
 export function findLatestMatchingCase(
-  medicalRecordNumber: string,
+  mrn: string,
   cases: LocalSurgeryCase[]
 ): LocalSurgeryCase | null {
-  if (!medicalRecordNumber.trim()) return null;
+  if (!mrn || !mrn.trim()) return null;
 
+  const normalizedMrn = mrn.trim().toLowerCase();
   const matchingCases = cases.filter(
-    (c) => c.medicalRecordNumber === medicalRecordNumber.trim()
+    (c) => c.medicalRecordNumber.trim().toLowerCase() === normalizedMrn
   );
 
   if (matchingCases.length === 0) return null;
 
-  return matchingCases.sort((a, b) => {
-    return Number(b.arrivalDate - a.arrivalDate);
-  })[0];
+  // Sort by arrival date descending (most recent first)
+  matchingCases.sort((a, b) => {
+    const diff = Number(b.arrivalDate - a.arrivalDate);
+    if (diff !== 0) return diff;
+    return Number(b.caseId - a.caseId);
+  });
+
+  return matchingCases[0];
 }
 
-export function getPrefillData(matchingCase: LocalSurgeryCase): Partial<CaseFormData> {
-  const demographics = matchingCase.patientDemographics;
-  
+/**
+ * Extracts prefill data from a case
+ */
+export function getPrefillData(sourceCase: LocalSurgeryCase) {
   return {
-    petName: demographics.name,
-    ownerLastName: '', // Not stored in backend
-    species: demographics.species as 'Canine' | 'Feline' | 'Other',
-    breed: demographics.breed,
-    sex: 'Male', // Not stored in backend, default
-    dateOfBirth: null, // Age is stored, not DOB
+    petName: sourceCase.patientDemographics.name || '',
+    ownerLastName: sourceCase.patientDemographics.ownerLastName || '',
+    species: sourceCase.patientDemographics.species || 'Canine',
+    breed: sourceCase.patientDemographics.breed || '',
+    sex: sourceCase.patientDemographics.sex || 'Male',
+    dateOfBirth: sourceCase.patientDemographics.dateOfBirth || '',
   };
 }
