@@ -1,50 +1,16 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-16T19:04:22.289Z",
-  "summary": "REQ-1 is only partially addressed via added clean rebuild documentation/scripts focused on frontend artifact cleanup and regenerating bindings, but does not demonstrate a full clean rebuild + redeploy of both canisters or removal of all specified stale artifacts (e.g., .dfx, frontend/node_modules). REQ-2 is not evidenced in the provided backend/main.mo diff snippet (method not shown). Several unrelated frontend feature changes appear to have been introduced beyond the connectivity/binding fix scope.",
-  "missing_requirements": [
-    {
-      "id": "REQ-1",
-      "requirement": "Perform a fresh clean rebuild and redeploy of both backend and frontend canisters so the Live frontend is guaranteed to reference the currently deployed backend canister ID (eliminate any stale canister-ID/binding artifacts).",
-      "reason": "The added script focuses on cleaning some frontend artifacts and regenerating bindings, but it does not remove .dfx or frontend/node_modules as called out in the requirement/AC examples, and it does not actually redeploy the frontend canister (it only prints 'Next steps: Deploy frontend'). Evidence of an end-to-end clean rebuild + redeploy procedure for both canisters is incomplete in the diff.",
-      "evidence": [
-        "frontend/scripts/clean-rebuild-frontend.sh",
-        "frontend/DEPLOYMENT_NOTES.md"
-      ]
-    },
-    {
-      "id": "REQ-2",
-      "requirement": "Make backend actor initialization compatible with the existing Live frontend by adding a public backend method named `_initializeAccessControlWithSecret` that safely no-ops and returns successfully.",
-      "reason": "The backend diff snippet for backend/main.mo is truncated and does not show any `_initializeAccessControlWithSecret` method definition, so implementation cannot be confirmed from the provided evidence.",
-      "evidence": [
-        "backend/main.mo"
-      ]
-    }
-  ],
-  "hallucinated_features": [
-    {
-      "description": "Extensive frontend feature changes unrelated to the requested clean rebuild/binding fix (e.g., new presentingComplaint handling across queries/store/forms, timezone-safe YYYY-MM-DD date refactors, CSV changes, image URL field, online status semantics, sync and persistence behavior changes, header/footer changes).",
-      "reason": "BuildRequest non-goals explicitly avoid redesign beyond what is necessary to verify backend connectivity; these changes appear to add/modify core product behavior rather than strictly ensuring Live backend connectivity and binding freshness.",
-      "evidence": [
-        "frontend-file-summaries.txt"
-      ]
-    },
-    {
-      "description": "Non-English/emoji output in the clean rebuild script.",
-      "reason": "Constraint says to use English for any user-facing text; the script prints multiple emoji-prefixed status lines, which may violate this constraint if considered user-facing output.",
-      "evidence": [
-        "frontend/scripts/clean-rebuild-frontend.sh"
-      ]
-    }
-  ],
-  "confidence": 0.68,
+  "generatedAt": "2026-02-16T23:00:24.983Z",
+  "summary": "Diff appears to implement the requested Quick Add Demographics fixes: paste handling captures text synchronously and triggers extraction, extraction rules are expanded (MRN formats, names with mixed case and punctuation), and CaseForm is described as providing toast feedback for both no-detection and success counts. Some key CaseForm logic is truncated, so verification of touched-fields protection and toast behavior relies partly on file summary text.",
+  "missing_requirements": [],
+  "hallucinated_features": [],
+  "confidence": 0.7,
   "changed_files": [
-    "backend/main.mo",
     "frontend-file-summaries.txt",
-    "frontend/DEPLOYMENT_NOTES.md",
-    "frontend/scripts/clean-rebuild-frontend.sh",
-    "frontend/scripts/verify-live-backend-binding.md",
+    "frontend/src/components/cases/CaseForm.tsx",
+    "frontend/src/components/cases/DemographicsQuickAdd.tsx",
+    "frontend/src/utils/demographicsExtract.ts",
     "project_state.json"
   ]
 }

@@ -28,33 +28,45 @@ export class ModalErrorBoundary extends Component<ModalErrorBoundaryProps, Modal
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     const { resetKey, debugLabel } = this.props;
     
-    // Enhanced development-only logging
-    console.group('🔴 Modal Error Boundary Caught Error');
-    console.error('Error:', error);
-    console.error('Error message:', error.message);
-    
-    if (error.stack) {
-      console.error('Error stack:', error.stack);
+    // Enhanced development-focused logging with clear context
+    if (process.env.NODE_ENV === 'development') {
+      console.group('🔴 Modal Error Boundary - Error Details');
+      console.error('Modal:', debugLabel || 'Unknown');
+      console.error('Reset Key:', resetKey);
+      console.error('Timestamp:', new Date().toISOString());
+      console.error('');
+      console.error('Error Name:', error.name);
+      console.error('Error Message:', error.message);
+      console.error('');
+      
+      if (error.stack) {
+        console.error('Error Stack Trace:');
+        console.error(error.stack);
+        console.error('');
+      }
+      
+      if (errorInfo.componentStack) {
+        console.error('React Component Stack:');
+        console.error(errorInfo.componentStack);
+      }
+      
+      console.groupEnd();
+    } else {
+      // Production: minimal logging
+      console.error('Modal error:', error.message);
     }
-    
-    if (errorInfo.componentStack) {
-      console.error('Component stack:', errorInfo.componentStack);
-    }
-    
-    console.log('Reset key:', resetKey);
-    console.log('Debug label:', debugLabel);
-    console.log('Timestamp:', new Date().toISOString());
-    console.groupEnd();
   }
 
   componentDidUpdate(prevProps: ModalErrorBoundaryProps) {
     // Reset error state when resetKey changes (e.g., modal reopens)
     if (this.state.hasError && prevProps.resetKey !== this.props.resetKey) {
-      console.log('ModalErrorBoundary: Resetting error state due to resetKey change', {
-        oldKey: prevProps.resetKey,
-        newKey: this.props.resetKey,
-        debugLabel: this.props.debugLabel,
-      });
+      if (process.env.NODE_ENV === 'development') {
+        console.log('ModalErrorBoundary: Resetting error state', {
+          debugLabel: this.props.debugLabel,
+          oldKey: prevProps.resetKey,
+          newKey: this.props.resetKey,
+        });
+      }
       this.setState({ hasError: false, error: null });
     }
   }

@@ -2,12 +2,11 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-perform-a-fresh-clean-rebuild-and-redeploy-of-both-backend-and-frontend-canisters-so-the-live-frontend-is-guaranteed-to-reference-the-currently-deployed-backend-canister-id-eliminate-any-stale-canister-id-binding-artifacts",
-      "featureTitle": "Perform a fresh clean rebuild and redeploy of both backend and frontend canisters so the Live frontend is guaranteed to reference the currently deployed backend canister ID (eliminate any stale canister-ID/binding artifacts).",
+      "featureId": "feature-fix-the-quick-add-demographics-paste-handler-so-demographics-extraction-reliably-runs-on-pasted-content-and-correctly-populates-the-caseform-fields",
+      "featureTitle": "Fix the Quick Add Demographics paste handler so demographics extraction reliably runs on pasted content and correctly populates the CaseForm fields.",
       "files": [
-        "frontend/DEPLOYMENT_NOTES.md",
-        "frontend/scripts/clean-rebuild-frontend.sh",
-        "frontend/scripts/verify-live-backend-binding.md"
+        "frontend/src/components/cases/CaseForm.tsx",
+        "frontend/src/components/cases/DemographicsQuickAdd.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -20,6 +19,47 @@
       ],
       "testIds": [
         "REQ-1"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-improve-the-demographics-extraction-rules-to-better-match-common-real-world-pasted-demographics-formats-so-that-patient-information-is-extracted-more-consistently",
+      "featureTitle": "Improve the demographics extraction rules to better match common real-world pasted demographics formats so that patient information is extracted more consistently.",
+      "files": [
+        "frontend/src/components/cases/CaseForm.tsx",
+        "frontend/src/utils/demographicsExtract.ts"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "camera@1.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-2"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-add-clear-user-facing-feedback-when-no-usable-demographics-can-be-extracted-from-the-pasted-text",
+      "featureTitle": "Add clear user-facing feedback when no usable demographics can be extracted from the pasted text.",
+      "files": [
+        "frontend/src/components/cases/CaseForm.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "camera@1.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-3"
       ],
       "confidence": "high"
     }

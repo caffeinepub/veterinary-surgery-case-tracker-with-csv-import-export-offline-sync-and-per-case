@@ -1,10 +1,12 @@
 # Specification
 
 ## Summary
-**Goal:** Restore Live frontend connectivity to the currently deployed backend by performing a clean rebuild/redeploy and adding a backend compatibility method required by existing frontend initialization.
+**Goal:** Fix Quick Add Demographics so pasted demographics text reliably extracts patient info and auto-fills the CaseForm, with clear feedback when nothing is detected.
 
 **Planned changes:**
-- Perform a fresh clean rebuild and redeploy of both backend and frontend canisters to eliminate stale build artifacts and ensure the Live frontend references the current backend canister ID and freshly generated bindings.
-- Update the Motoko backend actor (backend/main.mo) to expose a public `_initializeAccessControlWithSecret(secret : Text) : async ()` method that safely no-ops and returns successfully for compatibility with the existing Live frontend.
+- Update the Quick Add Demographics paste handling so extraction runs on the pasted text reliably (without relying on the paste event’s clipboardData after the event) while keeping the pasted text visible/editable in the textarea.
+- Improve extraction rules to better match real-world demographics formats (mixed-case names with common characters like hyphens/apostrophes; MRN formats with prefixes/separators).
+- Ensure auto-fill respects existing CaseForm touchedFields behavior and does not overwrite fields the user has already touched.
+- Add non-blocking user feedback when no demographics are detected, and keep/maintain success feedback indicating how many fields were filled when extraction succeeds.
 
-**User-visible outcome:** Opening the Live Surgery Case Tracker app no longer shows the backend connection initialization error, and the app connects to the currently deployed backend successfully.
+**User-visible outcome:** When users paste demographics into Quick Add Demographics, eligible CaseForm fields (MRN, Pet Name, Owner Last Name, Species, Breed, Sex, Date of Birth) auto-fill more consistently; if nothing can be extracted, the app shows a clear non-blocking message while leaving the pasted text in place for editing.

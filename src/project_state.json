@@ -4,29 +4,36 @@
   "summary": "New project",
   "architectural_notes": [],
   "known_issues": [
-    "Live version shows 'Backend Connection Error: Failed to initialize backend connection' (frontend cannot reach backend; possibly stale/outdated backend canister ID in live build)."
+    "Quick add demographics is not extracting patient information (patient info not being pulled/populated)."
   ],
   "isFixRequest": true,
   "existing_features": [
     {
-      "id": "feature-perform-a-fresh-clean-rebuild-and-redeploy-of-both-backend-and-frontend-canisters-so-the-live-frontend-is-guaranteed-to-reference-the-currently-deployed-backend-canister-id-eliminate-any-stale-canister-id-binding-artifacts",
-      "title": "Perform a fresh clean rebuild and redeploy of both backend and frontend canisters so the Live frontend is guaranteed to reference the currently deployed backend canister ID (eliminate any stale canister-ID/binding artifacts).",
+      "id": "feature-fix-the-quick-add-demographics-paste-handler-so-demographics-extraction-reliably-runs-on-pasted-content-and-correctly-populates-the-caseform-fields",
+      "title": "Fix the Quick Add Demographics paste handler so demographics extraction reliably runs on pasted content and correctly populates the CaseForm fields.",
       "reqIds": [
         "REQ-1"
       ],
       "version": 1
-    }
-  ],
-  "new_feature_requests": [
+    },
     {
-      "id": "AR-2",
-      "summary": "Make backend actor initialization compatible with the existing Live frontend by adding a public backend method named `_initializeAccessControlWithSecret` that safely no-ops (does not change access control or require any token) and returns successfully.",
+      "id": "feature-improve-the-demographics-extraction-rules-to-better-match-common-real-world-pasted-demographics-formats-so-that-patient-information-is-extracted-more-consistently",
+      "title": "Improve the demographics extraction rules to better match common real-world pasted demographics formats so that patient information is extracted more consistently.",
       "reqIds": [
         "REQ-2"
       ],
-      "status": "pending"
+      "version": 1
+    },
+    {
+      "id": "feature-add-clear-user-facing-feedback-when-no-usable-demographics-can-be-extracted-from-the-pasted-text",
+      "title": "Add clear user-facing feedback when no usable demographics can be extracted from the pasted text.",
+      "reqIds": [
+        "REQ-3"
+      ],
+      "version": 1
     }
   ],
+  "new_feature_requests": [],
   "projectName": "Surgery Case Tracker",
   "clarification_mode": "instant",
   "clarification_rounds": 0

@@ -1,68 +1,74 @@
 {
   "kind": "build_request",
-  "title": "Clean rebuild and restore Live backend connectivity",
+  "title": "Fix Quick Add Demographics not extracting patient information",
   "projectName": "Surgery Case Tracker",
   "priority": "high",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Perform a fresh clean rebuild and redeploy of both backend and frontend canisters so the Live frontend is guaranteed to reference the currently deployed backend canister ID (eliminate any stale canister-ID/binding artifacts).",
-      "target": "both",
+      "text": "Fix the Quick Add Demographics paste handler so demographics extraction reliably runs on pasted content and correctly populates the CaseForm fields.",
+      "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-6"
         ],
         "quotes": [
-          "trigger a fresh clean rebuild"
+          "quick add demographics is not extracting patient information"
         ]
       },
       "acceptanceCriteria": [
-        "A clean build is executed using steps equivalent to removing prior build artifacts (e.g., frontend/dist, frontend/node_modules, and .dfx) and then redeploying backend and frontend.",
-        "After redeploy, opening the Live app no longer shows: \"Backend Connection Error: Failed to initialize backend connection. The backend service may be unavailable.\"",
-        "The frontend build uses freshly generated backend bindings (dfx generate backend) from the currently deployed backend canister."
+        "When the user pastes text into the \"Quick Add Demographics\" textarea, extraction runs and the form auto-fills any eligible fields (MRN, Pet Name, Owner Last Name, Species, Breed, Sex, Date of Birth) based on the pasted text.",
+        "Extraction must not depend on reading clipboardData asynchronously after the paste event (i.e., it must still work even if the paste event object is no longer valid).",
+        "The pasted text must remain visible in the Quick Add Demographics textarea after paste, and the user can still edit it normally."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Make backend actor initialization compatible with the existing Live frontend by adding a public backend method named `_initializeAccessControlWithSecret` that safely no-ops (does not change access control or require any token) and returns successfully.",
-      "target": "backend",
+      "text": "Improve the demographics extraction rules to better match common real-world pasted demographics formats so that patient information is extracted more consistently.",
+      "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-6"
         ],
         "quotes": [
-          "I n the live version Backend Connection Error:\nFailed to initialize backend connection. The backend service may be unavailable."
+          "quick add demographics is not extracting patient information"
         ]
       },
       "acceptanceCriteria": [
-        "The Motoko backend exposes a callable method `_initializeAccessControlWithSecret(secret : Text) : async ()` (or equivalent signature compatible with generated frontend bindings).",
-        "Calling `_initializeAccessControlWithSecret` does not grant permissions, does not modify roles, and does not affect authorization behavior of existing endpoints.",
-        "Frontend TypeScript bindings generated from the backend include `_initializeAccessControlWithSecret`, allowing the frontend to compile without type errors related to that method."
+        "Extraction correctly handles pet/patient names that include mixed case and common characters (e.g., hyphen/apostrophe) instead of only matching a single lowercase token.",
+        "Extraction correctly handles MRN/record identifiers that may include prefixes and separators (e.g., \"MRN: A-12345\").",
+        "Extraction does not overwrite fields in the CaseForm that the user has already touched, consistent with the existing touchedFields behavior in CaseForm."
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "text": "Add clear user-facing feedback when no usable demographics can be extracted from the pasted text.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-6"
+        ],
+        "quotes": [
+          "quick add demographics is not extracting patient information"
+        ]
+      },
+      "acceptanceCriteria": [
+        "If the user pastes text and extraction yields no fields, show a non-blocking message (e.g., toast) indicating that no demographics were detected.",
+        "If at least one field is auto-filled, the existing success feedback remains (or equivalent) and indicates how many fields were filled."
       ]
     }
   ],
   "constraints": [
-    "Do not edit files under frontend/src/hooks/useActor.ts or other paths listed as immutable in SYSTEM_CONTEXT.",
-    "Keep all Motoko logic within the single actor in backend/main.mo; only add migration code if a state upgrade is required (avoid migration if not needed).",
-    "Use English for any user-facing text."
+    "Do not edit any files under frontend/src/components/ui (Shadcn components are read-only and must be composed, not modified).",
+    "Do not modify frontend immutable paths listed in SYSTEM_CONTEXT (e.g., frontend/src/hooks/useInternetIdentity.ts(x), frontend/src/hooks/useActor.ts, frontend/src/main.tsx)."
   ],
   "nonGoals": [
-    "Redesigning the UI/UX beyond what is necessary to verify backend connectivity.",
-    "Adding new authentication methods beyond Internet Identity.",
-    "Introducing external databases or third-party backend services."
+    "Adding OCR/image-based demographics extraction.",
+    "Adding backend parsing or storing additional extracted fields beyond what the CaseForm already supports.",
+    "Integrating third-party parsing services or AI extraction."
   ],
   "imageRequirements": {
     "required": [],
     "edits": []
-  },
-  "userProfileUpdate": {
-    "goalsToAdd": [],
-    "goalsToRemove": [],
-    "preferencesToAdd": [],
-    "preferencesToRemove": [],
-    "miscToAdd": [],
-    "miscToRemove": [],
-    "fieldsToSet": {},
-    "fieldsToDelete": []
   }
 }

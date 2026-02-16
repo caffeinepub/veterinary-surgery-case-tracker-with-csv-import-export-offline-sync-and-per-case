@@ -8,6 +8,12 @@ set -e  # Exit on any error
 echo "🧹 Starting clean rebuild process..."
 echo ""
 
+# Ensure we're in the repo root or can find dfx.json
+if [ ! -f "dfx.json" ]; then
+    echo "❌ ERROR: dfx.json not found. Please run this script from the repository root."
+    exit 1
+fi
+
 # Step 1: Remove stale frontend build artifacts
 echo "📦 Step 1: Removing stale build artifacts..."
 rm -rf frontend/dist
@@ -73,3 +79,4 @@ echo "  2. Verify deployment using: frontend/scripts/verify-live-backend-binding
 echo ""
 echo "Backend canister ID: $BACKEND_ID"
 echo "Frontend build output: frontend/dist"
+echo ""

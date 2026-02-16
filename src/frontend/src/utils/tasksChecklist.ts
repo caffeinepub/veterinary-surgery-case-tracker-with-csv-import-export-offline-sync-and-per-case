@@ -37,15 +37,24 @@ export function createDefaultTasksChecklist(): TasksChecklist {
  * Normalizes a partial or legacy TasksChecklist to the full 7-task structure
  * Ensures all tasks have both required and checked fields
  * Preserves existing required flags for saved cases
+ * Safely handles undefined, null, or malformed input
  */
 export function normalizeTasksChecklist(partial: Partial<TasksChecklist> | any): TasksChecklist {
+  // Guard against undefined/null input
+  if (!partial || typeof partial !== 'object') {
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('normalizeTasksChecklist: received invalid input, returning default checklist', { partial });
+    }
+    return createDefaultTasksChecklist();
+  }
+
   const normalized: any = {};
   
   TASK_DEFINITIONS.forEach((def) => {
     const existing = partial?.[def.key];
     
-    if (existing && typeof existing === 'object') {
-      // If it exists and has the new structure, preserve the required flag
+    if (existing && typeof existing === 'object' && 'required' in existing && 'checked' in existing) {
+      // If it exists and has the new structure, preserve both flags
       normalized[def.key] = {
         required: existing.required ?? false,
         checked: existing.checked ?? false,
@@ -56,14 +65,14 @@ export function normalizeTasksChecklist(partial: Partial<TasksChecklist> | any):
         required: false,
         checked: existing,
       };
-    } else if (existing && existing.checked !== undefined) {
+    } else if (existing && typeof existing === 'object' && 'checked' in existing) {
       // Old format: { checked: boolean } without required
       normalized[def.key] = {
         required: false,
         checked: existing.checked ?? false,
       };
     } else {
-      // Missing entirely
+      // Missing entirely or invalid
       normalized[def.key] = {
         required: false,
         checked: false,
@@ -78,8 +87,17 @@ export function normalizeTasksChecklist(partial: Partial<TasksChecklist> | any):
  * Creates a TasksChecklist for a new case based on form selections
  * Only tasks that are checked in the form will have required=true
  * All other tasks will have required=false
+ * Safely handles undefined or malformed input
  */
-export function createTasksChecklistForNewCase(formTasks: TasksChecklist): TasksChecklist {
+export function createTasksChecklistForNewCase(formTasks: TasksChecklist | any): TasksChecklist {
+  // Guard against undefined/null input
+  if (!formTasks || typeof formTasks !== 'object') {
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('createTasksChecklistForNewCase: received invalid input, returning default checklist', { formTasks });
+    }
+    return createDefaultTasksChecklist();
+  }
+
   const checklist: any = {};
   
   TASK_DEFINITIONS.forEach((def) => {

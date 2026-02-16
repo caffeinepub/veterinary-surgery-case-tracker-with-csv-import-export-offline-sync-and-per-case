@@ -16,6 +16,7 @@ import { Alert, AlertDescription } from '../ui/alert';
 import { Info } from 'lucide-react';
 import { TASK_DEFINITIONS, createDefaultTasksChecklist, setTaskRequired, normalizeTasksChecklist, createTasksChecklistForNewCase } from '../../utils/tasksChecklist';
 import type { TasksChecklist } from '../../types/cases';
+import type { ExtractedDemographics } from '../../utils/demographicsExtract';
 
 interface CaseFormProps {
   editingCaseId: bigint | null;
@@ -144,6 +145,53 @@ export default function CaseForm({ editingCaseId, onCancelEdit, onSaveComplete }
     setTouchedFields((prev) => new Set(prev).add(field));
   };
 
+  const handlePasteExtraction = (extracted: ExtractedDemographics) => {
+    if (!extracted || Object.keys(extracted).length === 0) {
+      toast.info('No demographics detected in pasted text');
+      return;
+    }
+
+    const updates: Partial<CaseFormData> = {};
+    let filledCount = 0;
+
+    // Only fill fields that are empty and not touched
+    if (extracted.medicalRecordNumber && !formData.medicalRecordNumber && !touchedFields.has('medicalRecordNumber')) {
+      updates.medicalRecordNumber = extracted.medicalRecordNumber;
+      filledCount++;
+    }
+    if (extracted.petName && !formData.petName && !touchedFields.has('petName')) {
+      updates.petName = extracted.petName;
+      filledCount++;
+    }
+    if (extracted.ownerLastName && !formData.ownerLastName && !touchedFields.has('ownerLastName')) {
+      updates.ownerLastName = extracted.ownerLastName;
+      filledCount++;
+    }
+    if (extracted.species && !touchedFields.has('species')) {
+      updates.species = extracted.species;
+      filledCount++;
+    }
+    if (extracted.breed && !formData.breed && !touchedFields.has('breed')) {
+      updates.breed = extracted.breed;
+      filledCount++;
+    }
+    if (extracted.sex && !touchedFields.has('sex')) {
+      updates.sex = extracted.sex;
+      filledCount++;
+    }
+    if (extracted.dateOfBirth && !formData.dateOfBirth && !touchedFields.has('dateOfBirth')) {
+      updates.dateOfBirth = extracted.dateOfBirth;
+      filledCount++;
+    }
+
+    if (filledCount > 0) {
+      setFormData((prev) => ({ ...prev, ...updates }));
+      toast.success(`Auto-filled ${filledCount} field${filledCount > 1 ? 's' : ''} from pasted text`);
+    } else {
+      toast.info('No new fields to fill from pasted text');
+    }
+  };
+
   const handleTaskToggle = (taskKey: keyof TasksChecklist) => {
     setFormData((prev) => {
       const normalized = normalizeTasksChecklist(prev.requiredTasks);
@@ -239,20 +287,26 @@ export default function CaseForm({ editingCaseId, onCancelEdit, onSaveComplete }
           <Info className="h-4 w-4 text-blue-600 dark:text-blue-400" />
           <AlertDescription className="flex items-center justify-between">
             <span className="text-sm text-blue-900 dark:text-blue-100">
-              Found previous case for MRN {formData.medicalRecordNumber}. Prefill demographics?
+              Found previous case for MRN {formData.medicalRecordNumber}. Auto-fill demographics?
             </span>
             <div className="flex gap-2 ml-4">
               <Button type="button" size="sm" variant="outline" onClick={handleDismissPrefill}>
                 No
               </Button>
-              <Button type="button" size="sm" onClick={handlePrefill} className="gap-1">
-                <Sparkles className="h-3 w-3" />
+              <Button type="button" size="sm" onClick={handlePrefill}>
+                <Sparkles className="h-3 w-3 mr-1" />
                 Yes
               </Button>
             </div>
           </AlertDescription>
         </Alert>
       )}
+
+      <DemographicsQuickAdd
+        value={formData.demographicsRawText}
+        onChange={(value) => handleFieldChange('demographicsRawText', value)}
+        onPaste={handlePasteExtraction}
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
@@ -262,6 +316,7 @@ export default function CaseForm({ editingCaseId, onCancelEdit, onSaveComplete }
             value={formData.medicalRecordNumber}
             onChange={(e) => handleFieldChange('medicalRecordNumber', e.target.value)}
             required
+            placeholder="e.g., A-12345"
           />
         </div>
 
@@ -274,25 +329,6 @@ export default function CaseForm({ editingCaseId, onCancelEdit, onSaveComplete }
         </div>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="presentingComplaint">Presenting Complaint</Label>
-        <Textarea
-          id="presentingComplaint"
-          value={formData.presentingComplaint}
-          onChange={(e) => handleFieldChange('presentingComplaint', e.target.value)}
-          placeholder="Enter the presenting complaint or reason for visit"
-          rows={3}
-          className="resize-none"
-        />
-      </div>
-
-      <DemographicsQuickAdd
-        value={formData.demographicsRawText}
-        onChange={(value) => handleFieldChange('demographicsRawText', value)}
-        capturedImageUrl={formData.capturedImageUrl}
-        onCapturedImageChange={(url) => handleFieldChange('capturedImageUrl', url)}
-      />
-
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="petName">Pet Name *</Label>
@@ -301,6 +337,7 @@ export default function CaseForm({ editingCaseId, onCancelEdit, onSaveComplete }
             value={formData.petName}
             onChange={(e) => handleFieldChange('petName', e.target.value)}
             required
+            placeholder="e.g., Buddy"
           />
         </div>
 
@@ -311,6 +348,7 @@ export default function CaseForm({ editingCaseId, onCancelEdit, onSaveComplete }
             value={formData.ownerLastName}
             onChange={(e) => handleFieldChange('ownerLastName', e.target.value)}
             required
+            placeholder="e.g., Smith"
           />
         </div>
       </div>
@@ -331,11 +369,13 @@ export default function CaseForm({ editingCaseId, onCancelEdit, onSaveComplete }
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="breed">Breed</Label>
+          <Label htmlFor="breed">Breed *</Label>
           <Input
             id="breed"
             value={formData.breed}
             onChange={(e) => handleFieldChange('breed', e.target.value)}
+            required
+            placeholder="e.g., Labrador"
           />
         </div>
 
@@ -360,25 +400,34 @@ export default function CaseForm({ editingCaseId, onCancelEdit, onSaveComplete }
         <DateField
           value={formData.dateOfBirth}
           onChange={(value) => handleFieldChange('dateOfBirth', value)}
+          placeholder="Optional"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="presentingComplaint">Presenting Complaint</Label>
+        <Textarea
+          id="presentingComplaint"
+          value={formData.presentingComplaint}
+          onChange={(e) => handleFieldChange('presentingComplaint', e.target.value)}
+          placeholder="Brief description of the case"
+          rows={3}
         />
       </div>
 
       <div className="space-y-3">
         <Label>Required Tasks</Label>
-        <div className="space-y-2 border rounded-lg p-4 bg-muted/30">
-          {TASK_DEFINITIONS.map((task) => (
-            <div key={task.key} className="flex items-center space-x-2">
+        <div className="space-y-2">
+          {TASK_DEFINITIONS.map((def) => (
+            <label key={def.key} className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
-                id={`task-${task.key}`}
-                checked={formData.requiredTasks[task.key]?.required || false}
-                onChange={() => handleTaskToggle(task.key)}
-                className="h-4 w-4 rounded border-gray-300"
+                checked={formData.requiredTasks[def.key].required}
+                onChange={() => handleTaskToggle(def.key)}
+                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
               />
-              <Label htmlFor={`task-${task.key}`} className="text-sm font-normal cursor-pointer">
-                {task.label}
-              </Label>
-            </div>
+              <span className="text-sm">{def.label}</span>
+            </label>
           ))}
         </div>
         <p className="text-xs text-muted-foreground">
@@ -386,7 +435,7 @@ export default function CaseForm({ editingCaseId, onCancelEdit, onSaveComplete }
         </p>
       </div>
 
-      <div className="flex gap-3 pt-4">
+      <div className="flex justify-end gap-3 pt-4">
         <Button type="button" variant="outline" onClick={onCancelEdit} disabled={isSubmitting}>
           Cancel
         </Button>
@@ -394,10 +443,12 @@ export default function CaseForm({ editingCaseId, onCancelEdit, onSaveComplete }
           {isSubmitting ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              {editingCaseId ? 'Updating...' : 'Creating...'}
+              Saving...
             </>
+          ) : editingCaseId ? (
+            'Update Case'
           ) : (
-            <>{editingCaseId ? 'Update Case' : 'Create Case'}</>
+            'Create Case'
           )}
         </Button>
       </div>
