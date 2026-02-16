@@ -1,7 +1,8 @@
-import { useActor } from './useActor';
+import { useActorWithError } from './useActorWithError';
 import { useInternetIdentity } from './useInternetIdentity';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState, useEffect } from 'react';
+import { classifyBackendError } from '../utils/backendErrorMessages';
 
 export interface BackendConnectionStatus {
   isConnected: boolean;
@@ -16,15 +17,15 @@ export interface BackendConnectionStatus {
  */
 export function useBackendConnection(): BackendConnectionStatus {
   const { identity, loginStatus } = useInternetIdentity();
-  const { actor, isFetching: actorFetching } = useActor();
+  const { actor, isFetching: actorFetching, error: actorError, retry: retryActor } = useActorWithError();
   const queryClient = useQueryClient();
-  const [connectionError, setConnectionError] = useState<string | null>(null);
+  const [probeError, setProbeError] = useState<string | null>(null);
   const [isProbing, setIsProbing] = useState(false);
 
   const isAuthenticated = !!identity;
   const isInitializing = loginStatus === 'initializing' || actorFetching || isProbing;
 
-  // Probe backend connectivity with a read call after login
+  // Probe backend connectivity with a read call after actor is ready
   const probeQuery = useQuery({
     queryKey: ['backendConnectionProbe', identity?.getPrincipal().toString()],
     queryFn: async () => {
@@ -37,76 +38,67 @@ export function useBackendConnection(): BackendConnectionStatus {
         await actor.getCallerUserProfile();
         return true;
       } catch (error: any) {
-        // Parse error messages from backend
-        if (error.message?.includes('Unauthorized')) {
-          throw new Error('Not authorized to access backend');
-        } else if (error.message?.includes('Canister') || error.message?.includes('canister')) {
-          throw new Error('Backend service unavailable');
-        } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
-          throw new Error('Network error connecting to backend');
-        } else {
-          throw new Error('Failed to connect to backend');
-        }
+        // Classify the error for user-friendly messaging
+        const classified = classifyBackendError(error, 'backend probe');
+        throw new Error(classified.message);
       }
     },
-    enabled: isAuthenticated && !!actor && !actorFetching,
+    enabled: isAuthenticated && !!actor && !actorFetching && !actorError,
     retry: false,
     staleTime: 30000, // Consider connection valid for 30 seconds
   });
 
-  // Update connection error state based on probe results
+  // Update probe error state based on probe results
   useEffect(() => {
     if (probeQuery.isError) {
       const errorMessage = probeQuery.error instanceof Error 
         ? probeQuery.error.message 
         : 'Failed to connect to backend';
-      setConnectionError(errorMessage);
+      setProbeError(errorMessage);
     } else if (probeQuery.isSuccess) {
-      setConnectionError(null);
+      setProbeError(null);
     }
   }, [probeQuery.isError, probeQuery.isSuccess, probeQuery.error]);
 
-  // Check for actor initialization errors
-  useEffect(() => {
-    if (isAuthenticated && !actorFetching && !actor && !probeQuery.isFetching) {
-      setConnectionError('Failed to initialize backend connection');
-    }
-  }, [isAuthenticated, actorFetching, actor, probeQuery.isFetching]);
-
+  // Retry function that performs full reset: actor init + probe
   const retry = async () => {
     setIsProbing(true);
-    setConnectionError(null);
+    setProbeError(null);
     
     try {
-      // Invalidate actor query to force re-initialization
-      await queryClient.invalidateQueries({ 
-        queryKey: ['actor', identity?.getPrincipal().toString()] 
-      });
+      // First, retry actor initialization
+      await retryActor();
       
-      // Refetch the probe query
+      // Then refetch the probe query
       await probeQuery.refetch();
       
-      // Invalidate dependent queries to refresh data
-      await queryClient.invalidateQueries({
-        predicate: (query) => {
-          const key = query.queryKey[0];
-          return key !== 'actor' && key !== 'backendConnectionProbe';
-        }
-      });
+      // If successful, invalidate dependent queries to refresh data
+      if (probeQuery.isSuccess) {
+        await queryClient.invalidateQueries({
+          predicate: (query) => {
+            const key = query.queryKey[0];
+            return key !== 'actor' && key !== 'backendConnectionProbe';
+          }
+        });
+      }
     } catch (error) {
       console.error('Retry failed:', error);
-      setConnectionError(error instanceof Error ? error.message : 'Retry failed');
+      // Error will be captured by actor or probe query
     } finally {
       setIsProbing(false);
     }
   };
 
-  const isConnected = isAuthenticated && !!actor && probeQuery.isSuccess && !connectionError;
+  // Determine the primary error to display
+  // Priority: actor initialization error > probe error
+  const primaryError = actorError || probeError;
+
+  const isConnected = isAuthenticated && !!actor && !actorError && probeQuery.isSuccess && !primaryError;
 
   return {
     isConnected,
     isInitializing,
-    error: connectionError,
+    error: primaryError,
     retry,
   };
 }

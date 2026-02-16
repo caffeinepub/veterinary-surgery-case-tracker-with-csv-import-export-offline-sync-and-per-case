@@ -6,7 +6,7 @@ import { Button } from './components/ui/button';
 import { Input } from './components/ui/input';
 import { Label } from './components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './components/ui/dialog';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Plus } from 'lucide-react';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
 import CaseList from './components/cases/CaseList';
@@ -15,11 +15,12 @@ import SyncStatusBar from './components/sync/SyncStatusBar';
 import CsvImportDialog from './components/csv/CsvImportDialog';
 import CsvExportButton from './components/csv/CsvExportButton';
 import SortControls from './components/cases/SortControls';
+import StartupRecoveryScreen from './components/startup/StartupRecoveryScreen';
 import { Toaster } from './components/ui/sonner';
 
 export default function App() {
   const { identity, loginStatus } = useInternetIdentity();
-  const { isConnected, isInitializing: backendInitializing } = useBackendConnection();
+  const { isConnected, isInitializing: backendInitializing, error: backendError, retry: retryBackend } = useBackendConnection();
   const isAuthenticated = !!identity;
   const { data: userProfile, isLoading: profileLoading, isFetched } = useGetCallerUserProfile();
   const saveProfile = useSaveCallerUserProfile();
@@ -29,6 +30,8 @@ export default function App() {
   const [sortField, setSortField] = useState<'arrivalDate' | 'medicalRecordNumber'>('arrivalDate');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [editingCaseId, setEditingCaseId] = useState<bigint | null>(null);
+  const [showCaseFormModal, setShowCaseFormModal] = useState(false);
+  const [startupTimeout, setStartupTimeout] = useState(false);
 
   // Show profile setup only when authenticated, connected, and no profile exists
   useEffect(() => {
@@ -37,13 +40,61 @@ export default function App() {
     }
   }, [isAuthenticated, isConnected, profileLoading, isFetched, userProfile]);
 
+  // Detect startup timeout for authenticated users
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setStartupTimeout(false);
+      return;
+    }
+
+    if (backendInitializing) {
+      const timer = setTimeout(() => {
+        setStartupTimeout(true);
+      }, 10000); // 10 second timeout
+
+      return () => clearTimeout(timer);
+    } else {
+      setStartupTimeout(false);
+    }
+  }, [backendInitializing, isAuthenticated]);
+
   const handleSaveProfile = async () => {
     if (!profileName.trim()) return;
     await saveProfile.mutateAsync({ name: profileName.trim() });
     setShowProfileSetup(false);
   };
 
-  if (loginStatus === 'initializing' || backendInitializing) {
+  const handleRetry = async () => {
+    setStartupTimeout(false);
+    await retryBackend();
+  };
+
+  const handleReload = () => {
+    window.location.reload();
+  };
+
+  const handleAddCase = () => {
+    setEditingCaseId(null);
+    setShowCaseFormModal(true);
+  };
+
+  const handleEditCase = (caseId: bigint) => {
+    setEditingCaseId(caseId);
+    setShowCaseFormModal(true);
+  };
+
+  const handleCloseCaseForm = () => {
+    setShowCaseFormModal(false);
+    setEditingCaseId(null);
+  };
+
+  const handleSaveComplete = () => {
+    setShowCaseFormModal(false);
+    setEditingCaseId(null);
+  };
+
+  // Only block on Internet Identity initialization, not backend
+  if (loginStatus === 'initializing') {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -51,6 +102,7 @@ export default function App() {
     );
   }
 
+  // Show unauthenticated UI immediately without blocking on backend
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -68,6 +120,24 @@ export default function App() {
     );
   }
 
+  // Show recovery screen if backend connection fails or times out
+  if (isAuthenticated && (backendError || startupTimeout) && !isConnected) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Header />
+        <main className="flex-1 flex items-center justify-center px-4">
+          <StartupRecoveryScreen
+            error={backendError || 'Backend connection is taking longer than expected'}
+            onRetry={handleRetry}
+            onReload={handleReload}
+            isRetrying={backendInitializing}
+          />
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
@@ -77,17 +147,13 @@ export default function App() {
         <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <h1 className="text-3xl font-bold text-primary">Surgery Cases</h1>
           <div className="flex gap-2 flex-wrap">
+            <Button onClick={handleAddCase} className="gap-2">
+              <Plus className="h-4 w-4" />
+              Add Case
+            </Button>
             <CsvImportDialog />
             <CsvExportButton />
           </div>
-        </div>
-
-        <div className="mb-6">
-          <CaseForm 
-            editingCaseId={editingCaseId} 
-            onCancelEdit={() => setEditingCaseId(null)}
-            onSaveComplete={() => setEditingCaseId(null)}
-          />
         </div>
 
         <div className="mb-4">
@@ -102,7 +168,7 @@ export default function App() {
         <CaseList
           sortField={sortField}
           sortDirection={sortDirection}
-          onEditCase={setEditingCaseId}
+          onEditCase={handleEditCase}
         />
       </main>
 
@@ -144,6 +210,19 @@ export default function App() {
               )}
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showCaseFormModal} onOpenChange={setShowCaseFormModal}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editingCaseId ? 'Edit Case' : 'Add New Case'}</DialogTitle>
+          </DialogHeader>
+          <CaseForm 
+            editingCaseId={editingCaseId} 
+            onCancelEdit={handleCloseCaseForm}
+            onSaveComplete={handleSaveComplete}
+          />
         </DialogContent>
       </Dialog>
 

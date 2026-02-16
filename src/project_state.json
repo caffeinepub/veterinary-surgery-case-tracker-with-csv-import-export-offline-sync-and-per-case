@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0.0",
-  "projectStateVersion": 21,
+  "projectStateVersion": 29,
   "summary": "App to track veterinary surgery cases with CSV import/export, structured case fields with date pickers, per-case task checklist, and quick-add demographics via paste or camera.",
   "architectural_notes": [
     "Tasks/to-do checklist scope includes 7 items (Discharge Notes, pDVM Notified, Labs, Histo, Surgery Report, Imaging, Culture) with defaults checked for Discharge Notes and pDVM Notified; selections made on case entry drive which items appear on the case card as needing completion."
@@ -11,7 +11,10 @@
     "Owner Last Name, Sex, and Date of Birth are not appearing on the case card UI as expected.",
     "Some previously entered cases (user reported 2) are not being displayed in the case list UI.",
     "Arrival Date and Date of Birth are displayed one day earlier than the date entered (likely date/timezone handling issue).",
-    "User reports the app is not connected to the backend (backend connectivity/integration issue)."
+    "User reports the app is not connected to the backend (backend connectivity/integration issue).",
+    "Cases created/visible in the Draft deployment are not showing up in the Live/Production app (environment data separation or deployment configuration issue).",
+    "Draft environment is not loading (user reports draft not loading).",
+    "Draft app shows error \"Failed to initialize backend connection\" even after logging out/in (actor initialization failing in Draft)."
   ],
   "isFixRequest": true,
   "existing_features": [
@@ -262,6 +265,110 @@
         "REQ-35"
       ],
       "version": 1
+    },
+    {
+      "id": "feature-when-the-authenticated-production-live-app-is-connected-to-the-backend-and-the-case-list-is-empty-show-an-explicit-user-facing-explanation-that-cases-created-in-the-draft-deployment-will-not-automatically-appear-in-live-because-deployments-use-separate-storage-and-provide-clear-next-steps-to-move-data-using-the-existing-csv-export-import-flow",
+      "title": "When the authenticated Production (Live) app is connected to the backend and the case list is empty, show an explicit user-facing explanation that cases created in the Draft deployment will not automatically appear in Live because deployments use separate storage, and provide clear next steps to move data using the existing CSV Export/Import flow.",
+      "reqIds": [
+        "REQ-36"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-a-visible-environment-label-in-the-authenticated-app-header-area-indicating-whether-the-user-is-on-a-draft-build-or-live-production-build-using-only-frontend-derived-context-available-at-runtime-e-g-hostname-origin-and-keep-the-label-text-in-english",
+      "title": "Add a visible environment label in the authenticated app header area indicating whether the user is on a Draft build or Live/Production build, using only frontend-derived context available at runtime (e.g., hostname/origin), and keep the label text in English.",
+      "reqIds": [
+        "REQ-37"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-prevent-the-app-from-being-stuck-on-the-full-screen-loading-spinner-when-the-user-is-not-authenticated-update-the-initial-loading-gate-in-frontend-src-app-tsx-so-the-unauthenticated-login-screen-can-render-even-if-backend-actor-initialization-is-slow-or-failing",
+      "title": "Prevent the app from being stuck on the full-screen loading spinner when the user is not authenticated. Update the initial loading gate in `frontend/src/App.tsx` so the unauthenticated Login screen can render even if backend actor initialization is slow or failing.",
+      "reqIds": [
+        "REQ-38"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-a-user-facing-recovery-path-when-startup-connection-initialization-takes-too-long-or-fails-on-draft-the-ui-must-show-an-english-error-explanation-and-provide-actions-to-a-retry-backend-connection-and-b-reload-the-page-include-a-brief-hint-to-check-network-connectivity-if-applicable",
+      "title": "Add a user-facing recovery path when startup/connection initialization takes too long or fails on Draft. The UI must show an English error/explanation and provide actions to (a) retry backend connection and (b) reload the page; include a brief hint to check network/connectivity if applicable.",
+      "reqIds": [
+        "REQ-39"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-improve-backend-connection-status-icon-text-consistency-in-the-authenticated-status-bar-so-users-can-accurately-tell-whether-the-backend-is-connected-or-disconnected-english-labels",
+      "title": "Improve backend-connection status icon/text consistency in the authenticated status bar so users can accurately tell whether the backend is connected or disconnected (English labels).",
+      "reqIds": [
+        "REQ-40"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-the-authenticated-home-page-the-main-screen-rendered-in-frontend-src-app-tsx-so-the-primary-content-is-the-cases-list-rendered-as-case-cards-and-the-case-creation-editing-form-is-not-shown-inline-by-default",
+      "title": "Update the authenticated home page (the main screen rendered in `frontend/src/App.tsx`) so the primary content is the Cases list rendered as case cards, and the case creation/editing form is not shown inline by default.",
+      "reqIds": [
+        "REQ-41"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-a-prominent-add-case-button-on-the-authenticated-home-page-near-the-surgery-cases-header-controls-that-opens-the-existing-caseform-ui-for-creating-a-new-case",
+      "title": "Add a prominent \"Add Case\" button on the authenticated home page near the \"Surgery Cases\" header controls that opens the existing `CaseForm` UI for creating a new case.",
+      "reqIds": [
+        "REQ-42"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-ensure-the-existing-edit-flow-from-a-case-card-still-works-with-the-new-home-page-layout-clicking-a-case-card-edit-action-should-open-the-case-form-for-that-case-and-allow-saving-canceling",
+      "title": "Ensure the existing edit flow from a case card still works with the new home-page layout: clicking a case card edit action should open the case form for that case and allow saving/canceling.",
+      "reqIds": [
+        "REQ-43"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-the-empty-cases-experience-so-that-when-there-are-no-cases-and-migration-guidance-is-not-being-shown-user-facing-guidance-points-to-the-new-add-case-button-rather-than-referencing-an-inline-form-above",
+      "title": "Update the empty-cases experience so that when there are no cases (and migration guidance is not being shown), user-facing guidance points to the new \"Add Case\" button rather than referencing an inline form above.",
+      "reqIds": [
+        "REQ-44"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-expose-actor-initialization-failures-to-the-ui-instead-of-silently-resulting-in-a-null-actor-so-the-draft-app-does-not-get-stuck-showing-the-generic-error-failed-to-initialize-backend-connection-without-actionable-detail",
+      "title": "Expose actor initialization failures to the UI instead of silently resulting in a null actor, so the Draft app does not get stuck showing the generic error \"Failed to initialize backend connection\" without actionable detail.",
+      "reqIds": [
+        "REQ-45"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-improve-draft-admin-token-handling-for-backend-initialization-detect-missing-empty-admin-token-and-show-clear-guidance-and-persist-reuse-the-token-across-logout-login-within-the-same-browser-session",
+      "title": "Improve Draft admin-token handling for backend initialization: detect missing/empty admin token and show clear guidance, and persist/reuse the token across logout/login within the same browser session.",
+      "reqIds": [
+        "REQ-46"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-differentiate-unauthorized-vs-unreachable-backend-failures-during-draft-startup-and-display-accurate-english-user-facing-messages-for-each-case",
+      "title": "Differentiate unauthorized vs unreachable backend failures during Draft startup and display accurate, English user-facing messages for each case.",
+      "reqIds": [
+        "REQ-47"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-ensure-the-retry-connection-action-fully-resets-the-failed-startup-state-so-that-repeated-retries-can-recover-without-requiring-a-full-page-reload",
+      "title": "Ensure the \"Retry Connection\" action fully resets the failed startup state so that repeated retries can recover without requiring a full page reload.",
+      "reqIds": [
+        "REQ-48"
+      ],
+      "version": 1
     }
   ],
   "new_feature_requests": [
@@ -343,6 +450,12 @@
       "reqIds": [
         "REQ-29"
       ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-21",
+      "summary": "Set the Home page to display the Cases list as case cards by default, and add a prominent \"Add Case\" button for creating a new case",
+      "reqIds": [],
       "status": "pending"
     }
   ],

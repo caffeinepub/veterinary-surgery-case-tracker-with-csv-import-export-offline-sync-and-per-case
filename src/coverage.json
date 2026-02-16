@@ -1,56 +1,69 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-16T06:47:24.359Z",
+  "generatedAt": "2026-02-16T14:54:36.543Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 3,
-    "implemented": 3,
+    "total": 4,
+    "implemented": 4,
     "items": [
       {
-        "id": "REQ-33",
-        "summary": "Fix the frontend-to-backend connection so authenticated users can successfully create an actor and call backend methods (e.g., `getCallerUserProfile`, `getAllSurgeryCases`) without the app behaving as if it is disconnected.",
+        "id": "REQ-45",
+        "summary": "Expose actor initialization failures to the UI instead of silently resulting in a null actor, so the Draft app does not get stuck showing the generic error \"Failed to initialize backend connection\" without actionable detail.",
         "status": "implemented",
         "plannedFiles": [
+          "frontend/src/hooks/useActor.ts",
           "frontend/src/hooks/useBackendConnection.ts",
-          "frontend/src/hooks/useCasesStore.ts",
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/App.tsx"
+          "frontend/src/components/startup/StartupRecoveryScreen.tsx"
         ],
         "matchedFiles": [
           "frontend/src/hooks/useBackendConnection.ts",
-          "frontend/src/hooks/useCasesStore.ts",
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/App.tsx"
+          "frontend/src/components/startup/StartupRecoveryScreen.tsx"
         ]
       },
       {
-        "id": "REQ-34",
-        "summary": "Harden actor initialization in `frontend/src/hooks/useActor.ts` so that failures during `createActorWithConfig(...)` and/or `_initializeAccessControlWithSecret(...)` do not leave the UI in an ambiguous state; instead, capture the error and expose it to the UI as a backend connection/initialization error.",
+        "id": "REQ-46",
+        "summary": "Improve Draft admin-token handling for backend initialization: detect missing/empty admin token and show clear guidance, and persist/reuse the token across logout/login within the same browser session.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/hooks/useBackendConnection.ts",
-          "frontend/src/components/sync/SyncStatusBar.tsx"
+          "frontend/src/utils/draftAdminToken.ts",
+          "frontend/src/hooks/useActor.ts",
+          "frontend/src/components/startup/StartupRecoveryScreen.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/hooks/useBackendConnection.ts",
-          "frontend/src/components/sync/SyncStatusBar.tsx"
+          "frontend/src/utils/draftAdminToken.ts",
+          "frontend/src/components/startup/StartupRecoveryScreen.tsx"
         ]
       },
       {
-        "id": "REQ-35",
-        "summary": "Add a visible, user-facing backend connection status and error message in the UI (English), including a simple retry action, so users can tell the difference between Offline mode and Backend not connected/unauthorized.",
+        "id": "REQ-47",
+        "summary": "Differentiate unauthorized vs unreachable backend failures during Draft startup and display accurate, English user-facing messages for each case.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/sync/SyncStatusBar.tsx",
-          "frontend/src/hooks/useOnlineStatus.ts"
+          "frontend/src/utils/backendErrorMessages.ts",
+          "frontend/src/hooks/useActor.ts",
+          "frontend/src/hooks/useBackendConnection.ts"
         ],
         "matchedFiles": [
-          "frontend/src/components/sync/SyncStatusBar.tsx",
-          "frontend/src/hooks/useOnlineStatus.ts"
+          "frontend/src/utils/backendErrorMessages.ts",
+          "frontend/src/hooks/useBackendConnection.ts"
+        ]
+      },
+      {
+        "id": "REQ-48",
+        "summary": "Ensure the \"Retry Connection\" action fully resets the failed startup state so that repeated retries can recover without requiring a full page reload.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/hooks/useActor.ts",
+          "frontend/src/hooks/useBackendConnection.ts",
+          "frontend/src/App.tsx",
+          "frontend/src/components/sync/SyncStatusBar.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/hooks/useBackendConnection.ts"
         ]
       }
     ]
@@ -60,13 +73,11 @@
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/App.tsx",
-    "frontend/src/components/sync/SyncStatusBar.tsx",
+    "frontend/src/components/startup/StartupRecoveryScreen.tsx",
+    "frontend/src/hooks/useActorWithError.ts",
     "frontend/src/hooks/useBackendConnection.ts",
-    "frontend/src/hooks/useCasesStore.ts",
-    "frontend/src/hooks/useOnlineStatus.ts",
-    "frontend/src/hooks/useQueries.ts",
-    "frontend/src/hooks/useSync.ts",
+    "frontend/src/utils/backendErrorMessages.ts",
+    "frontend/src/utils/draftAdminToken.ts",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

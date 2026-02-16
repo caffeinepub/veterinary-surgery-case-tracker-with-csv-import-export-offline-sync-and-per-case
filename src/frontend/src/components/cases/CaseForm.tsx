@@ -1,11 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
-import { Textarea } from '../ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Loader2, X, Sparkles } from 'lucide-react';
+import { Loader2, Sparkles } from 'lucide-react';
 import DateField from './DateField';
 import DemographicsQuickAdd from './DemographicsQuickAdd';
 import { useCreateSurgeryCase, useUpdateSurgeryCase } from '../../hooks/useQueries';
@@ -71,6 +69,24 @@ export default function CaseForm({ editingCaseId, onCancelEdit, onSaveComplete }
         setTouchedFields(new Set());
         setHasAutoPrefilled(false);
       }
+    } else {
+      // Reset form when creating new case
+      setFormData({
+        medicalRecordNumber: '',
+        arrivalDate: getTodayDateOnlyString(),
+        petName: '',
+        ownerLastName: '',
+        species: 'Canine',
+        breed: '',
+        sex: 'Male',
+        dateOfBirth: '',
+        presentingComplaint: '',
+        notes: '',
+        demographicsRawText: '',
+        requiredTasks: createDefaultTasksChecklist(),
+      });
+      setTouchedFields(new Set());
+      setHasAutoPrefilled(false);
     }
   }, [editingCaseId, cases]);
 
@@ -177,24 +193,8 @@ export default function CaseForm({ editingCaseId, onCancelEdit, onSaveComplete }
           tasksChecklist: formData.requiredTasks,
         });
         toast.success('Case created successfully');
+        onSaveComplete();
       }
-
-      setFormData({
-        medicalRecordNumber: '',
-        arrivalDate: getTodayDateOnlyString(),
-        petName: '',
-        ownerLastName: '',
-        species: 'Canine',
-        breed: '',
-        sex: 'Male',
-        dateOfBirth: '',
-        presentingComplaint: '',
-        notes: '',
-        demographicsRawText: '',
-        requiredTasks: createDefaultTasksChecklist(),
-      });
-      setTouchedFields(new Set());
-      setHasAutoPrefilled(false);
     } catch (error) {
       console.error('Failed to save case:', error);
       toast.error('Failed to save case');
@@ -202,209 +202,169 @@ export default function CaseForm({ editingCaseId, onCancelEdit, onSaveComplete }
   };
 
   const handleCancel = () => {
-    setFormData({
-      medicalRecordNumber: '',
-      arrivalDate: getTodayDateOnlyString(),
-      petName: '',
-      ownerLastName: '',
-      species: 'Canine',
-      breed: '',
-      sex: 'Male',
-      dateOfBirth: '',
-      presentingComplaint: '',
-      notes: '',
-      demographicsRawText: '',
-      requiredTasks: createDefaultTasksChecklist(),
-    });
-    setTouchedFields(new Set());
-    setHasAutoPrefilled(false);
     onCancelEdit();
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          <span>{editingCaseId ? 'Edit Case' : 'New Case'}</span>
-          {editingCaseId && (
-            <Button variant="ghost" size="sm" onClick={handleCancel}>
-              <X className="h-4 w-4" />
+    <form onSubmit={handleSubmit} className="space-y-6">
+      {showPrefillSuggestion && hasAutoPrefilled && (
+        <Alert className="bg-primary/5 border-primary/20">
+          <Sparkles className="h-4 w-4 text-primary" />
+          <AlertDescription className="flex items-center justify-between">
+            <span className="text-sm">
+              <strong>Auto-filled</strong> from previous case with this Medical Record #
+            </span>
+            <Button 
+              type="button" 
+              size="sm" 
+              variant="outline"
+              onClick={() => handlePrefill()}
+            >
+              Refresh Data
             </Button>
-          )}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {showPrefillSuggestion && hasAutoPrefilled && (
-            <Alert className="bg-primary/5 border-primary/20">
-              <Sparkles className="h-4 w-4 text-primary" />
-              <AlertDescription className="flex items-center justify-between">
-                <span className="text-sm">
-                  <strong>Auto-filled</strong> from previous case with this Medical Record #
-                </span>
-                <Button 
-                  type="button" 
-                  size="sm" 
-                  variant="outline"
-                  onClick={() => handlePrefill()}
-                >
-                  Refresh Data
-                </Button>
-              </AlertDescription>
-            </Alert>
-          )}
+          </AlertDescription>
+        </Alert>
+      )}
 
-          {showPrefillSuggestion && !hasAutoPrefilled && (
-            <Alert>
-              <Info className="h-4 w-4" />
-              <AlertDescription className="flex items-center justify-between">
-                <span>Previous case found with this Medical Record #</span>
-                <Button type="button" size="sm" onClick={() => handlePrefill()}>
-                  Prefill Demographics
-                </Button>
-              </AlertDescription>
-            </Alert>
-          )}
+      {showPrefillSuggestion && !hasAutoPrefilled && (
+        <Alert>
+          <Info className="h-4 w-4" />
+          <AlertDescription className="flex items-center justify-between">
+            <span>Previous case found with this Medical Record #</span>
+            <Button type="button" size="sm" onClick={() => handlePrefill()}>
+              Prefill Demographics
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="medicalRecordNumber">Medical Record # *</Label>
-              <Input
-                id="medicalRecordNumber"
-                value={formData.medicalRecordNumber}
-                onChange={(e) => handleFieldChange('medicalRecordNumber', e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="arrivalDate">Arrival Date *</Label>
-              <DateField
-                value={formData.arrivalDate}
-                onChange={(dateStr) => handleFieldChange('arrivalDate', dateStr || getTodayDateOnlyString())}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="petName">Pet Name</Label>
-              <Input
-                id="petName"
-                value={formData.petName}
-                onChange={(e) => handleFieldChange('petName', e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="ownerLastName">Owner Last Name</Label>
-              <Input
-                id="ownerLastName"
-                value={formData.ownerLastName}
-                onChange={(e) => handleFieldChange('ownerLastName', e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="species">Species</Label>
-              <Select value={formData.species} onValueChange={(value: any) => handleFieldChange('species', value)}>
-                <SelectTrigger id="species">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Canine">Canine</SelectItem>
-                  <SelectItem value="Feline">Feline</SelectItem>
-                  <SelectItem value="Other">Other</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="breed">Breed</Label>
-              <Input id="breed" value={formData.breed} onChange={(e) => handleFieldChange('breed', e.target.value)} />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="sex">Sex</Label>
-              <Select value={formData.sex} onValueChange={(value: any) => handleFieldChange('sex', value)}>
-                <SelectTrigger id="sex">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Male">Male</SelectItem>
-                  <SelectItem value="Male Neutered">Male Neutered</SelectItem>
-                  <SelectItem value="Female">Female</SelectItem>
-                  <SelectItem value="Female Spayed">Female Spayed</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="dateOfBirth">Date of Birth</Label>
-              <DateField
-                value={formData.dateOfBirth}
-                onChange={(dateStr) => handleFieldChange('dateOfBirth', dateStr)}
-                placeholder="Optional"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="presentingComplaint">Presenting Complaint</Label>
-            <Textarea
-              id="presentingComplaint"
-              value={formData.presentingComplaint}
-              onChange={(e) => handleFieldChange('presentingComplaint', e.target.value)}
-              rows={3}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="notes">Notes</Label>
-            <Textarea
-              id="notes"
-              value={formData.notes}
-              onChange={(e) => handleFieldChange('notes', e.target.value)}
-              rows={3}
-            />
-          </div>
-
-          <DemographicsQuickAdd
-            value={formData.demographicsRawText}
-            onChange={(val) => handleFieldChange('demographicsRawText', val)}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="medicalRecordNumber">Medical Record # *</Label>
+          <Input
+            id="medicalRecordNumber"
+            value={formData.medicalRecordNumber}
+            onChange={(e) => handleFieldChange('medicalRecordNumber', e.target.value)}
+            required
           />
+        </div>
 
-          <div className="space-y-3">
-            <Label>Required Tasks</Label>
-            <div className="space-y-2">
-              {TASK_DEFINITIONS.map((task) => (
-                <div key={task.key} className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id={`task-${task.key}`}
-                    checked={formData.requiredTasks[task.key].required}
-                    onChange={() => handleTaskRequiredToggle(task.key)}
-                    className="h-4 w-4 rounded border-gray-300"
-                  />
-                  <Label htmlFor={`task-${task.key}`} className="font-normal cursor-pointer">
-                    {task.label}
-                  </Label>
-                </div>
-              ))}
+        <div className="space-y-2">
+          <Label htmlFor="arrivalDate">Arrival Date *</Label>
+          <DateField
+            value={formData.arrivalDate}
+            onChange={(dateStr) => handleFieldChange('arrivalDate', dateStr || getTodayDateOnlyString())}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="petName">Pet Name</Label>
+          <Input
+            id="petName"
+            value={formData.petName}
+            onChange={(e) => handleFieldChange('petName', e.target.value)}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="ownerLastName">Owner Last Name</Label>
+          <Input
+            id="ownerLastName"
+            value={formData.ownerLastName}
+            onChange={(e) => handleFieldChange('ownerLastName', e.target.value)}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="species">Species</Label>
+          <Select value={formData.species} onValueChange={(value) => handleFieldChange('species', value)}>
+            <SelectTrigger id="species">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Canine">Canine</SelectItem>
+              <SelectItem value="Feline">Feline</SelectItem>
+              <SelectItem value="Avian">Avian</SelectItem>
+              <SelectItem value="Exotic">Exotic</SelectItem>
+              <SelectItem value="Other">Other</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="breed">Breed</Label>
+          <Input
+            id="breed"
+            value={formData.breed}
+            onChange={(e) => handleFieldChange('breed', e.target.value)}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="sex">Sex</Label>
+          <Select value={formData.sex} onValueChange={(value) => handleFieldChange('sex', value)}>
+            <SelectTrigger id="sex">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Male">Male</SelectItem>
+              <SelectItem value="Female">Female</SelectItem>
+              <SelectItem value="Male Neutered">Male Neutered</SelectItem>
+              <SelectItem value="Female Spayed">Female Spayed</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="dateOfBirth">Date of Birth</Label>
+          <DateField
+            value={formData.dateOfBirth}
+            onChange={(dateStr) => handleFieldChange('dateOfBirth', dateStr || '')}
+          />
+        </div>
+      </div>
+
+      <DemographicsQuickAdd
+        value={formData.demographicsRawText}
+        onChange={(text) => handleFieldChange('demographicsRawText', text)}
+      />
+
+      <div className="space-y-3">
+        <Label className="text-base font-semibold">Required Tasks</Label>
+        <p className="text-sm text-muted-foreground">Select which tasks are required for this case</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {Object.entries(TASK_DEFINITIONS).map(([key, definition]) => (
+            <div key={key} className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id={`task-${key}`}
+                checked={formData.requiredTasks[key as keyof TasksChecklist].required}
+                onChange={() => handleTaskRequiredToggle(key as keyof TasksChecklist)}
+                className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+              />
+              <Label htmlFor={`task-${key}`} className="text-sm font-normal cursor-pointer">
+                {definition.label}
+              </Label>
             </div>
-          </div>
+          ))}
+        </div>
+      </div>
 
-          <div className="flex gap-2">
-            <Button type="submit" disabled={createCase.isPending || updateCase.isPending}>
-              {(createCase.isPending || updateCase.isPending) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {editingCaseId ? 'Update Case' : 'Create Case'}
-            </Button>
-            {editingCaseId && (
-              <Button type="button" variant="outline" onClick={handleCancel}>
-                Cancel
-              </Button>
-            )}
-          </div>
-        </form>
-      </CardContent>
-    </Card>
+      <div className="flex gap-2 justify-end pt-4">
+        <Button type="button" variant="outline" onClick={handleCancel}>
+          Cancel
+        </Button>
+        <Button type="submit" disabled={createCase.isPending || updateCase.isPending}>
+          {(createCase.isPending || updateCase.isPending) ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            editingCaseId ? 'Update Case' : 'Create Case'
+          )}
+        </Button>
+      </div>
+    </form>
   );
 }

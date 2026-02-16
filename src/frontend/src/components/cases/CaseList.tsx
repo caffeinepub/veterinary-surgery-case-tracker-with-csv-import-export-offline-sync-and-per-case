@@ -1,6 +1,10 @@
 import { useCasesStore } from '../../hooks/useCasesStore';
+import { useInternetIdentity } from '../../hooks/useInternetIdentity';
+import { useBackendConnection } from '../../hooks/useBackendConnection';
+import { useOnlineStatus } from '../../hooks/useOnlineStatus';
 import CaseCard from './CaseCard';
-import { Loader2, FolderOpen } from 'lucide-react';
+import EmptyCasesState from './EmptyCasesState';
+import { Loader2 } from 'lucide-react';
 import type { LocalSurgeryCase } from '../../types/cases';
 
 interface CaseListProps {
@@ -11,6 +15,11 @@ interface CaseListProps {
 
 export default function CaseList({ sortField, sortDirection, onEditCase }: CaseListProps) {
   const { cases, isLoading } = useCasesStore();
+  const { identity } = useInternetIdentity();
+  const { isConnected } = useBackendConnection();
+  const isOnline = useOnlineStatus();
+
+  const isAuthenticated = !!identity;
 
   const sortedCases = [...cases].sort((a, b) => {
     let comparison = 0;
@@ -33,17 +42,14 @@ export default function CaseList({ sortField, sortDirection, onEditCase }: CaseL
   }
 
   if (cases.length === 0) {
-    return (
-      <div className="text-center py-16">
-        <div className="flex justify-center mb-4">
-          <div className="rounded-full bg-muted p-6">
-            <FolderOpen className="h-12 w-12 text-muted-foreground" />
-          </div>
-        </div>
-        <h3 className="text-lg font-semibold mb-2">No cases yet</h3>
-        <p className="text-muted-foreground">Create your first case using the form above.</p>
-      </div>
-    );
+    // Show migration guidance only when:
+    // - User is authenticated
+    // - Backend is connected
+    // - Browser is online
+    // - Case list is empty
+    const showMigrationGuidance = isAuthenticated && isConnected && isOnline !== false;
+    
+    return <EmptyCasesState showMigrationGuidance={showMigrationGuidance} />;
   }
 
   return (

@@ -4,7 +4,7 @@ import { useSync } from '../../hooks/useSync';
 import { useInternetIdentity } from '../../hooks/useInternetIdentity';
 import { Button } from '../ui/button';
 import { Alert, AlertDescription } from '../ui/alert';
-import { Wifi, WifiOff, RefreshCw, AlertCircle, ServerOff } from 'lucide-react';
+import { Wifi, WifiOff, RefreshCw, AlertCircle, Server, ServerOff } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function SyncStatusBar() {
@@ -73,7 +73,7 @@ export default function SyncStatusBar() {
                   </>
                 ) : isConnected ? (
                   <>
-                    <ServerOff className="h-4 w-4 text-primary" />
+                    <Server className="h-4 w-4 text-primary" />
                     <span className="text-sm font-medium text-primary">Backend Connected</span>
                   </>
                 ) : (

@@ -1,78 +1,114 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Frontend backend-connection diagnostics, retry, and non-ambiguous actor initialization states",
+  "title": "Draft startup recovery: actionable actor initialization errors, admin-token persistence, and reliable retry",
   "requirements": [
     {
-      "id": "REQ-33",
-      "summary": "Ensure authenticated sessions reliably establish a backend actor and confirm connectivity via at least one successful read call, with clear surfaced failures instead of silent fallback.",
+      "id": "REQ-45",
+      "summary": "Surface backend actor initialization failures in the UI and expose an explicit actor error state for downstream hooks.",
       "acceptanceCriteria": [
-        "When logged in with Internet Identity, the app successfully loads the user profile (or prompts for profile setup) and fetches cases from the backend without requiring manual refreshes.",
-        "If backend calls fail, the failure is surfaced as a clear error state (not silent fallback) indicating the app could not connect or is unauthorized.",
-        "A successful backend connection is confirmed by at least one successful read call (e.g., `getCallerUserProfile` or `getAllSurgeryCases`) after login."
+        "When backend actor creation or `_initializeAccessControlWithSecret(...)` fails, the error is captured and surfaced as a specific, user-visible message (English) on the StartupRecoveryScreen instead of only setting `actor` to null.",
+        "`useActor` returns an explicit error state (e.g., `error: string | null`) in addition to `actor` and `isFetching` so downstream hooks can distinguish 'still loading' vs 'failed to create actor'.",
+        "`useBackendConnection` uses the actor initialization error (when present) as the primary displayed error, rather than overwriting it with the generic \"Failed to initialize backend connection\" message."
       ],
       "file_operations": [
         {
+          "path": "frontend/src/hooks/useActor.ts",
+          "operation": "modify",
+          "description": "Capture and retain actor creation / access-control initialization failures as a typed, user-safe error string (do not leak secrets), and return it from `useActor` alongside `actor` and `isFetching` so callers can distinguish loading vs initialization failure. This includes failures related to the authorization component's access-control initialization; verify the component's usage instructions before implementing."
+        },
+        {
           "path": "frontend/src/hooks/useBackendConnection.ts",
+          "operation": "modify",
+          "description": "Prefer the actor initialization error from `useActor` as the primary `error` value, and avoid replacing it with a generic message when `actor` is null; only run the backend probe when actor initialization succeeded and the actor is available."
+        },
+        {
+          "path": "frontend/src/components/startup/StartupRecoveryScreen.tsx",
+          "operation": "modify",
+          "description": "Ensure the recovery UI presents the passed-in initialization error as the key actionable message in English (no silent fallback to generic text), while keeping supporting guidance secondary."
+        }
+      ]
+    },
+    {
+      "id": "REQ-46",
+      "summary": "Detect missing/empty Draft admin token during access-control initialization, guide the user, and persist/reuse the token across logout/login within the same session.",
+      "acceptanceCriteria": [
+        "If `caffeineAdminToken` is missing/empty at the moment `_initializeAccessControlWithSecret(...)` is attempted, the UI displays an English error explaining that the Draft build requires an admin token and instructs the user to open the Draft URL that contains the token (do not display the token value).",
+        "The token retrieval logic uses the existing URL/session helpers in `frontend/src/utils/urlParams.ts` so that, once provided, the token is stored in `sessionStorage` and continues to work after the user logs out and logs back in (until the browser session ends).",
+        "Retrying from the recovery screen re-attempts actor initialization using the persisted token without requiring the user to re-enter it."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/utils/draftAdminToken.ts",
           "operation": "create",
-          "description": "Create a higher-level backend connection manager hook that composes the existing Internet Identity + actor lifecycle to: (1) probe backend connectivity with a post-login read call (e.g., getCallerUserProfile/getCallerUserRole), (2) derive a single connection status and human-readable English error message, and (3) expose a retry function that re-attempts actor initialization and refreshes dependent queries. Use the selected \"authorization\" component concepts for post-login profile probing and for treating authorization traps as user-facing unauthorized/connection errors. Verify the component's usage instructions before implementing."
+          "description": "Add a small helper that retrieves `caffeineAdminToken` using the existing URL/session utilities from `frontend/src/utils/urlParams.ts` (sessionStorage persistence), and provides safe checks for missing/empty tokens without ever returning a value intended for display."
         },
         {
-          "path": "frontend/src/hooks/useCasesStore.ts",
+          "path": "frontend/src/hooks/useActor.ts",
           "operation": "modify",
-          "description": "Stop silently treating backend failures as a normal disconnected state for authenticated users: capture fetch failures (when an actor exists but backend read calls fail) into an exposed error string/state that the UI can display, while still allowing offline/local cases when the browser is actually offline. Ensure no uncaught errors break rendering; errors should be stored and surfaced in English."
+          "description": "Use the Draft admin-token helper (backed by `urlParams.ts` session persistence) when attempting `_initializeAccessControlWithSecret(...)`; if the token is missing/empty at that moment, fail actor initialization with an explicit English message instructing the user to open the Draft URL containing the token (do not display the token). This interacts with the authorization component's access-control init; verify the component's usage instructions before implementing."
         },
         {
-          "path": "frontend/src/hooks/useQueries.ts",
+          "path": "frontend/src/components/startup/StartupRecoveryScreen.tsx",
           "operation": "modify",
-          "description": "Align profile/case queries with connection diagnostics: avoid silent fallbacks when actor is unavailable due to initialization failure by throwing a clear Error (English) for authenticated flows where appropriate, and disable automatic retries that would mask the underlying actor/connectivity problem. Use the selected \"authorization\" component guidance for profile setup flow (getCallerUserProfile/saveCallerUserProfile) and for handling authorization failures gracefully in the UI. Verify the component's usage instructions before implementing."
+          "description": "Ensure the token-missing guidance message is clearly readable in English and does not include or echo the token value."
+        }
+      ]
+    },
+    {
+      "id": "REQ-47",
+      "summary": "Differentiate unauthorized vs unreachable backend failures during Draft startup and show accurate English messages without misclassifying initialization failures.",
+      "acceptanceCriteria": [
+        "If the backend call fails due to authorization (e.g., traps containing \"Unauthorized\"), the recovery screen shows an authorization-specific message (English) rather than a generic connectivity message.",
+        "If the failure is due to network/canister unavailability, the recovery screen shows a network/service-unavailable specific message (English).",
+        "The displayed error path does not misclassify 'actor not available because it failed to initialize' as a network failure; it should be reported as initialization failure with the underlying cause included when available."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/utils/backendErrorMessages.ts",
+          "operation": "create",
+          "description": "Create a shared error-classification utility that converts raw thrown errors (including trap messages) into user-facing English messages, distinguishing authorization failures vs service/network unavailability, and preserving initialization failure causes when available."
+        },
+        {
+          "path": "frontend/src/hooks/useActor.ts",
+          "operation": "modify",
+          "description": "Map actor creation and `_initializeAccessControlWithSecret(...)` failures to clear, user-facing English messages via the shared error-message utility, ensuring initialization failures remain categorized as initialization failures (not network failures). This is closely related to the authorization component behavior; verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/hooks/useBackendConnection.ts",
+          "operation": "modify",
+          "description": "Use the shared error-message utility to classify backend probe failures into authorization vs service/network-unavailable messages, while ensuring actor initialization failures short-circuit and are surfaced as initialization failures (not probe/network errors)."
+        }
+      ]
+    },
+    {
+      "id": "REQ-48",
+      "summary": "Make Retry Connection fully reset failed startup state and perform a fresh actor init + fresh probe without a page reload.",
+      "acceptanceCriteria": [
+        "Clicking \"Retry Connection\" clears prior actor/probe errors and triggers a fresh actor initialization attempt, followed by a fresh backend probe, without requiring `window.location.reload()`.",
+        "If a retry succeeds, the app transitions into the authenticated main UI and does not continue to show the StartupRecoveryScreen.",
+        "If a retry fails, the user sees the latest failure reason (English), not a stale error from a previous attempt."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/hooks/useActor.ts",
+          "operation": "modify",
+          "description": "Expose a retry/reset mechanism from `useActor` (e.g., a `retry` function that clears the prior init error and forces a new initialization attempt) so higher-level hooks can reliably restart actor initialization without a full page reload."
+        },
+        {
+          "path": "frontend/src/hooks/useBackendConnection.ts",
+          "operation": "modify",
+          "description": "Update `retry` to fully reset startup state by clearing stored connection/probe errors and triggering (1) a fresh actor initialization attempt via `useActor`’s reset/retry mechanism, then (2) a fresh backend probe. Ensure the latest failure is shown and that success clears errors so the app can transition out of StartupRecoveryScreen."
         },
         {
           "path": "frontend/src/App.tsx",
           "operation": "modify",
-          "description": "Wire the new backend connection manager so that after login the app performs (and can react to) a confirmed successful read call before assuming it is connected. Ensure profile setup prompting continues to work without manual refresh (no modal flash), and that connection/authorization failures are surfaced via the shared status UI rather than appearing as 'disconnected' without explanation."
-        }
-      ]
-    },
-    {
-      "id": "REQ-34",
-      "summary": "Harden actor initialization handling without modifying the immutable useActor.ts by capturing actor creation/initialization failures and exposing them as a stable UI-facing backend initialization error.",
-      "acceptanceCriteria": [
-        "If actor creation fails (network, canister ID/host misconfiguration, agent error), `useActor` exposes a non-null error string describing the failure in English.",
-        "If `_initializeAccessControlWithSecret` fails (e.g., missing/invalid token), the error is captured and surfaced; the app does not silently proceed as if connected.",
-        "`useActor` continues to return a stable `actor: null` state when initialization fails, and dependent queries/mutations do not throw uncaught errors that break rendering."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/hooks/useBackendConnection.ts",
-          "operation": "create",
-          "description": "Implement actor-initialization error capture without editing the immutable frontend/src/hooks/useActor.ts by inspecting the react-query state for the actor query (keyed by the current principal) and translating failures from createActorWithConfig(...) and/or _initializeAccessControlWithSecret(...) into a stable, non-null English error string. Expose derived fields like isInitializing/hasError and a safe retry() that invalidates/refetches the actor query."
+          "description": "Wire the recovery screen Retry Connection action to the updated retry behavior (no page reload needed) and ensure successful retries allow the authenticated main UI to render instead of continuing to show StartupRecoveryScreen."
         },
         {
           "path": "frontend/src/components/sync/SyncStatusBar.tsx",
           "operation": "modify",
-          "description": "Integrate the new backend connection hook so actor initialization failures are shown as explicit, user-facing backend connection/initialization errors (English), rather than leaving the UI ambiguous. Ensure the UI remains stable when actor is null and no uncaught errors occur."
-        }
-      ]
-    },
-    {
-      "id": "REQ-35",
-      "summary": "Add a visible backend connection status banner that distinguishes offline vs backend unauthorized/connection failure and provides a retry action.",
-      "acceptanceCriteria": [
-        "When the actor is not available due to initialization failure, the UI shows a clear message such as \"Not connected to backend\" or a more specific error in English.",
-        "The status UI distinguishes: (1) browser offline, vs (2) browser online but backend connection/authorization failed.",
-        "A retry control is available that re-attempts actor initialization and/or refetches backend queries; on success, the error/status clears and backend data loads."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/components/sync/SyncStatusBar.tsx",
-          "operation": "modify",
-          "description": "Extend the existing status bar to display (a) browser online/offline (existing), and (b) backend connection status from the new backend connection hook, including a clear English error message when browser is online but backend is not connected/unauthorized. Add a retry control that calls the hook's retry() and triggers query refetch to recover. Keep the UX consistent with existing shadcn/ui Alert/Button patterns; verify any existing component usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/hooks/useOnlineStatus.ts",
-          "operation": "modify",
-          "description": "Optionally enhance online/offline status handling to support clearer UI messaging (e.g., initial null/unknown state or more robust event handling) if needed to reliably distinguish true offline mode from backend authorization/connection failures shown in the status UI."
+          "description": "Ensure the status-bar Retry Connection action benefits from the same full reset behavior (fresh actor initialization + fresh probe) and displays the latest error state consistently."
         }
       ]
     }

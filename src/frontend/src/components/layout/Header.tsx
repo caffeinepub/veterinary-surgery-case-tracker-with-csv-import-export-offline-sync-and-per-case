@@ -1,12 +1,15 @@
 import { useInternetIdentity } from '../../hooks/useInternetIdentity';
 import { useQueryClient } from '@tanstack/react-query';
+import { useEnvironmentLabel } from '../../hooks/useEnvironmentLabel';
 import { Button } from '../ui/button';
+import { Badge } from '../ui/badge';
 import { Loader2, Stethoscope } from 'lucide-react';
 import { clearLocalStorage } from '../../utils/localPersistence';
 
 export default function Header() {
   const { login, clear, loginStatus, identity } = useInternetIdentity();
   const queryClient = useQueryClient();
+  const environmentLabel = useEnvironmentLabel();
 
   const isAuthenticated = !!identity;
   const disabled = loginStatus === 'logging-in';
@@ -38,7 +41,17 @@ export default function Header() {
             <Stethoscope className="h-6 w-6 text-primary-foreground" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-primary">VetCase Tracker</h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl font-bold text-primary">VetCase Tracker</h1>
+              {isAuthenticated && (
+                <Badge 
+                  variant="outline" 
+                  className="text-xs font-normal bg-muted/50"
+                >
+                  {environmentLabel}
+                </Badge>
+              )}
+            </div>
             <p className="text-xs text-muted-foreground">Surgery Case Management</p>
           </div>
         </div>

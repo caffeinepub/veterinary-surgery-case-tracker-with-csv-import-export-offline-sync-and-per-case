@@ -1,72 +1,93 @@
 {
   "kind": "build_request",
-  "title": "Fix backend connectivity and add clear connection diagnostics",
+  "title": "Fix Draft startup: backend actor initialization fails even after logout/login",
   "priority": "high",
   "requirements": [
     {
-      "id": "REQ-33",
-      "text": "Fix the frontend-to-backend connection so authenticated users can successfully create an actor and call backend methods (e.g., `getCallerUserProfile`, `getAllSurgeryCases`) without the app behaving as if it is disconnected.",
-      "target": "both",
-      "source": {
-        "messageIds": [
-          "msg-4"
-        ],
-        "quotes": [
-          "App not connected on backend"
-        ]
-      },
-      "acceptanceCriteria": [
-        "When logged in with Internet Identity, the app successfully loads the user profile (or prompts for profile setup) and fetches cases from the backend without requiring manual refreshes.",
-        "If backend calls fail, the failure is surfaced as a clear error state (not silent fallback) indicating the app could not connect or is unauthorized.",
-        "A successful backend connection is confirmed by at least one successful read call (e.g., `getCallerUserProfile` or `getAllSurgeryCases`) after login."
-      ]
-    },
-    {
-      "id": "REQ-34",
-      "text": "Harden actor initialization in `frontend/src/hooks/useActor.ts` so that failures during `createActorWithConfig(...)` and/or `_initializeAccessControlWithSecret(...)` do not leave the UI in an ambiguous state; instead, capture the error and expose it to the UI as a backend connection/initialization error.",
+      "id": "REQ-45",
+      "text": "Expose actor initialization failures to the UI instead of silently resulting in a null actor, so the Draft app does not get stuck showing the generic error \"Failed to initialize backend connection\" without actionable detail.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-4"
+          "msg-4",
+          "msg-5"
         ],
         "quotes": [
-          "App not connected on backend"
+          "Failed to initialize backend connection",
+          "Logged out and back in; still happening in draft"
         ]
       },
       "acceptanceCriteria": [
-        "If actor creation fails (network, canister ID/host misconfiguration, agent error), `useActor` exposes a non-null error string describing the failure in English.",
-        "If `_initializeAccessControlWithSecret` fails (e.g., missing/invalid token), the error is captured and surfaced; the app does not silently proceed as if connected.",
-        "`useActor` continues to return a stable `actor: null` state when initialization fails, and dependent queries/mutations do not throw uncaught errors that break rendering."
+        "When backend actor creation or `_initializeAccessControlWithSecret(...)` fails, the error is captured and surfaced as a specific, user-visible message (English) on the StartupRecoveryScreen instead of only setting `actor` to null.",
+        "`useActor` returns an explicit error state (e.g., `error: string | null`) in addition to `actor` and `isFetching` so downstream hooks can distinguish 'still loading' vs 'failed to create actor'.",
+        "`useBackendConnection` uses the actor initialization error (when present) as the primary displayed error, rather than overwriting it with the generic \"Failed to initialize backend connection\" message."
       ]
     },
     {
-      "id": "REQ-35",
-      "text": "Add a visible, user-facing backend connection status and error message in the UI (English), including a simple retry action, so users can tell the difference between Offline mode and Backend not connected/unauthorized.",
+      "id": "REQ-46",
+      "text": "Improve Draft admin-token handling for backend initialization: detect missing/empty admin token and show clear guidance, and persist/reuse the token across logout/login within the same browser session.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-4"
+          "msg-5"
         ],
         "quotes": [
-          "App not connected on backend"
+          "Logged out and back in; still happening in draft"
         ]
       },
       "acceptanceCriteria": [
-        "When the actor is not available due to initialization failure, the UI shows a clear message such as \"Not connected to backend\" or a more specific error in English.",
-        "The status UI distinguishes: (1) browser offline, vs (2) browser online but backend connection/authorization failed.",
-        "A retry control is available that re-attempts actor initialization and/or refetches backend queries; on success, the error/status clears and backend data loads."
+        "If `caffeineAdminToken` is missing/empty at the moment `_initializeAccessControlWithSecret(...)` is attempted, the UI displays an English error explaining that the Draft build requires an admin token and instructs the user to open the Draft URL that contains the token (do not display the token value).",
+        "The token retrieval logic uses the existing URL/session helpers in `frontend/src/utils/urlParams.ts` so that, once provided, the token is stored in `sessionStorage` and continues to work after the user logs out and logs back in (until the browser session ends).",
+        "Retrying from the recovery screen re-attempts actor initialization using the persisted token without requiring the user to re-enter it."
+      ]
+    },
+    {
+      "id": "REQ-47",
+      "text": "Differentiate unauthorized vs unreachable backend failures during Draft startup and display accurate, English user-facing messages for each case.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-4",
+          "msg-5"
+        ],
+        "quotes": [
+          "Failed to initialize backend connection",
+          "Logged out and back in; still happening in draft"
+        ]
+      },
+      "acceptanceCriteria": [
+        "If the backend call fails due to authorization (e.g., traps containing \"Unauthorized\"), the recovery screen shows an authorization-specific message (English) rather than a generic connectivity message.",
+        "If the failure is due to network/canister unavailability, the recovery screen shows a network/service-unavailable specific message (English).",
+        "The displayed error path does not misclassify 'actor not available because it failed to initialize' as a network failure; it should be reported as initialization failure with the underlying cause included when available."
+      ]
+    },
+    {
+      "id": "REQ-48",
+      "text": "Ensure the \"Retry Connection\" action fully resets the failed startup state so that repeated retries can recover without requiring a full page reload.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-5"
+        ],
+        "quotes": [
+          "Logged out and back in; still happening in draft"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Clicking \"Retry Connection\" clears prior actor/probe errors and triggers a fresh actor initialization attempt, followed by a fresh backend probe, without requiring `window.location.reload()`.",
+        "If a retry succeeds, the app transitions into the authenticated main UI and does not continue to show the StartupRecoveryScreen.",
+        "If a retry fails, the user sees the latest failure reason (English), not a stale error from a previous attempt."
       ]
     }
   ],
   "constraints": [
-    "Backend must remain a single Motoko actor in `backend/main.mo`; do not introduce additional canisters/services.",
-    "Do not edit files under `frontend/src/hooks/useInternetIdentity.ts` / `.tsx`, `frontend/src/hooks/useActor.ts`, `frontend/src/main.tsx`, or `frontend/src/components/ui` beyond composing/using them as allowed by immutable path rules (note: `frontend/src/hooks/useActor.ts` is listed as immutable in system context, so implement actor error propagation and connection diagnostics without modifying this file directly—e.g., by adding a new wrapper hook or higher-level connection manager).",
-    "Use English for all user-facing text."
+    "Do not modify any files under frontend/src/hooks/useInternetIdentity.ts or other paths listed in SYSTEM_CONTEXT.frontend.immutablePaths; compose behavior by changing non-immutable hooks/components instead.",
+    "Keep all user-facing text in English."
   ],
   "nonGoals": [
-    "Adding third-party authentication providers (only Internet Identity is supported).",
-    "Implementing real-time connectivity via WebSockets or push notifications.",
-    "Changing case/task features unrelated to backend connectivity."
+    "Do not add new authentication providers; Internet Identity remains the only auth mechanism.",
+    "Do not introduce new backend services or external databases.",
+    "Do not change unrelated case-management, CSV, tasks checklist, or offline/sync features except where necessary to restore backend connection initialization behavior."
   ],
   "imageRequirements": {
     "required": [],

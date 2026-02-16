@@ -1,60 +1,76 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-16T06:47:24.356Z",
-  "summary": "The diff adds a new `useBackendConnection` hook that probes backend connectivity via a read call and surfaces a connection error + retry, and updates UI (notably `SyncStatusBar`) to show online/offline vs backend connected/disconnected states. However, the request to harden `useActor` error propagation (REQ-34) is not evidenced in the diff, and parts of the app still appear to fall back to local data on backend failures (potentially violating the “no silent fallback” expectation in REQ-33 unless the UI clearly displays those errors, which is not shown in the provided diff snippets). Several unrelated changes (timezone-safe date handling, footer attribution/UTM, camera/csv enhancements) appear beyond the stated scope.",
+  "generatedAt": "2026-02-16T14:54:36.539Z",
+  "summary": "The diff adds a new wrapper hook (useActorWithError), token helpers, and backend error classification, and wires actor/probe errors into useBackendConnection and StartupRecoveryScreen. However, several acceptance criteria are only partially met (notably: useActor itself was not updated to expose an explicit error state and actor-init failures are inferred rather than captured from the real underlying failure). The diff summary also indicates multiple unrelated feature changes (case UI modal, date/csv/offline/sync logic changes) that were not requested and conflict with the stated non-goals.",
   "missing_requirements": [
     {
-      "id": "REQ-34",
-      "requirement": "Harden actor initialization in `frontend/src/hooks/useActor.ts` so failures during `createActorWithConfig(...)` and/or `_initializeAccessControlWithSecret(...)` are captured and exposed to the UI as an English error string, keeping `actor: null` stable and avoiding uncaught render-breaking errors.",
-      "reason": "The diff does not show any changes to `frontend/src/hooks/useActor.ts` nor any explicit propagation of actor-creation / access-control initialization errors from that hook. The new wrapper hook (`useBackendConnection`) infers failure when `actor` is null, but it does not demonstrate capturing the underlying initialization error coming from `useActor` as required.",
+      "id": "REQ-45",
+      "requirement": "`useActor` returns an explicit error state (e.g., `error: string | null`) in addition to `actor` and `isFetching` so downstream hooks can distinguish loading vs failed actor creation.",
+      "reason": "The diff adds a new hook `useActorWithError` that wraps `useActor`, but there is no evidence that `useActor` itself was modified to return an `error` field as required.",
       "evidence": [
-        "frontend/src/hooks/useBackendConnection.ts (uses `useActor()` but no evidence `useActor` exposes an error string)",
-        "file diff summary shows no modification entry for `frontend/src/hooks/useActor.ts`"
+        "frontend/src/hooks/useActorWithError.ts (wraps `useActor()` which returns only `{ actor, isFetching }` per usage)"
       ]
     },
     {
-      "id": "REQ-33",
-      "requirement": "If backend calls fail, the failure is surfaced as a clear error state (not silent fallback) indicating the app could not connect or is unauthorized.",
-      "reason": "Some hooks still return local data on backend failures (e.g., cases query in `useCasesStore`) while only logging to console and storing an internal `fetchError` state. The diff snippet does not show any UI consuming/displaying that `fetchError`, so it’s not evidenced that failures are always surfaced (as opposed to silently falling back).",
+      "id": "REQ-45",
+      "requirement": "When backend actor creation or `_initializeAccessControlWithSecret(...)` fails, capture and surface the specific underlying error message on StartupRecoveryScreen instead of only ending up with a null actor and a generic message.",
+      "reason": "`useActorWithError` infers an error when authenticated + not fetching + actor is null, and then sets either a missing-token message or a generic message. There is no evidence it captures the actual thrown error from actor creation or `_initializeAccessControlWithSecret(...)` failure and surfaces that specific cause.",
       "evidence": [
-        "frontend/src/hooks/useCasesStore.ts (catch: logs error, sets `fetchError`, returns `normalizedLocalCases`)"
+        "frontend/src/hooks/useActorWithError.ts (sets generic 'Failed to initialize backend connection. Please try again.' when actor is null; does not receive/capture a thrown error from actor init)",
+        "frontend/src/utils/backendErrorMessages.ts (has helpers to classify errors, but `useActorWithError` does not use them for actor-init failures)"
+      ]
+    },
+    {
+      "id": "REQ-46",
+      "requirement": "If `caffeineAdminToken` is missing/empty at the moment `_initializeAccessControlWithSecret(...)` is attempted, show a clear guidance error (English) explaining Draft requires an admin token and instruct the user to open the Draft URL that contains the token.",
+      "reason": "The diff shows a missing-token check based on persisted URL parameter presence, but there is no evidence this check is performed specifically at the moment `_initializeAccessControlWithSecret(...)` is attempted (or that the initialization path is blocked with this specific message before the call). It is instead triggered after observing a null actor state.",
+      "evidence": [
+        "frontend/src/hooks/useActorWithError.ts (missing-token error set only after actor is observed null post-fetch)",
+        "frontend/src/utils/draftAdminToken.ts (token helpers exist, but no evidence `_initializeAccessControlWithSecret(...)` call site uses them)"
+      ]
+    },
+    {
+      "id": "REQ-47",
+      "requirement": "Differentiate unauthorized vs unreachable backend failures during Draft startup, with accurate user-facing messages for each case (including authorization-specific messaging).",
+      "reason": "The diff classifies errors during the backend probe call (`actor.getCallerUserProfile()`), but there is no evidence actor initialization failures (creation / access control init) are classified into unauthorized vs network/unreachable messages. Those actor-init failures appear to remain generic.",
+      "evidence": [
+        "frontend/src/hooks/useBackendConnection.ts (classifies probe errors only; actor init error comes from `useActorWithError`)",
+        "frontend/src/hooks/useActorWithError.ts (does not call `classifyBackendError` for actor init failure; uses generic message)"
       ]
     }
   ],
   "hallucinated_features": [
     {
-      "description": "Timezone-safe date-only refactor (e.g., representing arrivalDate/dateOfBirth as YYYY-MM-DD strings; new/updated date utilities; CSV import/export changes for date handling).",
-      "reason": "Not requested by REQ-33/34/35 and explicitly outside the scope of “backend connectivity and diagnostics”.",
+      "description": "Changed the case form UI to be shown in a modal dialog triggered by an \"Add Case\" button instead of inline.",
+      "reason": "This is unrelated to Draft startup/backend actor initialization and conflicts with the non-goal to avoid unrelated case-management changes except where necessary for backend connection initialization behavior.",
       "evidence": [
-        "frontend-file-summaries.txt (mentions changes to `frontend/src/types/cases.ts`, `frontend/src/utils/dates.ts`, `frontend/src/utils/csv.ts`, `frontend/src/components/cases/DateField.tsx`, `frontend/src/components/cases/CaseForm.tsx`)"
+        "frontend-file-summaries.txt (App.tsx summary mentions case form now shown in a modal dialog)"
       ]
     },
     {
-      "description": "Footer attribution link changes with UTM tracking parameters.",
-      "reason": "Not requested; unrelated to backend connectivity/diagnostics.",
+      "description": "Broad timezone-safe date handling refactor (types, date utilities, CSV import/export date behavior, date field component changes).",
+      "reason": "This is unrelated to fixing Draft startup actor initialization and conflicts with the non-goal to avoid unrelated CSV and case-management changes.",
       "evidence": [
-        "frontend-file-summaries.txt (mentions `frontend/src/components/layout/Footer.tsx` attribution link with UTM tracking)"
+        "frontend-file-summaries.txt (frontend/src/types/cases.ts, frontend/src/utils/dates.ts, frontend/src/utils/csv.ts, frontend/src/components/cases/DateField.tsx summaries)"
       ]
     },
     {
-      "description": "Camera capture / quick-add demographics enhancements beyond connectivity diagnostics.",
-      "reason": "Not requested in this BuildRequest; scope is backend connectivity and diagnostics.",
+      "description": "Changes to offline/local persistence and sync logic (localPersistence normalization, sync union/merge behavior, cases store error exposure).",
+      "reason": "The BuildRequest explicitly lists offline/sync features as non-goals to change except where necessary for backend initialization behavior; the diff summary indicates substantial modifications in these areas.",
       "evidence": [
-        "frontend-file-summaries.txt (mentions `frontend/src/components/cases/DemographicsQuickAdd.tsx`, `frontend/src/components/cases/CameraCapture.tsx`)"
+        "frontend-file-summaries.txt (frontend/src/utils/localPersistence.ts, frontend/src/hooks/useSync.ts, frontend/src/hooks/useCasesStore.ts summaries)"
       ]
     }
   ],
-  "confidence": 0.64,
+  "confidence": 0.72,
   "changed_files": [
     "frontend-file-summaries.txt",
-    "frontend/src/App.tsx",
-    "frontend/src/components/sync/SyncStatusBar.tsx",
+    "frontend/src/components/startup/StartupRecoveryScreen.tsx",
+    "frontend/src/hooks/useActorWithError.ts",
     "frontend/src/hooks/useBackendConnection.ts",
-    "frontend/src/hooks/useCasesStore.ts",
-    "frontend/src/hooks/useOnlineStatus.ts",
-    "frontend/src/hooks/useQueries.ts",
-    "frontend/src/hooks/useSync.ts",
+    "frontend/src/utils/backendErrorMessages.ts",
+    "frontend/src/utils/draftAdminToken.ts",
     "project_state.json"
   ]
 }
