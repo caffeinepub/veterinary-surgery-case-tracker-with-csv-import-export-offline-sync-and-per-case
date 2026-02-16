@@ -1,63 +1,31 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Fix live backend actor initialization and connection error handling",
+  "title": "Surgery Case Tracker — Clean frontend rebuild process to restore Live backend connectivity",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Stop calling the non-existent backend actor method during authenticated actor creation so Live actor initialization succeeds.",
+      "summary": "Ensure the Live frontend is rebuilt from a clean state and uses freshly generated backend bindings from the currently deployed backend canister (eliminate stale canister-id/binding artifacts).",
       "acceptanceCriteria": [
-        "`frontend/src/hooks/useActor.ts` no longer calls `actor._initializeAccessControlWithSecret(...)` during actor creation.",
-        "The app can create an authenticated actor without throwing a runtime or TypeScript interface error in Live/production.",
-        "Backend connection status can reach “Backend Connected” for an authenticated user when the canister is available."
+        "A clean build is executed using steps equivalent to removing prior build artifacts (e.g., frontend/dist, frontend/node_modules, and .dfx) and then redeploying backend and frontend.",
+        "After redeploy, opening the Live app no longer shows: \"Backend Connection Error: Failed to initialize backend connection. The backend service may be unavailable.\"",
+        "The frontend build uses freshly generated backend bindings (dfx generate backend) from the currently deployed backend canister."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/hooks/useActor.ts",
+          "path": "frontend/DEPLOYMENT_NOTES.md",
           "operation": "modify",
-          "description": "Remove the `_initializeAccessControlWithSecret` invocation from authenticated actor creation and rely on the backend’s existing access control initialization; ensure the actor is returned immediately after `createActorWithConfig(actorOptions)` succeeds."
-        }
-      ]
-    },
-    {
-      "id": "REQ-2",
-      "summary": "Remove Draft admin-token parameter coupling from normal actor initialization and ensure Live connection errors do not instruct users to provide admin tokens.",
-      "acceptanceCriteria": [
-        "`frontend/src/hooks/useActor.ts` does not read `caffeineAdminToken` as part of actor initialization.",
-        "`frontend/src/utils/backendErrorMessages.ts` does not surface “Draft admin token is required…” for standard Live connection failures.",
-        "When the backend is unreachable or the user is unauthorized, the UI displays an accurate English error message via existing connection UI (e.g., SyncStatusBar) without mentioning admin tokens."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/hooks/useActor.ts",
-          "operation": "modify",
-          "description": "Delete the `getSecretParameter('caffeineAdminToken')` read and any admin-token-dependent logic so normal actor initialization is not coupled to URL/session token parameters."
+          "description": "Update the clean rebuild + redeploy instructions to explicitly cover: (1) removing stale frontend build artifacts, (2) removing any stale generated frontend backend bindings, (3) re-running the backend binding generation step before building the frontend, and (4) a post-deploy verification checklist focused on confirming the Live frontend is using the currently deployed backend canister ID (no stale canister-id/binding artifacts)."
         },
         {
-          "path": "frontend/src/utils/backendErrorMessages.ts",
-          "operation": "modify",
-          "description": "Adjust error classification/messages so standard initialization/network/authorization failures never suggest providing a Draft admin token; keep messages accurate and in plain English for Live connection failures."
-        }
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "summary": "Improve backend connection probing (actor creation + `getCallerUserProfile` probe) to surface actionable errors and make retry reliably re-run actor init and the probe without reload.",
-      "acceptanceCriteria": [
-        "If actor creation fails or the probe call fails, `useBackendConnection` surfaces a non-empty English error string and `SyncStatusBar` shows “Backend Connection Error: …”.",
-        "Clicking “Retry Connection” triggers the existing retry mechanism and re-runs both actor initialization and the probe call.",
-        "Successful retry clears the error and updates status to “Backend Connected” without requiring a page reload."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/hooks/useActorWithError.ts",
-          "operation": "modify",
-          "description": "Enhance actor initialization error detection by reading the underlying React Query state for the actor query (in addition to the existing null-actor heuristic) and setting a non-empty, user-friendly English error message when initialization fails; keep the existing retry mechanism intact."
+          "path": "frontend/scripts/clean-rebuild-frontend.sh",
+          "operation": "create",
+          "description": "Add a repo-local helper script that performs a deterministic frontend clean (e.g., remove frontend build output and local dependency artifacts) and then runs the frontend install/build commands in the correct order so developers/operators can reliably reproduce a clean rebuild process before deploying. (This script should be referenced by the updated frontend/DEPLOYMENT_NOTES.md.)"
         },
         {
-          "path": "frontend/src/hooks/useBackendConnection.ts",
-          "operation": "modify",
-          "description": "Make the retry path reliably re-run both actor initialization and the backend probe by explicitly invalidating/refetching the probe query after retrying actor creation, and ensure success clears any prior error and results in `isConnected` reflecting “Backend Connected” without page reload."
+          "path": "frontend/scripts/verify-live-backend-binding.md",
+          "operation": "create",
+          "description": "Add a short verification guide that operators can follow after redeploy to confirm the Live frontend is using fresh backend bindings and the currently deployed backend canister ID (e.g., checks for regenerated declaration artifacts, clean build confirmation, and observed absence of the backend initialization error in the Live UI)."
         }
       ]
     }

@@ -1,11 +1,10 @@
 # Specification
 
 ## Summary
-**Goal:** Fix live/production backend connection initialization so authenticated actor creation and connection probing succeed without relying on non-existent backend methods or draft admin tokens.
+**Goal:** Restore Live frontend connectivity to the currently deployed backend by performing a clean rebuild/redeploy and adding a backend compatibility method required by existing frontend initialization.
 
 **Planned changes:**
-- Remove the frontend call to the non-existent actor method `_initializeAccessControlWithSecret(...)` during actor creation in `frontend/src/hooks/useActor.ts`.
-- Stop using the `caffeineAdminToken` URL parameter for normal actor initialization and update backend connection error messaging to avoid mentioning draft/admin tokens for standard Live failures.
-- Improve the backend connection probing flow (actor creation + `getCallerUserProfile` probe) to surface actionable English errors, display them via existing connection UI, and ensure “Retry Connection” re-runs initialization + probe and clears errors on success.
+- Perform a fresh clean rebuild and redeploy of both backend and frontend canisters to eliminate stale build artifacts and ensure the Live frontend references the current backend canister ID and freshly generated bindings.
+- Update the Motoko backend actor (backend/main.mo) to expose a public `_initializeAccessControlWithSecret(secret : Text) : async ()` method that safely no-ops and returns successfully for compatibility with the existing Live frontend.
 
-**User-visible outcome:** In the live app, signed-in users can reach “Backend Connected” when the canister is available; if connection/probe fails, they see a clear “Backend Connection Error: …” message and can recover via “Retry Connection” without reloading.
+**User-visible outcome:** Opening the Live Surgery Case Tracker app no longer shows the backend connection initialization error, and the app connects to the currently deployed backend successfully.

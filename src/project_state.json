@@ -4,33 +4,25 @@
   "summary": "New project",
   "architectural_notes": [],
   "known_issues": [
-    "Live app error: \"failed to initialize backend connection\" (backend connection initialization failing in production)."
+    "Live version shows 'Backend Connection Error: Failed to initialize backend connection' (frontend cannot reach backend; possibly stale/outdated backend canister ID in live build)."
   ],
   "isFixRequest": true,
   "existing_features": [
     {
-      "id": "feature-eliminate-reliance-on-the-caffeineadmintoken-url-parameter-for-normal-actor-initialization-and-ensure-backend-connection-error-messaging-does-not-instruct-users-to-provide-a-draft-admin-token-unless-the-app-explicitly-still-supports-a-draft-token-based-flow",
-      "title": "Eliminate reliance on the `caffeineAdminToken` URL parameter for normal actor initialization and ensure backend connection error messaging does not instruct users to provide a Draft admin token unless the app explicitly still supports a Draft-token-based flow.",
+      "id": "feature-perform-a-fresh-clean-rebuild-and-redeploy-of-both-backend-and-frontend-canisters-so-the-live-frontend-is-guaranteed-to-reference-the-currently-deployed-backend-canister-id-eliminate-any-stale-canister-id-binding-artifacts",
+      "title": "Perform a fresh clean rebuild and redeploy of both backend and frontend canisters so the Live frontend is guaranteed to reference the currently deployed backend canister ID (eliminate any stale canister-ID/binding artifacts).",
       "reqIds": [
-        "REQ-2"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-ensure-the-backend-connection-probing-flow-actor-creation-getcalleruserprofile-probe-reports-actionable-errors-and-provides-a-working-retry-path-in-the-live-app",
-      "title": "Ensure the backend connection probing flow (actor creation + `getCallerUserProfile` probe) reports actionable errors and provides a working retry path in the live app.",
-      "reqIds": [
-        "REQ-3"
+        "REQ-1"
       ],
       "version": 1
     }
   ],
   "new_feature_requests": [
     {
-      "id": "AR-1",
-      "summary": "Remove the frontend-only backend initialization call to the non-existent actor method `_initializeAccessControlWithSecret` so the backend actor can be created successfully in the live app.",
+      "id": "AR-2",
+      "summary": "Make backend actor initialization compatible with the existing Live frontend by adding a public backend method named `_initializeAccessControlWithSecret` that safely no-ops (does not change access control or require any token) and returns successfully.",
       "reqIds": [
-        "REQ-1"
+        "REQ-2"
       ],
       "status": "pending"
     }

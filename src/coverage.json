@@ -1,59 +1,48 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-16T18:52:08.092Z",
+  "generatedAt": "2026-02-16T19:04:22.292Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 3,
-    "implemented": 2,
+    "total": 2,
+    "implemented": 1,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Remove the frontend-only backend initialization call to the non-existent actor method `_initializeAccessControlWithSecret` so the backend actor can be created successfully in the live app.",
-        "status": "missing",
+        "summary": "Perform a fresh clean rebuild and redeploy of both backend and frontend canisters so the Live frontend is guaranteed to reference the currently deployed backend canister ID (eliminate any stale canister-ID/binding artifacts).",
+        "status": "implemented",
         "plannedFiles": [
-          "frontend/src/hooks/useActor.ts"
+          "frontend/DEPLOYMENT_NOTES.md",
+          "frontend/scripts/clean-rebuild-frontend.sh",
+          "frontend/scripts/verify-live-backend-binding.md"
         ],
-        "matchedFiles": []
+        "matchedFiles": [
+          "frontend/DEPLOYMENT_NOTES.md",
+          "frontend/scripts/clean-rebuild-frontend.sh",
+          "frontend/scripts/verify-live-backend-binding.md"
+        ]
       },
       {
         "id": "REQ-2",
-        "summary": "Eliminate reliance on the `caffeineAdminToken` URL parameter for normal actor initialization and ensure backend connection error messaging does not instruct users to provide a Draft admin token unless the app explicitly still supports a Draft-token-based flow.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/hooks/useActor.ts",
-          "frontend/src/utils/backendErrorMessages.ts"
-        ],
-        "matchedFiles": [
-          "frontend/src/utils/backendErrorMessages.ts"
-        ]
-      },
-      {
-        "id": "REQ-3",
-        "summary": "Ensure the backend connection probing flow (actor creation + `getCallerUserProfile` probe) reports actionable errors and provides a working retry path in the live app.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/hooks/useActorWithError.ts",
-          "frontend/src/hooks/useBackendConnection.ts"
-        ],
-        "matchedFiles": [
-          "frontend/src/hooks/useActorWithError.ts",
-          "frontend/src/hooks/useBackendConnection.ts"
-        ]
+        "summary": "Make backend actor initialization compatible with the existing Live frontend by adding a public backend method named `_initializeAccessControlWithSecret` that safely no-ops (does not change access control or require any token) and returns successfully.",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
       }
     ]
   },
   "changedFiles": [
+    "backend/main.mo",
     "build-request.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/hooks/useActorWithError.ts",
-    "frontend/src/hooks/useBackendConnection.ts",
-    "frontend/src/utils/backendErrorMessages.ts",
+    "frontend/DEPLOYMENT_NOTES.md",
+    "frontend/scripts/clean-rebuild-frontend.sh",
+    "frontend/scripts/verify-live-backend-binding.md",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

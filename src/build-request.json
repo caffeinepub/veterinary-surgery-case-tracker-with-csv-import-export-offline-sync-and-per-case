@@ -1,75 +1,68 @@
 {
   "kind": "build_request",
-  "title": "Fix live backend connection initialization failure",
+  "title": "Clean rebuild and restore Live backend connectivity",
   "projectName": "Surgery Case Tracker",
   "priority": "high",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Remove the frontend-only backend initialization call to the non-existent actor method `_initializeAccessControlWithSecret` so the backend actor can be created successfully in the live app.",
-      "target": "frontend",
+      "text": "Perform a fresh clean rebuild and redeploy of both backend and frontend canisters so the Live frontend is guaranteed to reference the currently deployed backend canister ID (eliminate any stale canister-ID/binding artifacts).",
+      "target": "both",
       "source": {
         "messageIds": [
-          "recent-messages-user-1"
+          "msg-1"
         ],
         "quotes": [
-          "failed to initialize backend connection in live app"
+          "trigger a fresh clean rebuild"
         ]
       },
       "acceptanceCriteria": [
-        "`frontend/src/hooks/useActor.ts` no longer calls `actor._initializeAccessControlWithSecret(...)` during actor creation.",
-        "The app can create an authenticated actor without throwing a runtime or TypeScript interface error in Live/production.",
-        "Backend connection status can reach “Backend Connected” for an authenticated user when the canister is available."
+        "A clean build is executed using steps equivalent to removing prior build artifacts (e.g., frontend/dist, frontend/node_modules, and .dfx) and then redeploying backend and frontend.",
+        "After redeploy, opening the Live app no longer shows: \"Backend Connection Error: Failed to initialize backend connection. The backend service may be unavailable.\"",
+        "The frontend build uses freshly generated backend bindings (dfx generate backend) from the currently deployed backend canister."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Eliminate reliance on the `caffeineAdminToken` URL parameter for normal actor initialization and ensure backend connection error messaging does not instruct users to provide a Draft admin token unless the app explicitly still supports a Draft-token-based flow.",
-      "target": "frontend",
+      "text": "Make backend actor initialization compatible with the existing Live frontend by adding a public backend method named `_initializeAccessControlWithSecret` that safely no-ops (does not change access control or require any token) and returns successfully.",
+      "target": "backend",
       "source": {
         "messageIds": [
-          "recent-messages-user-1"
+          "msg-1"
         ],
         "quotes": [
-          "failed to initialize backend connection in live app"
+          "I n the live version Backend Connection Error:\nFailed to initialize backend connection. The backend service may be unavailable."
         ]
       },
       "acceptanceCriteria": [
-        "`frontend/src/hooks/useActor.ts` does not read `caffeineAdminToken` as part of actor initialization.",
-        "`frontend/src/utils/backendErrorMessages.ts` does not surface “Draft admin token is required…” for standard Live connection failures.",
-        "When the backend is unreachable or the user is unauthorized, the UI displays an accurate English error message via existing connection UI (e.g., SyncStatusBar) without mentioning admin tokens."
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "text": "Ensure the backend connection probing flow (actor creation + `getCallerUserProfile` probe) reports actionable errors and provides a working retry path in the live app.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "recent-messages-user-1"
-        ],
-        "quotes": [
-          "failed to initialize backend connection in live app"
-        ]
-      },
-      "acceptanceCriteria": [
-        "If actor creation fails or the probe call fails, `useBackendConnection` surfaces a non-empty English error string and `SyncStatusBar` shows “Backend Connection Error: …”.",
-        "Clicking “Retry Connection” triggers the existing retry mechanism and re-runs both actor initialization and the probe call.",
-        "Successful retry clears the error and updates status to “Backend Connected” without requiring a page reload."
+        "The Motoko backend exposes a callable method `_initializeAccessControlWithSecret(secret : Text) : async ()` (or equivalent signature compatible with generated frontend bindings).",
+        "Calling `_initializeAccessControlWithSecret` does not grant permissions, does not modify roles, and does not affect authorization behavior of existing endpoints.",
+        "Frontend TypeScript bindings generated from the backend include `_initializeAccessControlWithSecret`, allowing the frontend to compile without type errors related to that method."
       ]
     }
   ],
   "constraints": [
-    "Do not edit any files under `frontend/src/components/ui` (read-only components).",
-    "Do not edit immutable paths listed in SYSTEM_CONTEXT (e.g., `frontend/src/hooks/useInternetIdentity.ts(x)`, `frontend/src/hooks/useActor.ts`, `frontend/src/main.tsx`) beyond what is necessary to fix the reported initialization failure; prefer adding new wrapper logic/files when feasible."
+    "Do not edit files under frontend/src/hooks/useActor.ts or other paths listed as immutable in SYSTEM_CONTEXT.",
+    "Keep all Motoko logic within the single actor in backend/main.mo; only add migration code if a state upgrade is required (avoid migration if not needed).",
+    "Use English for any user-facing text."
   ],
   "nonGoals": [
-    "Do not add new authentication providers (Internet Identity remains the only supported auth).",
-    "Do not introduce external databases or third-party backend services.",
-    "Do not change backend authorization semantics or roles unless required to resolve the connection initialization error."
+    "Redesigning the UI/UX beyond what is necessary to verify backend connectivity.",
+    "Adding new authentication methods beyond Internet Identity.",
+    "Introducing external databases or third-party backend services."
   ],
   "imageRequirements": {
     "required": [],
     "edits": []
+  },
+  "userProfileUpdate": {
+    "goalsToAdd": [],
+    "goalsToRemove": [],
+    "preferencesToAdd": [],
+    "preferencesToRemove": [],
+    "miscToAdd": [],
+    "miscToRemove": [],
+    "fieldsToSet": {},
+    "fieldsToDelete": []
   }
 }

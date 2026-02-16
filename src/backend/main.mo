@@ -5,31 +5,26 @@ import Time "mo:core/Time";
 import Principal "mo:core/Principal";
 import Runtime "mo:core/Runtime";
 import List "mo:core/List";
-import MixinAuthorization "authorization/MixinAuthorization";
-import AccessControl "authorization/access-control";
-
-
 import Order "mo:core/Order";
 import Int "mo:core/Int";
 import Nat "mo:core/Nat";
 
+import MixinAuthorization "authorization/MixinAuthorization";
+import AccessControl "authorization/access-control";
 
 actor {
   let accessControlState = AccessControl.initState();
   include MixinAuthorization(accessControlState);
 
-  // User profile definition
   public type UserProfile = {
     name : Text;
   };
 
-  // Task item definition
   public type TaskItem = {
     required : Bool;
     checked : Bool;
   };
 
-  // Tasks checklist definition
   public type TasksChecklist = {
     dischargeNotes : TaskItem;
     pdvmNotified : TaskItem;
@@ -40,7 +35,6 @@ actor {
     culture : TaskItem;
   };
 
-  // Complete patient demographics definition
   public type CompletePatientDemographics = {
     name : Text;
     ownerLastName : Text;
@@ -50,7 +44,6 @@ actor {
     dateOfBirth : Text;
   };
 
-  // Surgery case definition (updated with presentingComplaint)
   public type SurgeryCase = {
     caseId : Nat;
     medicalRecordNumber : Text;
@@ -75,7 +68,6 @@ actor {
     };
   };
 
-  // Surgery case update definition (now includes presentingComplaint)
   public type SurgeryCaseUpdate = {
     medicalRecordNumber : ?Text;
     presentingComplaint : ?Text;
@@ -84,12 +76,10 @@ actor {
     tasksChecklist : ?TasksChecklist;
   };
 
-  // Persistent state
   var nextCaseId = 1;
   let cases = Map.empty<Principal, List.List<SurgeryCase>>();
   let userProfiles = Map.empty<Principal, UserProfile>();
 
-  // User profile management
   public query ({ caller }) func getCallerUserProfile() : async ?UserProfile {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can access profiles");
@@ -111,7 +101,6 @@ actor {
     userProfiles.add(caller, profile);
   };
 
-  // Surgery case creation with presentingComplaint
   public shared ({ caller }) func createSurgeryCase(medicalRecordNumber : Text, presentingComplaint : Text, patientDemographics : CompletePatientDemographics, arrivalDate : Time.Time, tasksChecklist : TasksChecklist) : async Nat {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can create surgery cases");
@@ -141,7 +130,6 @@ actor {
     caseId;
   };
 
-  // Update surgery case (with presentingComplaint)
   public shared ({ caller }) func updateSurgeryCase(caseId : Nat, updates : SurgeryCaseUpdate) : async Bool {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can update surgery cases");
@@ -200,7 +188,6 @@ actor {
     };
   };
 
-  // Get all surgery cases for the caller
   public query ({ caller }) func getAllSurgeryCases() : async [SurgeryCase] {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can view surgery cases");
@@ -214,7 +201,6 @@ actor {
     };
   };
 
-  // Sync local changes from frontend
   public shared ({ caller }) func syncLocalChanges(localCases : [SurgeryCase]) : async () {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can sync surgery cases");
@@ -264,7 +250,6 @@ actor {
     if (x >= y) { x } else { y };
   };
 
-  // Check for unsynchronized changes
   public query ({ caller }) func hasUnsyncedChanges() : async Bool {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can check sync status");
@@ -284,7 +269,6 @@ actor {
     };
   };
 
-  // Get cases updated since last sync
   public query ({ caller }) func getUpdatedCases(since : Time.Time) : async [SurgeryCase] {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can view updated cases");

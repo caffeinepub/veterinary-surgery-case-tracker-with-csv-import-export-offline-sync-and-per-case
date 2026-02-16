@@ -1,44 +1,50 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-16T18:52:08.090Z",
-  "summary": "The diff adds new error/retry wrapper logic around actor initialization and updates backend connection probing/error classification, but it does not show the required removal of the `_initializeAccessControlWithSecret` call or removal of `caffeineAdminToken` usage from `useActor.ts`. UI-side acceptance criteria for displaying the specific “Backend Connection Error: …” text is also not evidenced in the provided changes.",
+  "generatedAt": "2026-02-16T19:04:22.289Z",
+  "summary": "REQ-1 is only partially addressed via added clean rebuild documentation/scripts focused on frontend artifact cleanup and regenerating bindings, but does not demonstrate a full clean rebuild + redeploy of both canisters or removal of all specified stale artifacts (e.g., .dfx, frontend/node_modules). REQ-2 is not evidenced in the provided backend/main.mo diff snippet (method not shown). Several unrelated frontend feature changes appear to have been introduced beyond the connectivity/binding fix scope.",
   "missing_requirements": [
     {
       "id": "REQ-1",
-      "requirement": "Remove the frontend-only backend initialization call to the non-existent actor method `_initializeAccessControlWithSecret` so the backend actor can be created successfully in the live app.",
-      "reason": "No changes to `frontend/src/hooks/useActor.ts` are included in the diff summary, so there is no evidence that the call to `actor._initializeAccessControlWithSecret(...)` was removed during actor creation.",
+      "requirement": "Perform a fresh clean rebuild and redeploy of both backend and frontend canisters so the Live frontend is guaranteed to reference the currently deployed backend canister ID (eliminate any stale canister-ID/binding artifacts).",
+      "reason": "The added script focuses on cleaning some frontend artifacts and regenerating bindings, but it does not remove .dfx or frontend/node_modules as called out in the requirement/AC examples, and it does not actually redeploy the frontend canister (it only prints 'Next steps: Deploy frontend'). Evidence of an end-to-end clean rebuild + redeploy procedure for both canisters is incomplete in the diff.",
       "evidence": [
-        "frontend/src/hooks/useActorWithError.ts (wraps useActor but does not modify it)",
-        "(No diff shown for) frontend/src/hooks/useActor.ts"
+        "frontend/scripts/clean-rebuild-frontend.sh",
+        "frontend/DEPLOYMENT_NOTES.md"
       ]
     },
     {
       "id": "REQ-2",
-      "requirement": "Eliminate reliance on the `caffeineAdminToken` URL parameter for normal actor initialization.",
-      "reason": "The diff does not include any modifications to `frontend/src/hooks/useActor.ts`, so there is no evidence that `caffeineAdminToken` is no longer read/used as part of actor initialization.",
+      "requirement": "Make backend actor initialization compatible with the existing Live frontend by adding a public backend method named `_initializeAccessControlWithSecret` that safely no-ops and returns successfully.",
+      "reason": "The backend diff snippet for backend/main.mo is truncated and does not show any `_initializeAccessControlWithSecret` method definition, so implementation cannot be confirmed from the provided evidence.",
       "evidence": [
-        "frontend/src/hooks/useActorWithError.ts (wraps useActor but does not modify it)",
-        "(No diff shown for) frontend/src/hooks/useActor.ts"
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "requirement": "Ensure the backend connection probing flow reports actionable errors and provides a working retry path, and SyncStatusBar shows “Backend Connection Error: …”.",
-      "reason": "While `useBackendConnection` now exposes an `error` string and a `retry()` that triggers actor + probe refetch, the diff summary does not include any changes to the UI component(s) (e.g., SyncStatusBar) to confirm it displays the exact required text “Backend Connection Error: …”.",
-      "evidence": [
-        "frontend/src/hooks/useBackendConnection.ts",
-        "(No diff shown for) SyncStatusBar / related UI component file(s)"
+        "backend/main.mo"
       ]
     }
   ],
-  "hallucinated_features": [],
+  "hallucinated_features": [
+    {
+      "description": "Extensive frontend feature changes unrelated to the requested clean rebuild/binding fix (e.g., new presentingComplaint handling across queries/store/forms, timezone-safe YYYY-MM-DD date refactors, CSV changes, image URL field, online status semantics, sync and persistence behavior changes, header/footer changes).",
+      "reason": "BuildRequest non-goals explicitly avoid redesign beyond what is necessary to verify backend connectivity; these changes appear to add/modify core product behavior rather than strictly ensuring Live backend connectivity and binding freshness.",
+      "evidence": [
+        "frontend-file-summaries.txt"
+      ]
+    },
+    {
+      "description": "Non-English/emoji output in the clean rebuild script.",
+      "reason": "Constraint says to use English for any user-facing text; the script prints multiple emoji-prefixed status lines, which may violate this constraint if considered user-facing output.",
+      "evidence": [
+        "frontend/scripts/clean-rebuild-frontend.sh"
+      ]
+    }
+  ],
   "confidence": 0.68,
   "changed_files": [
+    "backend/main.mo",
     "frontend-file-summaries.txt",
-    "frontend/src/hooks/useActorWithError.ts",
-    "frontend/src/hooks/useBackendConnection.ts",
-    "frontend/src/utils/backendErrorMessages.ts",
+    "frontend/DEPLOYMENT_NOTES.md",
+    "frontend/scripts/clean-rebuild-frontend.sh",
+    "frontend/scripts/verify-live-backend-binding.md",
     "project_state.json"
   ]
 }

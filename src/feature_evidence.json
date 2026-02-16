@@ -2,10 +2,12 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-eliminate-reliance-on-the-caffeineadmintoken-url-parameter-for-normal-actor-initialization-and-ensure-backend-connection-error-messaging-does-not-instruct-users-to-provide-a-draft-admin-token-unless-the-app-explicitly-still-supports-a-draft-token-based-flow",
-      "featureTitle": "Eliminate reliance on the `caffeineAdminToken` URL parameter for normal actor initialization and ensure backend connection error messaging does not instruct users to provide a Draft admin token unless the app explicitly still supports a Draft-token-based flow.",
+      "featureId": "feature-perform-a-fresh-clean-rebuild-and-redeploy-of-both-backend-and-frontend-canisters-so-the-live-frontend-is-guaranteed-to-reference-the-currently-deployed-backend-canister-id-eliminate-any-stale-canister-id-binding-artifacts",
+      "featureTitle": "Perform a fresh clean rebuild and redeploy of both backend and frontend canisters so the Live frontend is guaranteed to reference the currently deployed backend canister ID (eliminate any stale canister-ID/binding artifacts).",
       "files": [
-        "frontend/src/utils/backendErrorMessages.ts"
+        "frontend/DEPLOYMENT_NOTES.md",
+        "frontend/scripts/clean-rebuild-frontend.sh",
+        "frontend/scripts/verify-live-backend-binding.md"
       ],
       "components": [
         "authorization@4.0.0",
@@ -17,28 +19,7 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-2"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-ensure-the-backend-connection-probing-flow-actor-creation-getcalleruserprofile-probe-reports-actionable-errors-and-provides-a-working-retry-path-in-the-live-app",
-      "featureTitle": "Ensure the backend connection probing flow (actor creation + `getCallerUserProfile` probe) reports actionable errors and provides a working retry path in the live app.",
-      "files": [
-        "frontend/src/hooks/useActorWithError.ts",
-        "frontend/src/hooks/useBackendConnection.ts"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "camera@1.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-3"
+        "REQ-1"
       ],
       "confidence": "high"
     }
