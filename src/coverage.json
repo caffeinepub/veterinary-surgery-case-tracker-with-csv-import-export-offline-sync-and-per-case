@@ -1,37 +1,72 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-16T23:20:50.339Z",
+  "generatedAt": "2026-02-17T00:40:47.920Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 1,
-    "implemented": 1,
+    "total": 4,
+    "implemented": 3,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Fix the Quick Add demographics paste flow so that when a user pastes demographics text that contains a pet/patient name, the CaseForm \"Pet Name\" field is populated (as long as the field is currently empty and has not been touched). Investigate and correct the root cause, which may be in the pet-name parsing logic in `extractDemographics` and/or how the extracted value is applied in `CaseForm.handlePasteExtraction`.",
+        "summary": "Add a delete action on each patient (surgery case) card that allows the user to delete that case, with a confirmation step before deletion.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/utils/demographicsExtract.ts",
-          "frontend/src/components/cases/CaseForm.tsx"
+          "frontend/src/components/cases/CaseCard.tsx",
+          "frontend/src/components/cases/CaseList.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/utils/demographicsExtract.ts",
-          "frontend/src/components/cases/CaseForm.tsx"
+          "frontend/src/components/cases/CaseCard.tsx"
+        ]
+      },
+      {
+        "id": "REQ-2",
+        "summary": "Implement a backend API to delete a surgery case by caseId for the authenticated caller, enforcing the same authorization rules as other case mutations.",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
+      },
+      {
+        "id": "REQ-3",
+        "summary": "Update the patient (surgery case) card UI so the presenting complaint is visually emphasized using a colored box around the complaint value.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/cases/CaseCard.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/cases/CaseCard.tsx"
+        ]
+      },
+      {
+        "id": "REQ-4",
+        "summary": "Wire the new backend delete API into the frontend data layer so deletions invalidate/refresh server case queries and keep the merged local/server list consistent.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/components/cases/CaseCard.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/components/cases/CaseCard.tsx"
         ]
       }
     ]
   },
   "changedFiles": [
+    "backend/main.mo",
     "build-request.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/components/cases/CaseForm.tsx",
-    "frontend/src/utils/demographicsExtract.ts",
+    "frontend/src/backend.d.ts",
+    "frontend/src/backend.ts",
+    "frontend/src/components/cases/CaseCard.tsx",
+    "frontend/src/declarations/backend.did.d.ts",
+    "frontend/src/declarations/backend.did.js",
+    "frontend/src/hooks/useQueries.ts",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

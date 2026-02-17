@@ -140,6 +140,7 @@ export interface backendInterface {
     _initializeAccessControlWithSecret(userSecret: string): Promise<void>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
     createSurgeryCase(medicalRecordNumber: string, presentingComplaint: string, patientDemographics: CompletePatientDemographics, arrivalDate: Time, tasksChecklist: TasksChecklist): Promise<bigint>;
+    deleteSurgeryCase(caseId: bigint): Promise<boolean>;
     getAllSurgeryCases(): Promise<Array<SurgeryCase>>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
@@ -147,6 +148,7 @@ export interface backendInterface {
     getUserProfile(user: Principal): Promise<UserProfile | null>;
     hasUnsyncedChanges(): Promise<boolean>;
     isCallerAdmin(): Promise<boolean>;
+    ping(): Promise<void>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
     syncLocalChanges(localCases: Array<SurgeryCase>): Promise<void>;
     updateSurgeryCase(caseId: bigint, updates: SurgeryCaseUpdate): Promise<boolean>;
@@ -193,6 +195,20 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.createSurgeryCase(arg0, arg1, arg2, arg3, arg4);
+            return result;
+        }
+    }
+    async deleteSurgeryCase(arg0: bigint): Promise<boolean> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.deleteSurgeryCase(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.deleteSurgeryCase(arg0);
             return result;
         }
     }
@@ -291,6 +307,20 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.isCallerAdmin();
+            return result;
+        }
+    }
+    async ping(): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.ping();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.ping();
             return result;
         }
     }

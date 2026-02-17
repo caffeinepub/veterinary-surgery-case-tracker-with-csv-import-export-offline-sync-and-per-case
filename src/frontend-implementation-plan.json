@@ -1,27 +1,65 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Fix Quick Add Pet Name auto-fill reliability",
+  "title": "Case card deletion + presenting complaint emphasis",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Ensure Quick Add demographics paste reliably extracts and auto-fills Pet Name when empty/untouched, without overwriting user-entered values or regressing other field extraction.",
+      "summary": "Add a per-case delete control with confirmation that removes the case from the UI immediately and gracefully handles offline/backend failure.",
       "acceptanceCriteria": [
-        "Given the CaseForm is open for creating a new case and the Pet Name field is empty and untouched, pasting demographics text into the Quick Add textarea auto-fills the Pet Name field when the pasted text includes a pet/patient name.",
-        "If the Pet Name field has already been typed into (touched) or is non-empty, a Quick Add paste does not overwrite the Pet Name field.",
-        "A Quick Add paste that includes other demographics continues to behave as before (no regressions to MRN/owner/species/breed/sex/DOB/arrival date/presenting complaint extraction and auto-fill behavior).",
-        "User-facing messages/toasts related to Quick Add remain in English."
+        "Each rendered case card includes a clearly discoverable delete control (e.g., trash icon button) in addition to the existing edit button.",
+        "Clicking delete prompts the user to confirm (confirmation UI may be a simple confirm dialog).",
+        "On confirm, the case is removed from the UI list immediately.",
+        "If the app is connected to the backend, the deletion is also sent to the backend; if not connected, deletion still removes the case locally without crashing.",
+        "If backend deletion fails, the app shows a user-visible error (toast/alert) and logs the error to the console."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/utils/demographicsExtract.ts",
+          "path": "frontend/src/components/cases/CaseCard.tsx",
           "operation": "modify",
-          "description": "Investigate and correct pet-name extraction edge cases in extractDemographics (e.g., names presented without labels, all-caps names, comma/pipe-delimited formats, trailing punctuation, and avoiding false positives). Keep existing MRN/owner/species/breed/sex/DOB/arrival/complaint extraction behavior intact and deterministic."
+          "description": "Add a trash/delete icon button on each case card (next to the existing edit button). On click, show a confirmation step (e.g., window.confirm). If confirmed, call the local deletion mutation (useCasesStore().deleteCase) so the item disappears immediately; then attempt server deletion via the frontend delete mutation hook (added in REQ-4) when backend connectivity/actor is available. If server deletion fails, log to console and show a toast error via sonner. Verify the component's usage instructions before implementing."
         },
         {
-          "path": "frontend/src/components/cases/CaseForm.tsx",
+          "path": "frontend/src/components/cases/CaseList.tsx",
           "operation": "modify",
-          "description": "Fix how extracted petName is applied in CaseForm.handlePasteExtraction so it reliably fills only when the Pet Name field is currently empty (treat whitespace-only as empty) and has not been touched, and never overwrites user-entered values. Ensure other extracted fields continue to follow the same empty/untouched rules and existing English toasts remain unchanged."
+          "description": "Ensure the CaseCard props/wiring still works after adding delete UI (no orphan controls). Keep list rendering stable by continuing to key by caseId string and relying on mergedCases updates after local deletion. Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "summary": "Visually emphasize the presenting complaint on each case card using a contrasting colored container that works in light/dark modes and wraps long text.",
+      "acceptanceCriteria": [
+        "On each case card, the presenting complaint section is wrapped in a clearly visible colored container (background + border) that contrasts with surrounding rows.",
+        "The presenting complaint label remains readable and the complaint text wraps gracefully for long text.",
+        "The styling works in both light and dark modes using Tailwind/theme variables (no hard-to-read low-contrast combinations)."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/cases/CaseCard.tsx",
+          "operation": "modify",
+          "description": "Update the presenting complaint row to render inside a colored container (e.g., rounded border + subtle background using Tailwind theme colors like accent/primary/destructive-neutral variants). Adjust layout to prevent truncation and support long-text wrapping (e.g., align items-start, add min-w-0, break-words/whitespace-normal on the value). Ensure the label remains readable and contrasts appropriately in both light and dark modes. Verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "summary": "Add a React Query delete-case mutation hook that calls the backend delete capability and invalidates server and merged case queries without touching forbidden files.",
+      "acceptanceCriteria": [
+        "Frontend includes a React Query mutation hook for deleting a surgery case via the backend actor.",
+        "After a successful backend deletion, queries for server cases and merged cases are invalidated/refreshed (consistent with create/update patterns in frontend/src/hooks/useQueries.ts).",
+        "The deletion flow does not require editing any files under frontend/src/components/ui or frontend/src/hooks/useActor*."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/hooks/useQueries.ts",
+          "operation": "modify",
+          "description": "Implement a new React Query mutation hook (e.g., useDeleteSurgeryCase) that calls the backend actor's deleteSurgeryCase(caseId) capability. Mirror existing error handling patterns (including Unauthorized messaging) and, on success, invalidate both ['serverSurgeryCases'] and ['mergedCases'] to refresh the merged local/server view."
+        },
+        {
+          "path": "frontend/src/components/cases/CaseCard.tsx",
+          "operation": "modify",
+          "description": "Wire the new useDeleteSurgeryCase mutation into the card delete flow so that, after local removal, a connected backend attempt triggers query invalidation/refresh on success. Ensure this wiring does not modify any files under frontend/src/components/ui or frontend/src/hooks/useActor*. Verify the component's usage instructions before implementing."
         }
       ]
     }

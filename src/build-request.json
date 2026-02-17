@@ -1,36 +1,93 @@
 {
   "kind": "build_request",
-  "title": "Fix Quick Add paste so Pet Name auto-fills reliably",
+  "title": "Add delete option for patient cards and highlight presenting complaint",
   "projectName": "Surgery Case Tracker",
   "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Fix the Quick Add demographics paste flow so that when a user pastes demographics text that contains a pet/patient name, the CaseForm \"Pet Name\" field is populated (as long as the field is currently empty and has not been touched). Investigate and correct the root cause, which may be in the pet-name parsing logic in `extractDemographics` and/or how the extracted value is applied in `CaseForm.handlePasteExtraction`.",
+      "text": "Add a delete action on each patient (surgery case) card that allows the user to delete that case, with a confirmation step before deletion.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "recent-messages-5"
+          "msg-user-1"
         ],
         "quotes": [
-          "Pet name is not populating when text is pasted in quick add box"
+          "add option to delete patient card"
         ]
       },
       "acceptanceCriteria": [
-        "Given the CaseForm is open for creating a new case and the Pet Name field is empty and untouched, pasting demographics text into the Quick Add textarea auto-fills the Pet Name field when the pasted text includes a pet/patient name.",
-        "If the Pet Name field has already been typed into (touched) or is non-empty, a Quick Add paste does not overwrite the Pet Name field.",
-        "A Quick Add paste that includes other demographics continues to behave as before (no regressions to MRN/owner/species/breed/sex/DOB/arrival date/presenting complaint extraction and auto-fill behavior).",
-        "User-facing messages/toasts related to Quick Add remain in English."
+        "Each rendered case card includes a clearly discoverable delete control (e.g., trash icon button) in addition to the existing edit button.",
+        "Clicking delete prompts the user to confirm (confirmation UI may be a simple confirm dialog).",
+        "On confirm, the case is removed from the UI list immediately.",
+        "If the app is connected to the backend, the deletion is also sent to the backend; if not connected, deletion still removes the case locally without crashing.",
+        "If backend deletion fails, the app shows a user-visible error (toast/alert) and logs the error to the console."
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "text": "Implement a backend API to delete a surgery case by caseId for the authenticated caller, enforcing the same authorization rules as other case mutations.",
+      "target": "backend",
+      "source": {
+        "messageIds": [
+          "msg-user-1"
+        ],
+        "quotes": [
+          "add option to delete patient card"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Backend exposes a new shared method to delete a case by caseId for the caller (e.g., deleteSurgeryCase(caseId : Nat) : async Bool).",
+        "If the caller is not authorized as a user, the method traps with an Unauthorized message consistent with existing CRUD methods.",
+        "When a matching case exists, it is removed from the caller’s stored list and the method returns true; when not found, it returns false.",
+        "No state migration is required (no changes to persisted data schema/types)."
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "text": "Update the patient (surgery case) card UI so the presenting complaint is visually emphasized using a colored box around the complaint value.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-user-1"
+        ],
+        "quotes": [
+          "on patient card put a color box around presenting complaint so it stands out more"
+        ]
+      },
+      "acceptanceCriteria": [
+        "On each case card, the presenting complaint section is wrapped in a clearly visible colored container (background + border) that contrasts with surrounding rows.",
+        "The presenting complaint label remains readable and the complaint text wraps gracefully for long text.",
+        "The styling works in both light and dark modes using Tailwind/theme variables (no hard-to-read low-contrast combinations)."
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "text": "Wire the new backend delete API into the frontend data layer so deletions invalidate/refresh server case queries and keep the merged local/server list consistent.",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-user-1"
+        ],
+        "quotes": [
+          "add option to delete patient card"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Frontend includes a React Query mutation hook for deleting a surgery case via the backend actor.",
+        "After a successful backend deletion, queries for server cases and merged cases are invalidated/refreshed (consistent with create/update patterns in frontend/src/hooks/useQueries.ts).",
+        "The deletion flow does not require editing any files under frontend/src/components/ui or frontend/src/hooks/useActor*."
       ]
     }
   ],
   "constraints": [
-    "Do not modify files under `frontend/src/components/ui` (compose existing UI components instead).",
-    "Do not edit frontend immutable hook/bootstrap files listed in SYSTEM_CONTEXT (e.g., `frontend/src/main.tsx`, `frontend/src/hooks/useActor.ts`, `frontend/src/hooks/useInternetIdentity.ts`)."
+    "Backend must remain a single Motoko actor in backend/main.mo; do not introduce additional backend services.",
+    "Do not modify files under frontend/src/components/ui or the immutable hook paths listed in SYSTEM_CONTEXT."
   ],
   "nonGoals": [
-    "No backend (Motoko) changes.",
-    "No changes to case persistence/sync logic beyond what is necessary to fix Quick Add Pet Name auto-fill."
+    "Adding role-based admin deletion of other users’ cases.",
+    "Adding undo/restore, trash bin, or audit history for deletions.",
+    "Changing case sorting, search behavior, or CSV import/export behavior beyond what is needed to keep lists consistent after deletion."
   ],
   "imageRequirements": {
     "required": [],

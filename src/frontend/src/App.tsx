@@ -15,12 +15,13 @@ import SyncStatusBar from './components/sync/SyncStatusBar';
 import CsvImportDialog from './components/csv/CsvImportDialog';
 import CsvExportButton from './components/csv/CsvExportButton';
 import SortControls from './components/cases/SortControls';
+import BackendConnectionTroubleshooting from './components/errors/BackendConnectionTroubleshooting';
 import { Toaster } from './components/ui/sonner';
 import { ModalErrorBoundary } from './components/errors/ModalErrorBoundary';
 
 export default function App() {
   const { identity, loginStatus } = useInternetIdentity();
-  const { isConnected } = useBackendConnection();
+  const { isConnected, isInitializing, error: connectionError, retry: retryConnection } = useBackendConnection();
   const isAuthenticated = !!identity;
   const { data: userProfile, isLoading: profileLoading, isFetched } = useGetCallerUserProfile();
   const saveProfile = useSaveCallerUserProfile();
@@ -101,14 +102,25 @@ export default function App() {
     );
   }
 
-  // Authenticated users see the main UI with import/export and editing
-  // Backend connectivity issues are shown via SyncStatusBar, not blocking screens
+  // Authenticated users see the main UI with troubleshooting banner when connection fails
+  // The app remains usable for local-only features when backend is disconnected
+  const showTroubleshooting = isAuthenticated && !isInitializing && connectionError;
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
       <SyncStatusBar />
       
       <main className="flex-1 container mx-auto px-4 py-6 max-w-7xl">
+        {/* Prominent troubleshooting banner when backend connection fails */}
+        {showTroubleshooting && (
+          <BackendConnectionTroubleshooting
+            error={connectionError}
+            onRetry={retryConnection}
+            isRetrying={isInitializing}
+          />
+        )}
+
         <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <h1 className="text-3xl font-bold text-primary">Surgery Cases</h1>
           <div className="flex gap-2 flex-wrap">
@@ -189,28 +201,14 @@ export default function App() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showCaseFormModal} onOpenChange={(open) => {
-        if (!open) {
-          handleCloseCaseForm();
-        }
-      }}>
+      <Dialog open={showCaseFormModal} onOpenChange={handleCloseCaseForm}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{editingCaseId ? 'Edit Case' : 'New Case'}</DialogTitle>
-          </DialogHeader>
-          <ModalErrorBoundary 
-            onClose={handleCloseCaseForm}
-            resetKey={`${modalSessionKey}-${editingCaseId ? editingCaseId.toString() : 'new'}`}
-            debugLabel={editingCaseId ? `Edit-${editingCaseId}` : 'New'}
-          >
-            {showCaseFormModal && (
-              <CaseForm 
-                key={modalSessionKey}
-                editingCaseId={editingCaseId} 
-                onCancelEdit={handleCloseCaseForm}
-                onSaveComplete={handleSaveComplete}
-              />
-            )}
+          <ModalErrorBoundary resetKey={modalSessionKey} debugLabel="CaseForm" onClose={handleCloseCaseForm}>
+            <CaseForm
+              editingCaseId={editingCaseId}
+              onCancelEdit={handleCloseCaseForm}
+              onSaveComplete={handleSaveComplete}
+            />
           </ModalErrorBoundary>
         </DialogContent>
       </Dialog>

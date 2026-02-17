@@ -1,25 +1,63 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-16T23:20:50.336Z",
-  "summary": "Diff updates pet-name parsing in `extractDemographics` and appears to adjust CaseForm auto-fill emptiness checks, but the provided (truncated) evidence does not clearly show that Quick Add paste will only set Pet Name when the field is empty *and untouched*, nor that it will never overwrite a touched/non-empty Pet Name.",
+  "generatedAt": "2026-02-17T00:40:47.917Z",
+  "summary": "Diff implements a frontend delete control on case cards with confirmation, local-first deletion, attempted backend deletion, and user-visible error toast + console logging on backend failure. Evidence for the backend delete API, React Query delete mutation wiring/invalidation, and presenting-complaint highlight styling is not present in the provided truncated code excerpts.",
   "missing_requirements": [
     {
-      "id": "REQ-1",
-      "requirement": "Ensure Quick Add paste auto-fills CaseForm \"Pet Name\" only when the field is currently empty and has not been touched, and does not overwrite when non-empty or touched.",
-      "reason": "While `touchedFields` state exists in `CaseForm.tsx` and `extractDemographics` now extracts `petName`, the truncated diff does not include `CaseForm.handlePasteExtraction` (or equivalent) logic showing a guard that checks both (a) empty and (b) untouched before applying extracted `petName`, nor explicit prevention of overwriting when touched/non-empty.",
+      "id": "REQ-2",
+      "requirement": "Implement a backend API to delete a surgery case by caseId for the authenticated caller, enforcing the same authorization rules as other case mutations.",
+      "reason": "backend/main.mo excerpt is truncated before any deleteSurgeryCase (or equivalent) method is shown; cannot confirm method exists, traps on Unauthorized, or returns true/false per AC.",
       "evidence": [
-        "frontend/src/components/cases/CaseForm.tsx (truncated)",
-        "frontend-file-summaries.txt (mentions auto-fill uses an `isFieldEmpty` helper, but does not mention touched-field guard specifically)"
+        "backend/main.mo (truncated; no delete method visible)"
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "requirement": "Update the patient (surgery case) card UI so the presenting complaint is visually emphasized using a colored box around the complaint value.",
+      "reason": "CaseCard.tsx excerpt shows delete button wiring but does not show any presenting-complaint section or highlighted container styling (background + border, light/dark support).",
+      "evidence": [
+        "frontend/src/components/cases/CaseCard.tsx (truncated; no presenting complaint highlight visible)"
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "requirement": "Wire the new backend delete API into the frontend data layer so deletions invalidate/refresh server case queries and keep the merged local/server list consistent.",
+      "reason": "useQueries.ts excerpt is truncated before any delete mutation hook implementation and onSuccess invalidation for both serverSurgeryCases and mergedCases is shown; cannot verify wiring or invalidation behavior.",
+      "evidence": [
+        "frontend/src/hooks/useQueries.ts (truncated; delete mutation not visible)"
       ]
     }
   ],
-  "hallucinated_features": [],
-  "confidence": 0.58,
+  "hallucinated_features": [
+    {
+      "description": "Add capturedImageUrl support to LocalSurgeryCase/CaseFormData (camera-captured reference images).",
+      "reason": "Not requested in BuildRequest; appears as an additional feature described in the summaries.",
+      "evidence": [
+        "frontend-file-summaries.txt (mentions capturedImageUrl added)"
+      ]
+    },
+    {
+      "description": "Change arrivalDate/dateOfBirth representation to YYYY-MM-DD strings and update multiple utilities (dates, csv, prefill) for timezone-safe handling.",
+      "reason": "Not requested (and explicitly a non-goal to change CSV behavior beyond what is needed for deletion consistency); appears as broader date/CSV behavior changes described in the summaries.",
+      "evidence": [
+        "frontend-file-summaries.txt (mentions date type changes and CSV handling changes)"
+      ]
+    },
+    {
+      "description": "Overhaul local persistence behavior (verification reload, error throwing on save failures) and broader sync logic changes.",
+      "reason": "Not requested; BuildRequest only asks for deletion and list consistency after deletion, not general persistence/sync redesign.",
+      "evidence": [
+        "frontend-file-summaries.txt (mentions localPersistence verification and useSync changes)"
+      ]
+    }
+  ],
+  "confidence": 0.56,
   "changed_files": [
+    "backend/main.mo",
     "frontend-file-summaries.txt",
-    "frontend/src/components/cases/CaseForm.tsx",
-    "frontend/src/utils/demographicsExtract.ts",
+    "frontend/src/components/cases/CaseCard.tsx",
+    "frontend/src/hooks/useQueries.ts",
     "project_state.json"
   ]
 }

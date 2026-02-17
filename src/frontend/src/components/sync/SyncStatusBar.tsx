@@ -39,8 +39,7 @@ export default function SyncStatusBar() {
     toast.info('Retrying backend connection...');
   };
 
-  // Show connection error for authenticated users
-  const showConnectionError = isAuthenticated && !isInitializing && connectionError;
+  // Show sync error only (connection errors are now shown in the main troubleshooting banner)
   const showSyncError = syncError && !connectionError;
 
   return (
@@ -87,20 +86,6 @@ export default function SyncStatusBar() {
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Retry button for connection errors */}
-            {showConnectionError && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleRetry}
-                disabled={isInitializing}
-                className="gap-2"
-              >
-                <RefreshCw className="h-4 w-4" />
-                Retry Connection
-              </Button>
-            )}
-
             {/* Sync button */}
             {isAuthenticated && (
               <Button
@@ -126,17 +111,7 @@ export default function SyncStatusBar() {
           </div>
         </div>
 
-        {/* Connection error alert */}
-        {showConnectionError && (
-          <Alert variant="destructive" className="mt-2">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              <strong>Backend Connection Error:</strong> {connectionError}
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {/* Sync error alert */}
+        {/* Sync error alert (connection errors are shown in the main troubleshooting banner) */}
         {showSyncError && (
           <Alert variant="destructive" className="mt-2">
             <AlertCircle className="h-4 w-4" />

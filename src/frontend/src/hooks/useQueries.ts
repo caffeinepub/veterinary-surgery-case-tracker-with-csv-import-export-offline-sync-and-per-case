@@ -137,6 +137,29 @@ export function useUpdateSurgeryCase() {
   });
 }
 
+export function useDeleteSurgeryCase() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (caseId: bigint) => {
+      if (!actor) throw new Error('Backend connection not available');
+      try {
+        return await actor.deleteSurgeryCase(caseId);
+      } catch (error: any) {
+        if (error.message?.includes('Unauthorized')) {
+          throw new Error('Not authorized to delete cases');
+        }
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['serverSurgeryCases'] });
+      queryClient.invalidateQueries({ queryKey: ['mergedCases'] });
+    },
+  });
+}
+
 export function useSyncLocalChanges() {
   const { actor } = useActor();
   const queryClient = useQueryClient();

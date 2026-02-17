@@ -25,7 +25,7 @@ export function useBackendConnection(): BackendConnectionStatus {
   const isAuthenticated = !!identity;
   const isInitializing = loginStatus === 'initializing' || actorFetching || isProbing;
 
-  // Probe backend connectivity with a read call after actor is ready
+  // Probe backend connectivity with the unauthenticated ping endpoint
   const probeQuery = useQuery({
     queryKey: ['backendConnectionProbe', identity?.getPrincipal().toString()],
     queryFn: async () => {
@@ -34,8 +34,9 @@ export function useBackendConnection(): BackendConnectionStatus {
       }
       
       try {
-        // Attempt a simple read call to verify backend connectivity
-        await actor.getCallerUserProfile();
+        // Use the unauthenticated ping endpoint to verify backend reachability
+        // This avoids conflating authorization failures with connectivity issues
+        await actor.ping();
         return true;
       } catch (error: any) {
         // Classify the error for user-friendly messaging

@@ -57,6 +57,7 @@ export enum UserRole {
 export interface backendInterface {
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
     createSurgeryCase(medicalRecordNumber: string, presentingComplaint: string, patientDemographics: CompletePatientDemographics, arrivalDate: Time, tasksChecklist: TasksChecklist): Promise<bigint>;
+    deleteSurgeryCase(caseId: bigint): Promise<boolean>;
     getAllSurgeryCases(): Promise<Array<SurgeryCase>>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
@@ -64,6 +65,7 @@ export interface backendInterface {
     getUserProfile(user: Principal): Promise<UserProfile | null>;
     hasUnsyncedChanges(): Promise<boolean>;
     isCallerAdmin(): Promise<boolean>;
+    ping(): Promise<void>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
     syncLocalChanges(localCases: Array<SurgeryCase>): Promise<void>;
     updateSurgeryCase(caseId: bigint, updates: SurgeryCaseUpdate): Promise<boolean>;

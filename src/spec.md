@@ -1,11 +1,12 @@
 # Specification
 
 ## Summary
-**Goal:** Make Quick Add demographics paste reliably auto-fill the CaseForm “Pet Name” field when the pasted text includes a pet/patient name.
+**Goal:** Let users delete surgery case (patient) cards safely and make the presenting complaint stand out more on each card.
 
 **Planned changes:**
-- Investigate and fix the root cause preventing pet name extraction and/or application during Quick Add paste (within `extractDemographics` and/or `CaseForm.handlePasteExtraction`).
-- Ensure Pet Name is only auto-filled on paste when the field is currently empty and untouched, and never overwritten if it has been touched or is non-empty.
-- Verify other Quick Add demographic extractions (MRN/owner/species/breed/sex/DOB/arrival date/presenting complaint) continue to behave as before, and that existing English toasts/messages remain unchanged.
+- Add a clearly visible delete control on each case card with a confirmation step, and remove the case from the list immediately after confirming.
+- Implement a backend delete API to remove a case by caseId for the authenticated caller, following existing authorization rules.
+- Wire the frontend deletion flow to the backend via a React Query mutation, and invalidate/refresh server and merged case queries after successful deletion.
+- Visually emphasize the presenting complaint on each card using a contrasting colored container (background + border) that works in light/dark mode and wraps long text.
 
-**User-visible outcome:** When creating a new case, pasting demographics into Quick Add will correctly populate Pet Name (only if the field is empty and untouched) without disrupting other auto-fill behavior.
+**User-visible outcome:** Users can delete a surgery case from its card (after confirming) and the presenting complaint is more visually prominent on each case card.

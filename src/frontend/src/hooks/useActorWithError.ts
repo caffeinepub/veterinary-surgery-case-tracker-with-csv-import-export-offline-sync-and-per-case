@@ -3,6 +3,7 @@ import { useActor } from './useActor';
 import { useInternetIdentity } from './useInternetIdentity';
 import { useQueryClient } from '@tanstack/react-query';
 import { type backendInterface } from '../backend';
+import { classifyBackendError } from '../utils/backendErrorMessages';
 
 export interface UseActorWithErrorReturn {
   actor: backendInterface | null;
@@ -25,23 +26,32 @@ export function useActorWithError(): UseActorWithErrorReturn {
 
   const isAuthenticated = !!identity;
 
-  // Monitor actor initialization state
+  // Monitor actor initialization state and capture underlying errors
   useEffect(() => {
     // Track that we've attempted initialization
     if (isAuthenticated && !isFetching) {
       setInitAttempted(true);
     }
 
+    // Check for actor query errors from React Query
+    const actorQueryState = queryClient.getQueryState(['actor', identity?.getPrincipal().toString()]);
+    
     // If we're authenticated, finished fetching, but have no actor after attempting init, there was an error
     if (isAuthenticated && !isFetching && !actor && initAttempted && previousActor === null) {
-      setError('Failed to initialize backend connection. The backend service may be unavailable.');
+      // Try to get the actual error from the query state
+      if (actorQueryState?.error) {
+        const classified = classifyBackendError(actorQueryState.error, 'actor initialization');
+        setError(classified.message);
+      } else {
+        setError('Failed to initialize backend connection. The backend service may be unavailable.');
+      }
     } else if (actor) {
       // Successfully got an actor, clear any errors
       setError(null);
       setPreviousActor(actor);
       setInitAttempted(false);
     }
-  }, [isAuthenticated, isFetching, actor, previousActor, initAttempted]);
+  }, [isAuthenticated, isFetching, actor, previousActor, initAttempted, identity, queryClient]);
 
   // Clear error when user logs out
   useEffect(() => {

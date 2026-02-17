@@ -80,6 +80,10 @@ actor {
   let cases = Map.empty<Principal, List.List<SurgeryCase>>();
   let userProfiles = Map.empty<Principal, UserProfile>();
 
+  public query ({ caller }) func ping() : async () {
+    ();
+  };
+
   public query ({ caller }) func getCallerUserProfile() : async ?UserProfile {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can access profiles");
@@ -279,6 +283,35 @@ actor {
         let casesArray = userCases.toArray();
         let filteredCases = casesArray.filter(func(c) { c.lastSyncTimestamp > since });
         filteredCases.sort(SurgeryCase.compareByLastSyncTimestamp);
+      };
+    };
+  };
+
+  public shared ({ caller }) func deleteSurgeryCase(caseId : Nat) : async Bool {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can delete surgery cases");
+    };
+
+    switch (cases.get(caller)) {
+      case (null) { false };
+      case (?userCases) {
+        let caseIndex = userCases.findIndex(func(c) { c.caseId == caseId });
+        switch (caseIndex) {
+          case (null) { false };
+          case (?index) {
+            let updatedCases = List.empty<SurgeryCase>();
+            let iter = userCases.values();
+            var currentIndex = 0;
+            for (caseItem in iter) {
+              if (currentIndex != index) {
+                updatedCases.add(caseItem);
+              };
+              currentIndex += 1;
+            };
+            cases.add(caller, updatedCases);
+            true;
+          };
+        };
       };
     };
   };

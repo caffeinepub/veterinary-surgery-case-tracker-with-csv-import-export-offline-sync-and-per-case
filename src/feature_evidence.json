@@ -2,11 +2,10 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-fix-the-quick-add-demographics-paste-flow-so-that-when-a-user-pastes-demographics-text-that-contains-a-pet-patient-name-the-caseform-pet-name-field-is-populated-as-long-as-the-field-is-currently-empty-and-has-not-been-touched-investigate-and-correct-the-root-cause-which-may-be-in-the-pet-name-parsing-logic-in-extractdemographics-and-or-how-the-extracted-value-is-applied-in-caseform-handlepasteextraction",
-      "featureTitle": "Fix the Quick Add demographics paste flow so that when a user pastes demographics text that contains a pet/patient name, the CaseForm \"Pet Name\" field is populated (as long as the field is currently empty and has not been touched). Investigate and correct the root cause, which may be in the pet-name parsing logic in `extractDemographics` and/or how the extracted value is applied in `CaseForm.handlePasteExtraction`.",
+      "featureId": "feature-add-a-delete-action-on-each-patient-surgery-case-card-that-allows-the-user-to-delete-that-case-with-a-confirmation-step-before-deletion",
+      "featureTitle": "Add a delete action on each patient (surgery case) card that allows the user to delete that case, with a confirmation step before deletion.",
       "files": [
-        "frontend/src/components/cases/CaseForm.tsx",
-        "frontend/src/utils/demographicsExtract.ts"
+        "frontend/src/components/cases/CaseCard.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -19,6 +18,47 @@
       ],
       "testIds": [
         "REQ-1"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-update-the-patient-surgery-case-card-ui-so-the-presenting-complaint-is-visually-emphasized-using-a-colored-box-around-the-complaint-value",
+      "featureTitle": "Update the patient (surgery case) card UI so the presenting complaint is visually emphasized using a colored box around the complaint value.",
+      "files": [
+        "frontend/src/components/cases/CaseCard.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "camera@1.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-3"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-wire-the-new-backend-delete-api-into-the-frontend-data-layer-so-deletions-invalidate-refresh-server-case-queries-and-keep-the-merged-local-server-list-consistent",
+      "featureTitle": "Wire the new backend delete API into the frontend data layer so deletions invalidate/refresh server case queries and keep the merged local/server list consistent.",
+      "files": [
+        "frontend/src/components/cases/CaseCard.tsx",
+        "frontend/src/hooks/useQueries.ts"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "camera@1.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-4"
       ],
       "confidence": "high"
     }

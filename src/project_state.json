@@ -1,23 +1,59 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "New project",
+  "summary": "Patient card UI enhancements: add delete option and improve visibility of presenting complaint with a highlighted color box.",
   "architectural_notes": [],
-  "known_issues": [
-    "Pet name is not populating when text is pasted into the quick add box."
-  ],
-  "isFixRequest": true,
+  "known_issues": [],
+  "isFixRequest": false,
   "existing_features": [
     {
-      "id": "feature-fix-the-quick-add-demographics-paste-flow-so-that-when-a-user-pastes-demographics-text-that-contains-a-pet-patient-name-the-caseform-pet-name-field-is-populated-as-long-as-the-field-is-currently-empty-and-has-not-been-touched-investigate-and-correct-the-root-cause-which-may-be-in-the-pet-name-parsing-logic-in-extractdemographics-and-or-how-the-extracted-value-is-applied-in-caseform-handlepasteextraction",
-      "title": "Fix the Quick Add demographics paste flow so that when a user pastes demographics text that contains a pet/patient name, the CaseForm \"Pet Name\" field is populated (as long as the field is currently empty and has not been touched). Investigate and correct the root cause, which may be in the pet-name parsing logic in `extractDemographics` and/or how the extracted value is applied in `CaseForm.handlePasteExtraction`.",
+      "id": "feature-add-a-delete-action-on-each-patient-surgery-case-card-that-allows-the-user-to-delete-that-case-with-a-confirmation-step-before-deletion",
+      "title": "Add a delete action on each patient (surgery case) card that allows the user to delete that case, with a confirmation step before deletion.",
       "reqIds": [
         "REQ-1"
       ],
       "version": 1
+    },
+    {
+      "id": "feature-update-the-patient-surgery-case-card-ui-so-the-presenting-complaint-is-visually-emphasized-using-a-colored-box-around-the-complaint-value",
+      "title": "Update the patient (surgery case) card UI so the presenting complaint is visually emphasized using a colored box around the complaint value.",
+      "reqIds": [
+        "REQ-3"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-wire-the-new-backend-delete-api-into-the-frontend-data-layer-so-deletions-invalidate-refresh-server-case-queries-and-keep-the-merged-local-server-list-consistent",
+      "title": "Wire the new backend delete API into the frontend data layer so deletions invalidate/refresh server case queries and keep the merged local/server list consistent.",
+      "reqIds": [
+        "REQ-4"
+      ],
+      "version": 1
     }
   ],
-  "new_feature_requests": [],
+  "new_feature_requests": [
+    {
+      "id": "AR-1",
+      "summary": "Add option to delete a patient card",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-2",
+      "summary": "Highlight presenting complaint on patient card with a color box for better visibility",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-4",
+      "summary": "Implement a backend API to delete a surgery case by caseId for the authenticated caller, enforcing the same authorization rules as other case mutations.",
+      "reqIds": [
+        "REQ-2"
+      ],
+      "status": "pending"
+    }
+  ],
+  "gameProjectType": "none",
   "projectName": "Surgery Case Tracker",
   "clarification_mode": "instant",
   "clarification_rounds": 0

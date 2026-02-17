@@ -57,6 +57,7 @@ export interface _SERVICE {
     [string, string, CompletePatientDemographics, Time, TasksChecklist],
     bigint
   >,
+  'deleteSurgeryCase' : ActorMethod<[bigint], boolean>,
   'getAllSurgeryCases' : ActorMethod<[], Array<SurgeryCase>>,
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
@@ -64,6 +65,7 @@ export interface _SERVICE {
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
   'hasUnsyncedChanges' : ActorMethod<[], boolean>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
+  'ping' : ActorMethod<[], undefined>,
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
   'syncLocalChanges' : ActorMethod<[Array<SurgeryCase>], undefined>,
   'updateSurgeryCase' : ActorMethod<[bigint, SurgeryCaseUpdate], boolean>,

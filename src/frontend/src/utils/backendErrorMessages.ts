@@ -22,8 +22,10 @@ export function classifyBackendError(error: unknown, context?: string): Classifi
   const errorMessage = error instanceof Error ? error.message : String(error);
   const lowerMessage = errorMessage.toLowerCase();
 
-  // Check for authorization failures
-  if (lowerMessage.includes('unauthorized') || lowerMessage.includes('not authorized')) {
+  // Check for authorization failures - these are distinct from connectivity issues
+  if (lowerMessage.includes('unauthorized') || 
+      lowerMessage.includes('not authorized') ||
+      lowerMessage.includes('permission denied')) {
     return {
       category: 'authorization',
       message: 'You are not authorized to access this resource. Please check your permissions.',
@@ -33,10 +35,12 @@ export function classifyBackendError(error: unknown, context?: string): Classifi
   // Check for canister/service unavailability
   if (lowerMessage.includes('canister') || 
       lowerMessage.includes('service unavailable') ||
-      lowerMessage.includes('replica')) {
+      lowerMessage.includes('replica') ||
+      lowerMessage.includes('could not be reached') ||
+      lowerMessage.includes('not found')) {
     return {
       category: 'network',
-      message: 'Backend service is currently unavailable. Please try again in a moment.',
+      message: 'Backend service is currently unavailable. The canister may not be deployed or reachable.',
     };
   }
 
