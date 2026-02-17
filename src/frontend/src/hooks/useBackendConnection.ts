@@ -25,9 +25,14 @@ export function useBackendConnection(): BackendConnectionStatus {
   const isAuthenticated = !!identity;
   const isInitializing = loginStatus === 'initializing' || actorFetching || isProbing;
 
+  // Stable query key that never includes undefined
+  // Use explicit 'anonymous' when not authenticated to avoid cache churn
+  const principalKey = isAuthenticated ? identity.getPrincipal().toString() : 'anonymous';
+
   // Probe backend connectivity with the unauthenticated ping endpoint
+  // This runs whenever an actor is available (anonymous or authenticated)
   const probeQuery = useQuery({
-    queryKey: ['backendConnectionProbe', identity?.getPrincipal().toString()],
+    queryKey: ['backendConnectionProbe', principalKey],
     queryFn: async () => {
       if (!actor) {
         throw new Error('Actor not available');
@@ -44,7 +49,8 @@ export function useBackendConnection(): BackendConnectionStatus {
         throw new Error(classified.message);
       }
     },
-    enabled: isAuthenticated && !!actor && !actorFetching && !actorError,
+    // Run probe whenever actor is available, regardless of auth state
+    enabled: !!actor && !actorFetching && !actorError,
     retry: false,
     staleTime: 30000, // Consider connection valid for 30 seconds
   });
@@ -57,6 +63,7 @@ export function useBackendConnection(): BackendConnectionStatus {
         : 'Failed to connect to backend';
       setProbeError(errorMessage);
     } else if (probeQuery.isSuccess) {
+      // Clear probe error on success
       setProbeError(null);
     }
   }, [probeQuery.isError, probeQuery.isSuccess, probeQuery.error]);
@@ -73,16 +80,21 @@ export function useBackendConnection(): BackendConnectionStatus {
       // Wait a moment for actor to be ready
       await new Promise(resolve => setTimeout(resolve, 100));
       
-      // Then invalidate and refetch the probe query to re-run the probe
+      // Then invalidate and refetch the probe query using the stable key
       await queryClient.invalidateQueries({
-        queryKey: ['backendConnectionProbe', identity?.getPrincipal().toString()]
-      });
-      await queryClient.refetchQueries({
-        queryKey: ['backendConnectionProbe', identity?.getPrincipal().toString()]
+        queryKey: ['backendConnectionProbe', principalKey]
       });
       
+      await queryClient.refetchQueries({
+        queryKey: ['backendConnectionProbe', principalKey]
+      });
+      
+      // Check if refetch was successful by examining query state
+      const probeQueryState = queryClient.getQueryState(['backendConnectionProbe', principalKey]);
+      const wasSuccessful = probeQueryState?.data === true && !probeQueryState?.error;
+      
       // If successful, invalidate dependent queries to refresh data
-      if (probeQuery.isSuccess) {
+      if (wasSuccessful) {
         await queryClient.invalidateQueries({
           predicate: (query) => {
             const key = query.queryKey[0];
@@ -102,7 +114,8 @@ export function useBackendConnection(): BackendConnectionStatus {
   // Priority: actor initialization error > probe error
   const primaryError = actorError || probeError;
 
-  const isConnected = isAuthenticated && !!actor && !actorError && probeQuery.isSuccess && !primaryError;
+  // Connection is successful when we have an actor, no errors, and probe succeeded
+  const isConnected = !!actor && !actorError && probeQuery.isSuccess && !primaryError;
 
   return {
     isConnected,

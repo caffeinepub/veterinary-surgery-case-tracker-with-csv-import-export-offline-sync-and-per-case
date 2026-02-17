@@ -13,6 +13,7 @@ Perform a redeploy when:
 - You need to deploy frontend code changes to the Live environment
 - Troubleshooting persistent connection issues between frontend and backend
 - **Backend interface has changed** (methods added, removed, or renamed)
+- After removing or renaming backend methods (critical - stale bindings will cause runtime errors)
 
 ### Quick Redeploy (Recommended)
 

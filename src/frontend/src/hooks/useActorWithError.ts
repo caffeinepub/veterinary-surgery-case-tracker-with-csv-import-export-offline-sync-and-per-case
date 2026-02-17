@@ -25,19 +25,21 @@ export function useActorWithError(): UseActorWithErrorReturn {
   const [initAttempted, setInitAttempted] = useState(false);
 
   const isAuthenticated = !!identity;
+  // Stable query key that never includes undefined
+  const principalKey = isAuthenticated ? identity.getPrincipal().toString() : 'anonymous';
 
   // Monitor actor initialization state and capture underlying errors
   useEffect(() => {
     // Track that we've attempted initialization
-    if (isAuthenticated && !isFetching) {
+    if (!isFetching) {
       setInitAttempted(true);
     }
 
-    // Check for actor query errors from React Query
-    const actorQueryState = queryClient.getQueryState(['actor', identity?.getPrincipal().toString()]);
+    // Check for actor query errors from React Query using stable key
+    const actorQueryState = queryClient.getQueryState(['actor', principalKey]);
     
-    // If we're authenticated, finished fetching, but have no actor after attempting init, there was an error
-    if (isAuthenticated && !isFetching && !actor && initAttempted && previousActor === null) {
+    // If we finished fetching but have no actor after attempting init, there was an error
+    if (!isFetching && !actor && initAttempted && previousActor === null) {
       // Try to get the actual error from the query state
       if (actorQueryState?.error) {
         const classified = classifyBackendError(actorQueryState.error, 'actor initialization');
@@ -51,7 +53,7 @@ export function useActorWithError(): UseActorWithErrorReturn {
       setPreviousActor(actor);
       setInitAttempted(false);
     }
-  }, [isAuthenticated, isFetching, actor, previousActor, initAttempted, identity, queryClient]);
+  }, [isFetching, actor, previousActor, initAttempted, principalKey, queryClient]);
 
   // Clear error when user logs out
   useEffect(() => {
@@ -67,12 +69,12 @@ export function useActorWithError(): UseActorWithErrorReturn {
     setPreviousActor(null);
     setInitAttempted(false);
     
-    // Invalidate and refetch the actor query
+    // Invalidate and refetch the actor query using stable key
     await queryClient.invalidateQueries({ 
-      queryKey: ['actor', identity?.getPrincipal().toString()] 
+      queryKey: ['actor', principalKey] 
     });
     await queryClient.refetchQueries({ 
-      queryKey: ['actor', identity?.getPrincipal().toString()] 
+      queryKey: ['actor', principalKey] 
     });
   };
 

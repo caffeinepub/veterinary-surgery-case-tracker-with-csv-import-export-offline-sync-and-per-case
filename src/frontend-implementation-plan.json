@@ -1,66 +1,59 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Remove legacy case-loading calls and ensure Live redeploy uses fresh backend bindings",
+  "title": "Surgery Case Tracker — Deterministic clean rebuild, redeploy, and live backend binding verification",
   "requirements": [
     {
-      "id": "REQ-3",
-      "summary": "Eliminate any remaining frontend runtime call paths to deprecated `getAllSurgeryCases()` and ensure CaseList loads via paginated `getSurgeryCases(start, limit)` only.",
-      "acceptanceCriteria": [
-        "A repo-wide search (excluding generated declarations) finds no references to `getAllSurgeryCases` under `frontend/src`.",
-        "Case loading in `CaseList.tsx` uses the existing store/query path that ultimately calls `actor.getSurgeryCases(start, limit)` and not `getAllSurgeryCases()`.",
-        "The live error banner 'Server Cases Loading Failed' no longer appears due to a missing/removed backend method when the user is authenticated and attempts to load server cases."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/components/cases/CaseList.tsx",
-          "operation": "modify",
-          "description": "Inspect and adjust CaseList wiring to ensure it relies exclusively on `useCasesStore()` for server case loading/refetch and does not directly or indirectly trigger any legacy `getAllSurgeryCases()` call paths."
-        },
-        {
-          "path": "frontend/src/hooks/useCasesStore.ts",
-          "operation": "modify",
-          "description": "Verify the store’s server-fetch integration uses `useGetSurgeryCasesPaginated()` and that refetch flows (including the error-banner retry) cannot hit any legacy case-loading method."
-        },
-        {
-          "path": "frontend/src/hooks/useQueries.ts",
-          "operation": "modify",
-          "description": "Confirm `useGetSurgeryCasesPaginated()` only calls `actor.getSurgeryCases(start, limit)` and remove/replace any lingering legacy references if present; keep the query key behavior compatible with `useCasesStore()`."
-        },
-        {
-          "path": "frontend/src/hooks/useSync.ts",
-          "operation": "modify",
-          "description": "Confirm sync’s pagination helper uses only `actor.getSurgeryCases(start, limit)` and remove/replace any lingering legacy references if present (to prevent alternate runtime call paths)."
-        }
-      ]
-    },
-    {
       "id": "REQ-4",
-      "summary": "Ensure the Live frontend redeploy flow regenerates and verifies fresh backend TypeScript bindings that do not include `getAllSurgeryCases`.",
+      "summary": "Harden the deterministic clean rebuild flow to reliably remove stale artifacts, regenerate backend TypeScript bindings from the currently deployed backend canister, and validate the legacy method is not referenced.",
       "acceptanceCriteria": [
-        "`frontend/src/declarations/backend/backend.did.d.ts` (generated from the deployed backend) does not contain `getAllSurgeryCases`.",
-        "After redeploying the frontend with fresh bindings, the Live site loads server cases successfully (no backend-method-missing error), and the retry action in the error banner is no longer needed for the legacy-method failure scenario."
+        "Running `bash frontend/scripts/clean-rebuild-frontend.sh` completes successfully without errors.",
+        "`frontend/src/declarations/backend/backend.did.d.ts` exists after the rebuild.",
+        "The generated bindings file does not contain the legacy method `getAllSurgeryCases`.",
+        "No frontend source files (excluding `frontend/src/declarations` and `node_modules`) reference `getAllSurgeryCases`.",
+        "`frontend/dist` is rebuilt as part of the script run."
       ],
       "file_operations": [
         {
           "path": "frontend/scripts/clean-rebuild-frontend.sh",
           "operation": "modify",
-          "description": "Harden the deterministic clean rebuild checks so regeneration of bindings is mandatory and the script fails fast if generated bindings include `getAllSurgeryCases`, ensuring stale bindings cannot ship to Live."
-        },
+          "description": "Make the clean rebuild more deterministic and self-validating: strengthen shell safety (e.g., strict error handling), ensure dependency install is lockfile-respecting, keep the existing binding regeneration from the deployed backend canister, and add explicit post-build checks that `frontend/dist` exists and bindings validation checks run as the script already intends."
+        }
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "summary": "Ensure the deterministic redeploy flow reliably redeploys the rebuilt frontend and prints the needed canister IDs and Live URL to confirm the correct deployment.",
+      "acceptanceCriteria": [
+        "Running `bash frontend/redeploy.sh` completes successfully without errors.",
+        "The redeploy output prints both backend and frontend canister IDs and a Live URL when on mainnet.",
+        "The deployed Live frontend no longer shows a backend disconnected error on page load."
+      ],
+      "file_operations": [
         {
           "path": "frontend/redeploy.sh",
           "operation": "modify",
-          "description": "Ensure redeploy runs the clean rebuild flow that regenerates bindings before deploying the frontend, and keeps the output/summary steps aligned with verifying the current deployed backend interface."
+          "description": "Tighten the deterministic redeploy flow: preserve the existing sequence (clean rebuild then deploy), improve robustness of network detection/output so it consistently prints backend + frontend canister IDs and the correct Live URL on mainnet, and add a final reminder to do a hard refresh to avoid cached assets after deploy."
         },
         {
           "path": "frontend/DEPLOYMENT_NOTES.md",
           "operation": "modify",
-          "description": "Update redeploy guidance to explicitly require the clean rebuild + binding verification steps for Live deployments, including confirming bindings do not include `getAllSurgeryCases`."
-        },
+          "description": "Align redeploy documentation with the deterministic flow in `frontend/redeploy.sh`, including the expected console output (backend/front-end IDs + Live URL) and troubleshooting notes specific to cached assets and stale bindings after deployment."
+        }
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "summary": "Update the Live verification guide to explicitly confirm the Live frontend is using fresh bindings and the expected backend canister ID after redeploy.",
+      "acceptanceCriteria": [
+        "The backend canister ID reported by `dfx canister id backend` matches the backend canister ID the Live frontend is effectively using (per the verification guide).",
+        "A hard refresh of the Live site loads successfully and backend-dependent UI (e.g., initial connection check) indicates connected/online rather than disconnected."
+      ],
+      "file_operations": [
         {
           "path": "frontend/scripts/verify-live-backend-binding.md",
           "operation": "modify",
-          "description": "Update the Live verification checklist to include confirming the regenerated `frontend/src/declarations/backend/backend.did.d.ts` omits `getAllSurgeryCases` and that server cases load without the legacy-method-missing failure."
+          "description": "Complete and clarify the post-redeploy verification steps to confirm (1) local regenerated bindings are fresh, (2) the expected backend canister ID is the one the built/deployed frontend is configured to use, and (3) a hard refresh of the Live site shows connected/online behavior rather than backend disconnected; keep the guide aligned with the outputs produced by `frontend/redeploy.sh`."
         }
       ]
     }

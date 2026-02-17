@@ -1,67 +1,75 @@
 {
   "kind": "build_request",
-  "title": "Fix live 'Server Cases Loading Failed' by removing any legacy case-loading calls and redeploying with fresh backend bindings",
+  "title": "Run deterministic clean rebuild and redeploy to fix Live backend disconnected error",
   "projectName": "Surgery Case Tracker",
   "priority": "high",
   "requirements": [
     {
-      "id": "REQ-3",
-      "text": "Inspect `frontend/src/components/cases/CaseList.tsx` and any directly invoked case-loading flows it depends on (via `useCasesStore()` / `useGetSurgeryCasesPaginated()`) to ensure there are zero runtime call paths that invoke the deprecated backend method `getAllSurgeryCases()`. Replace any remaining legacy calls with the paginated API `getSurgeryCases(start, limit)` (directly or via the existing pagination helper).",
+      "id": "REQ-4",
+      "text": "Perform a deterministic clean rebuild of the frontend to eliminate stale artifacts and regenerate TypeScript backend bindings from the currently deployed backend canister, using the existing script `frontend/scripts/clean-rebuild-frontend.sh`.",
       "target": "frontend",
       "source": {
         "messageIds": [
           "msg-1"
         ],
         "quotes": [
-          "Open CaseList.tsx"
+          "run the clean rebuild again"
         ]
       },
       "acceptanceCriteria": [
-        "A repo-wide search (excluding generated declarations) finds no references to `getAllSurgeryCases` under `frontend/src`.",
-        "Case loading in `CaseList.tsx` uses the existing store/query path that ultimately calls `actor.getSurgeryCases(start, limit)` and not `getAllSurgeryCases()`.",
-        "The live error banner 'Server Cases Loading Failed' no longer appears due to a missing/removed backend method when the user is authenticated and attempts to load server cases."
+        "Running `bash frontend/scripts/clean-rebuild-frontend.sh` completes successfully without errors.",
+        "`frontend/src/declarations/backend/backend.did.d.ts` exists after the rebuild.",
+        "The generated bindings file does not contain the legacy method `getAllSurgeryCases`.",
+        "No frontend source files (excluding `frontend/src/declarations` and `node_modules`) reference `getAllSurgeryCases`.",
+        "`frontend/dist` is rebuilt as part of the script run."
       ]
     },
     {
-      "id": "REQ-4",
-      "text": "Ensure the deployed Live frontend is rebuilt and redeployed using freshly generated backend TypeScript bindings so it cannot call removed legacy APIs. Follow the existing clean rebuild flow and confirm the generated bindings do not include `getAllSurgeryCases`.",
+      "id": "REQ-5",
+      "text": "Redeploy the frontend canister after the clean rebuild so the Live site ships the newly generated backend bindings, using the deterministic redeploy flow in `frontend/redeploy.sh` (or equivalently: run clean rebuild then `dfx deploy frontend`).",
       "target": "frontend",
       "source": {
         "messageIds": [
           "msg-1"
         ],
         "quotes": [
-          "Server Cases Loading Failed\nThe backend encountered an error processing your request. Please try again or contact support if the issue persists.\n\nRetry\nLocal cases are still available below",
-          "that is happening on the live app website"
+          "run the clean rebuild again"
         ]
       },
       "acceptanceCriteria": [
-        "`frontend/src/declarations/backend/backend.did.d.ts` (generated from the deployed backend) does not contain `getAllSurgeryCases`.",
-        "After redeploying the frontend with fresh bindings, the Live site loads server cases successfully (no backend-method-missing error), and the retry action in the error banner is no longer needed for the legacy-method failure scenario."
+        "Running `bash frontend/redeploy.sh` completes successfully without errors.",
+        "The redeploy output prints both backend and frontend canister IDs and a Live URL when on mainnet.",
+        "The deployed Live frontend no longer shows a backend disconnected error on page load."
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "text": "After redeploy, verify that the Live frontend is bound to the currently deployed backend canister ID by following `frontend/scripts/verify-live-backend-binding.md` (confirm the frontend is using fresh bindings and the expected backend canister ID).",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "run the clean rebuild again"
+        ]
+      },
+      "acceptanceCriteria": [
+        "The backend canister ID reported by `dfx canister id backend` matches the backend canister ID the Live frontend is effectively using (per the verification guide).",
+        "A hard refresh of the Live site loads successfully and backend-dependent UI (e.g., initial connection check) indicates connected/online rather than disconnected."
       ]
     }
   ],
   "constraints": [
-    "Do not edit files under `frontend/src/components/ui` (compose them instead).",
-    "Do not modify immutable hook files: `frontend/src/hooks/useInternetIdentity.ts`, `frontend/src/hooks/useInternetIdentity.tsx`, `frontend/src/hooks/useActor.ts`, `frontend/src/main.tsx`.",
-    "Backend remains single-actor; only add a migration file if state schema upgrades are required."
+    "Do not modify files under the frontend immutable paths listed in SYSTEM_CONTEXT (compose existing components/hooks instead of editing them, if changes become necessary).",
+    "Respect the single-actor backend architecture; do not introduce additional backend services."
   ],
   "nonGoals": [
-    "Adding new product features unrelated to fixing the live server case loading failure.",
-    "Introducing external databases, third-party auth providers, or realtime/websocket features."
+    "Adding new product features beyond fixing the frontend↔backend binding/deployment mismatch.",
+    "Changing backend interface/schema unless the clean rebuild scripts reveal a backend export mismatch that must be addressed separately."
   ],
   "imageRequirements": {
     "required": [],
     "edits": []
-  },
-  "userProfileUpdate": {
-    "goalsToAdd": [],
-    "goalsToRemove": [],
-    "preferencesToAdd": [],
-    "preferencesToRemove": [],
-    "miscToAdd": [],
-    "miscToRemove": [],
-    "fieldsToSet": {},
-    "fieldsToDelete": []
   }
 }

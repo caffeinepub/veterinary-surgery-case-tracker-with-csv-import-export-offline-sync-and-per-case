@@ -1,35 +1,44 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-17T03:37:13.777Z",
+  "generatedAt": "2026-02-17T04:52:56.961Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 2,
-    "implemented": 0,
+    "total": 3,
+    "implemented": 2,
     "items": [
       {
-        "id": "REQ-3",
-        "summary": "Inspect `frontend/src/components/cases/CaseList.tsx` and any directly invoked case-loading flows it depends on (via `useCasesStore()` / `useGetSurgeryCasesPaginated()`) to ensure there are zero runtime call paths that invoke the deprecated backend method `getAllSurgeryCases()`. Replace any remaining legacy calls with the paginated API `getSurgeryCases(start, limit)` (directly or via the existing pagination helper).",
-        "status": "missing",
+        "id": "REQ-4",
+        "summary": "Perform a deterministic clean rebuild of the frontend to eliminate stale artifacts and regenerate TypeScript backend bindings from the currently deployed backend canister, using the existing script `frontend/scripts/clean-rebuild-frontend.sh`.",
+        "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/cases/CaseList.tsx",
-          "frontend/src/hooks/useCasesStore.ts",
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/hooks/useSync.ts"
+          "frontend/scripts/clean-rebuild-frontend.sh"
         ],
-        "matchedFiles": []
+        "matchedFiles": [
+          "frontend/scripts/clean-rebuild-frontend.sh"
+        ]
       },
       {
-        "id": "REQ-4",
-        "summary": "Ensure the deployed Live frontend is rebuilt and redeployed using freshly generated backend TypeScript bindings so it cannot call removed legacy APIs. Follow the existing clean rebuild flow and confirm the generated bindings do not include `getAllSurgeryCases`.",
+        "id": "REQ-5",
+        "summary": "Redeploy the frontend canister after the clean rebuild so the Live site ships the newly generated backend bindings, using the deterministic redeploy flow in `frontend/redeploy.sh` (or equivalently: run clean rebuild then `dfx deploy frontend`).",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/redeploy.sh",
+          "frontend/DEPLOYMENT_NOTES.md"
+        ],
+        "matchedFiles": [
+          "frontend/redeploy.sh",
+          "frontend/DEPLOYMENT_NOTES.md"
+        ]
+      },
+      {
+        "id": "REQ-6",
+        "summary": "After redeploy, verify that the Live frontend is bound to the currently deployed backend canister ID by following `frontend/scripts/verify-live-backend-binding.md` (confirm the frontend is using fresh bindings and the expected backend canister ID).",
         "status": "missing",
         "plannedFiles": [
-          "frontend/scripts/clean-rebuild-frontend.sh",
-          "frontend/redeploy.sh",
-          "frontend/DEPLOYMENT_NOTES.md",
           "frontend/scripts/verify-live-backend-binding.md"
         ],
         "matchedFiles": []
@@ -39,7 +48,11 @@
   "changedFiles": [
     "build-request.json",
     "feature_evidence.json",
+    "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
+    "frontend/DEPLOYMENT_NOTES.md",
+    "frontend/redeploy.sh",
+    "frontend/scripts/clean-rebuild-frontend.sh",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

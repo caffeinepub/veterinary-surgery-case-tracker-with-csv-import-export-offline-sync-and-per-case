@@ -1,12 +1,12 @@
 # Specification
 
 ## Summary
-**Goal:** Fix the Live “Server Cases Loading Failed” issue by removing any remaining frontend call paths to the deprecated `getAllSurgeryCases()` backend method and redeploying with fresh backend TypeScript bindings.
+**Goal:** Fix the Live “backend disconnected” error by deterministically rebuilding the frontend with fresh backend bindings and redeploying the frontend canister.
 
 **Planned changes:**
-- Audit `frontend/src/components/cases/CaseList.tsx` and its dependent case-loading flows (via `useCasesStore()` / `useGetSurgeryCasesPaginated()`) to ensure no runtime path calls `getAllSurgeryCases()`.
-- Replace any remaining legacy case-loading usage with the paginated API `getSurgeryCases(start, limit)` (directly or through the existing pagination helper).
-- Run a repo-wide check under `frontend/src` to confirm there are no references to `getAllSurgeryCases` (excluding generated declarations).
-- Rebuild and redeploy the Live frontend using freshly generated backend TypeScript bindings, confirming the generated `backend.did.d.ts` does not include `getAllSurgeryCases`.
+- Run the deterministic clean rebuild script (`frontend/scripts/clean-rebuild-frontend.sh`) to remove stale artifacts, regenerate TypeScript bindings from the currently deployed backend canister, and rebuild `frontend/dist`.
+- Confirm regenerated bindings are present and no longer reference the legacy `getAllSurgeryCases` method (including ensuring frontend source does not reference it outside generated declarations).
+- Redeploy the frontend canister using the deterministic redeploy flow (`frontend/redeploy.sh`, or clean rebuild then `dfx deploy frontend`) so Live ships the new bindings.
+- Verify Live is effectively bound to the currently deployed backend canister ID by following `frontend/scripts/verify-live-backend-binding.md`.
 
-**User-visible outcome:** Authenticated users can load server cases on the Live site without seeing the “Server Cases Loading Failed” banner caused by a missing/removed backend method.
+**User-visible outcome:** The Live site loads without a backend disconnected error and shows the app as connected/online on page load.

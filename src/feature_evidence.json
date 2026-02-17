@@ -1,4 +1,46 @@
 {
   "kind": "feature_evidence_report",
-  "features": []
+  "features": [
+    {
+      "featureId": "feature-perform-a-deterministic-clean-rebuild-of-the-frontend-to-eliminate-stale-artifacts-and-regenerate-typescript-backend-bindings-from-the-currently-deployed-backend-canister-using-the-existing-script-frontend-scripts-clean-rebuild-frontend-sh",
+      "featureTitle": "Perform a deterministic clean rebuild of the frontend to eliminate stale artifacts and regenerate TypeScript backend bindings from the currently deployed backend canister, using the existing script `frontend/scripts/clean-rebuild-frontend.sh`.",
+      "files": [
+        "frontend/scripts/clean-rebuild-frontend.sh"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "camera@1.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-4"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-redeploy-the-frontend-canister-after-the-clean-rebuild-so-the-live-site-ships-the-newly-generated-backend-bindings-using-the-deterministic-redeploy-flow-in-frontend-redeploy-sh-or-equivalently-run-clean-rebuild-then-dfx-deploy-frontend",
+      "featureTitle": "Redeploy the frontend canister after the clean rebuild so the Live site ships the newly generated backend bindings, using the deterministic redeploy flow in `frontend/redeploy.sh` (or equivalently: run clean rebuild then `dfx deploy frontend`).",
+      "files": [
+        "frontend/DEPLOYMENT_NOTES.md",
+        "frontend/redeploy.sh"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "camera@1.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-5"
+      ],
+      "confidence": "high"
+    }
+  ]
 }

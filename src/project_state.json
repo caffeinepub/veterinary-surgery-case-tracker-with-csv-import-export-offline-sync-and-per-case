@@ -2,20 +2,33 @@
   "schemaVersion": "1.0.0",
   "projectStateVersion": 5,
   "summary": "New project",
-  "architectural_notes": [
-    "Case-loading logic is implemented in frontend hooks (e.g., hooks/useQueries.ts or hooks/useBackendConnection.ts) which call backend queries.",
-    "Although case-loading hooks appear updated, a deprecated backend call path may still exist in a UI component (likely `CaseList.tsx`) rather than in hooks."
-  ],
+  "architectural_notes": [],
   "known_issues": [
-    "Live app web page shows 'Server Cases Loading Failed' when loading cases; likely caused by frontend still calling deprecated backend query getAllSurgeryCases from case-loading hooks.",
-    "Live production site still shows 'Server Cases Loading Failed'; likely due to a remaining `getAllSurgeryCases()` call in a component (suspected `CaseList.tsx`) despite hooks being cleaned."
+    "Live app shows 'backend disconnected' error on page load; likely stale/missing backend bindings or mismatched backend canister ID in deployed frontend bundle."
   ],
   "isFixRequest": true,
-  "existing_features": [],
+  "existing_features": [
+    {
+      "id": "feature-perform-a-deterministic-clean-rebuild-of-the-frontend-to-eliminate-stale-artifacts-and-regenerate-typescript-backend-bindings-from-the-currently-deployed-backend-canister-using-the-existing-script-frontend-scripts-clean-rebuild-frontend-sh",
+      "title": "Perform a deterministic clean rebuild of the frontend to eliminate stale artifacts and regenerate TypeScript backend bindings from the currently deployed backend canister, using the existing script `frontend/scripts/clean-rebuild-frontend.sh`.",
+      "reqIds": [
+        "REQ-4"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-redeploy-the-frontend-canister-after-the-clean-rebuild-so-the-live-site-ships-the-newly-generated-backend-bindings-using-the-deterministic-redeploy-flow-in-frontend-redeploy-sh-or-equivalently-run-clean-rebuild-then-dfx-deploy-frontend",
+      "title": "Redeploy the frontend canister after the clean rebuild so the Live site ships the newly generated backend bindings, using the deterministic redeploy flow in `frontend/redeploy.sh` (or equivalently: run clean rebuild then `dfx deploy frontend`).",
+      "reqIds": [
+        "REQ-5"
+      ],
+      "version": 1
+    }
+  ],
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Audit all frontend case-loading hooks and flows to ensure there are zero runtime call paths that invoke the deprecated backend method `getAllSurgeryCases()`, and update any remaining references to use the paginated API `getSurgeryCases(start, limit)` (directly or via existing pagination helpers).",
+      "summary": "Perform a deterministic clean rebuild of the frontend that removes stale build artifacts, regenerates TypeScript backend bindings from the currently deployed backend canister, verifies the generated bindings exist, and verifies that removed legacy methods (e.g., `getAllSurgeryCases`) are not present in the generated bindings nor referenced in the frontend source.",
       "reqIds": [
         "REQ-1"
       ],
@@ -23,7 +36,7 @@
     },
     {
       "id": "AR-2",
-      "summary": "Ensure the deployed frontend is using fresh generated backend bindings and is redeployed so that Live cannot call removed legacy APIs.",
+      "summary": "Redeploy the frontend canister after the clean rebuild so the Live site ships the newly generated backend bindings, using the existing deterministic redeploy flow.",
       "reqIds": [
         "REQ-2"
       ],
@@ -31,23 +44,17 @@
     },
     {
       "id": "AR-3",
-      "summary": "Inspect `CaseList.tsx` (and any directly related case-list components) for remaining calls to deprecated `getAllSurgeryCases()` and replace with `getSurgeryCases(start, limit)` / pagination helpers so the live app stops showing 'Server Cases Loading Failed'.",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-4",
-      "summary": "Inspect `frontend/src/components/cases/CaseList.tsx` and any directly invoked case-loading flows it depends on (via `useCasesStore()` / `useGetSurgeryCasesPaginated()`) to ensure there are zero runtime call paths that invoke the deprecated backend method `getAllSurgeryCases()`. Replace any remaining legacy calls with the paginated API `getSurgeryCases(start, limit)` (directly or via the existing pagination helper).",
+      "summary": "Verify that the Live frontend is bound to the currently deployed backend canister ID after redeploy, following the existing verification guide.",
       "reqIds": [
         "REQ-3"
       ],
       "status": "pending"
     },
     {
-      "id": "AR-5",
-      "summary": "Ensure the deployed Live frontend is rebuilt and redeployed using freshly generated backend TypeScript bindings so it cannot call removed legacy APIs. Follow the existing clean rebuild flow and confirm the generated bindings do not include `getAllSurgeryCases`.",
+      "id": "AR-6",
+      "summary": "After redeploy, verify that the Live frontend is bound to the currently deployed backend canister ID by following `frontend/scripts/verify-live-backend-binding.md` (confirm the frontend is using fresh bindings and the expected backend canister ID).",
       "reqIds": [
-        "REQ-4"
+        "REQ-6"
       ],
       "status": "pending"
     }

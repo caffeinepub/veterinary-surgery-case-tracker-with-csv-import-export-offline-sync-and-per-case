@@ -84,7 +84,7 @@ export default function App() {
     );
   }
 
-  // Show unauthenticated UI
+  // Show unauthenticated UI - no backend connection troubleshooting for logged-out users
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -104,7 +104,8 @@ export default function App() {
 
   // Authenticated users see the main UI with troubleshooting banner when connection fails
   // The app remains usable for local-only features when backend is disconnected
-  const showTroubleshooting = isAuthenticated && !isInitializing && connectionError;
+  // Only show troubleshooting when authenticated AND there's a connection error
+  const showTroubleshooting = isAuthenticated && !isInitializing && !!connectionError;
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -112,7 +113,7 @@ export default function App() {
       <SyncStatusBar />
       
       <main className="flex-1 container mx-auto px-4 py-6 max-w-7xl">
-        {/* Prominent troubleshooting banner when backend connection fails */}
+        {/* Prominent troubleshooting banner when backend connection fails for authenticated users */}
         {showTroubleshooting && (
           <BackendConnectionTroubleshooting
             error={connectionError}
