@@ -1,47 +1,74 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Frontend sync pagination + friendly trap error messaging",
+  "title": "Replace unbounded server case fetch with paginated loading and unblock local rendering after case creation",
   "requirements": [
     {
-      "id": "REQ-2",
-      "summary": "Update sync to use bounded/paginated case retrieval instead of unbounded getAllSurgeryCases so sync works with many cases.",
+      "id": "REQ-1",
+      "summary": "Replace frontend server-cases query to use paginated getSurgeryCases(start, limit) aggregation (no getAllSurgeryCases) with bounded page size and surfaced errors.",
       "acceptanceCriteria": [
-        "The Sync action in the live app completes successfully without triggering a canister trap when the user has many cases.",
-        "frontend/src/hooks/useSync.ts no longer makes assumptions that the entire case list can be fetched in a single call.",
-        "Sync still correctly merges server and local cases and clears pendingSync on success."
+        "On production, loading the case list does not call `getAllSurgeryCases()`.",
+        "The app fetches server cases via repeated calls to `getSurgeryCases(start, limit)` with a bounded page size (<= 100).",
+        "If the backend rejects/traps during any page fetch, the error is surfaced to the UI (not an indefinite spinner), and the raw error is still logged to the console for debugging.",
+        "After creating a case, the case list screen can render without being blocked by a failing/unavailable server-cases fetch."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/hooks/useSync.ts",
+          "path": "frontend/src/hooks/useQueries.ts",
           "operation": "modify",
-          "description": "Replace sync’s reliance on actor.getAllSurgeryCases() with a bounded retrieval strategy using the existing paginated backend capability actor.getSurgeryCases(start, limit). Implement a loop to fetch server cases in pages (with a conservative page size), accumulating results until exhaustion, and use that bounded retrieval both before sync (for prepareCasesForSync) and after sync (for mergeCases + pendingSync clearing). Ensure sync continues to update local persistence and React Query caches as it does today."
+          "description": "Update the server-cases React Query hook to stop calling actor.getAllSurgeryCases() and instead aggregate pages from actor.getSurgeryCases(start, limit) using a bounded page size (<= 100) until completion. Ensure failures are not retried indefinitely (keep retry disabled), log the raw error to console, and throw a user-facing Error so the UI can render an error state. Keep the queryKey as ['serverSurgeryCases'] so existing invalidations continue to work."
+        },
+        {
+          "path": "frontend/src/hooks/useCasesStore.ts",
+          "operation": "modify",
+          "description": "Update store wiring to consume the updated paginated server-cases hook (same queryKey) and to avoid gating merged case computation on server loading. Ensure merged cases can be computed with serverCases defaulting to [] while server fetch is in flight, and ensure merged cases recompute when server cases refresh (e.g., by invalidating the merged query when serverCases changes). Expose server loading/error and a retry/refetch function for UI retry handling."
+        }
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "summary": "Allow local cases to render immediately while server-cases are loading/errored, preventing indefinite spinner after local case creation.",
+      "acceptanceCriteria": [
+        "Creating a new case shows the new CaseCard in the grid immediately after the modal closes (without waiting for the server-cases query to finish).",
+        "`CaseList` only shows the centered spinning loader when there is genuinely no merged/local data to show yet; it does not block rendering solely because the server-cases query is loading.",
+        "If there are local cases present, `CaseList` renders them even when backend connectivity is degraded, while still allowing the existing troubleshooting banner to appear when appropriate."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/hooks/useCasesStore.ts",
+          "operation": "modify",
+          "description": "Refactor loading state so local persistence/merged data is available immediately (e.g., run merged cases query without waiting for server query; use local storage as initial/primary source). Return separate flags for 'hasAnyCases' vs 'server is loading' so UI can avoid blocking render when local cases exist."
+        },
+        {
+          "path": "frontend/src/components/cases/CaseList.tsx",
+          "operation": "modify",
+          "description": "Adjust CaseList rendering logic to avoid showing the centered spinner solely due to server-cases loading. Show the spinner only when there is no merged/local case data to display yet; otherwise render the grid with available cases even if server fetch is still loading or has errored. Keep existing empty-state behavior for the true empty list case."
         }
       ]
     },
     {
       "id": "REQ-3",
-      "summary": "Improve sync error handling so replica rejection/trap errors show a clear English message while logging raw details to the console.",
+      "summary": "Show clear English error messaging when server case loading fails and provide a Retry action without blocking local-case viewing.",
       "acceptanceCriteria": [
-        "If the backend returns a replica rejection/trap during sync, the UI displays an English, user-friendly error (e.g., indicating the backend failed and to retry), and does not display the full raw request/rejection dump.",
-        "The raw error details remain available in developer console logs for debugging.",
-        "All user-facing error text added/modified for this fix is in English."
+        "When the server-cases fetch fails, the UI shows a readable error state for case loading (in English) instead of an endless spinner.",
+        "The error state provides a Retry action that re-attempts fetching server cases (and subsequently recomputes merged cases).",
+        "The error state does not prevent viewing any already-available local cases."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/utils/backendErrorMessages.ts",
-          "operation": "modify",
-          "description": "Enhance error classification to explicitly recognize replica rejection/trap-style errors (e.g., messages containing “replica”, “reject”, “trapped”, “heap out of bounds”) and map them to a concise, user-friendly English message suitable for showing in the Sync UI, while keeping the raw details available for console logging by callers."
+          "path": "frontend/src/components/cases/ServerCasesLoadError.tsx",
+          "operation": "create",
+          "description": "Create a small, user-facing error banner/card component for server case loading failures using existing composed UI components (e.g., Alert + Button) and clear English copy. Include a Retry button and optional 'details' hint. Verify the component's usage instructions before implementing."
         },
         {
-          "path": "frontend/src/hooks/useSync.ts",
+          "path": "frontend/src/components/cases/CaseList.tsx",
           "operation": "modify",
-          "description": "Update sync error handling to never surface raw backend/replica dumps to users. Keep console.error logging the raw error object/details, but set syncError using the classified user-friendly message from classifyBackendError (instead of falling back to error.message). Ensure Unauthorized remains clearly communicated in English without exposing low-level rejection payloads."
+          "description": "Wire the new ServerCasesLoadError component into CaseList: when server-cases fetch errors, show the error UI (with Retry calling the store's refetch/retry) while still rendering any available cases. Use classifyBackendError from frontend/src/utils/backendErrorMessages.ts to show a friendly message, and keep logging of the raw error in the query layer."
         },
         {
-          "path": "frontend/src/components/sync/SyncStatusBar.tsx",
+          "path": "frontend/src/hooks/useCasesStore.ts",
           "operation": "modify",
-          "description": "Update Sync failure toast behavior to prefer displaying the friendly syncError message (when available) rather than a generic failure string, ensuring the user sees clear English guidance while the detailed raw error remains only in the developer console."
+          "description": "Expose server-cases error state (raw and/or classified) and a retry/refetch function (from React Query) so CaseList can render the error state and retry server loading, triggering merged-case recomputation afterward."
         }
       ]
     }

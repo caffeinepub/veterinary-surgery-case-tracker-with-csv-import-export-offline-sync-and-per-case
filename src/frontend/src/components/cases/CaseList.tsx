@@ -4,6 +4,7 @@ import { useBackendConnection } from '../../hooks/useBackendConnection';
 import { useOnlineStatus } from '../../hooks/useOnlineStatus';
 import CaseCard from './CaseCard';
 import EmptyCasesState from './EmptyCasesState';
+import ServerCasesLoadError from './ServerCasesLoadError';
 import { Loader2 } from 'lucide-react';
 import type { LocalSurgeryCase } from '../../types/cases';
 
@@ -15,7 +16,7 @@ interface CaseListProps {
 }
 
 export default function CaseList({ sortField, sortDirection, searchQuery, onEditCase }: CaseListProps) {
-  const { cases, isLoading } = useCasesStore();
+  const { cases, isLoading, hasAnyCases, serverError, refetchServer } = useCasesStore();
   const { identity } = useInternetIdentity();
   const { isConnected } = useBackendConnection();
   const isOnline = useOnlineStatus();
@@ -56,7 +57,8 @@ export default function CaseList({ sortField, sortDirection, searchQuery, onEdit
     return sortDirection === 'asc' ? comparison : -comparison;
   });
 
-  if (isLoading) {
+  // Only show centered spinner when there's genuinely no data yet
+  if (isLoading && !hasAnyCases) {
     return (
       <div className="flex items-center justify-center py-12">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -64,37 +66,47 @@ export default function CaseList({ sortField, sortDirection, searchQuery, onEdit
     );
   }
 
-  if (!cases || cases.length === 0) {
-    // Show migration guidance only when:
-    // - User is authenticated
-    // - Backend is connected
-    // - Browser is online
-    // - Case list is empty
-    const showMigrationGuidance = isAuthenticated && isConnected && isOnline !== false;
-    
-    return (
-      <EmptyCasesState 
-        showMigrationGuidance={showMigrationGuidance}
-        isConnected={isConnected}
-        isAuthenticated={isAuthenticated}
-      />
-    );
-  }
-
-  if (sortedCases.length === 0 && searchQuery.trim()) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-muted-foreground">No cases found matching "{searchQuery}"</p>
-        <p className="text-sm text-muted-foreground mt-2">Try a different search term</p>
-      </div>
-    );
-  }
+  // Show server error banner if server fetch failed (but don't block local cases)
+  const showServerError = serverError && isAuthenticated;
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {sortedCases.map((surgeryCase) => (
-        <CaseCard key={surgeryCase.caseId.toString()} surgeryCase={surgeryCase} onEdit={onEditCase} />
-      ))}
+    <div>
+      {showServerError && (
+        <ServerCasesLoadError 
+          error={serverError} 
+          onRetry={() => refetchServer()} 
+        />
+      )}
+
+      {!cases || cases.length === 0 ? (
+        // Show migration guidance only when:
+        // - User is authenticated
+        // - Backend is connected
+        // - Browser is online
+        // - Case list is empty
+        (() => {
+          const showMigrationGuidance = isAuthenticated && isConnected && isOnline !== false;
+          
+          return (
+            <EmptyCasesState 
+              showMigrationGuidance={showMigrationGuidance}
+              isConnected={isConnected}
+              isAuthenticated={isAuthenticated}
+            />
+          );
+        })()
+      ) : sortedCases.length === 0 && searchQuery.trim() ? (
+        <div className="text-center py-12">
+          <p className="text-muted-foreground">No cases found matching "{searchQuery}"</p>
+          <p className="text-sm text-muted-foreground mt-2">Try a different search term</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {sortedCases.map((surgeryCase) => (
+            <CaseCard key={surgeryCase.caseId.toString()} surgeryCase={surgeryCase} onEdit={onEditCase} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

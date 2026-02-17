@@ -59,12 +59,38 @@ export function useGetAllSurgeryCases() {
     queryKey: ['serverSurgeryCases'],
     queryFn: async () => {
       if (!actor) throw new Error('Backend connection not available');
+      
       try {
-        return await actor.getAllSurgeryCases();
+        const PAGE_SIZE = 100;
+        const allCases: SurgeryCase[] = [];
+        let start = 0;
+        let hasMore = true;
+
+        while (hasMore) {
+          const page = await actor.getSurgeryCases(BigInt(start), BigInt(PAGE_SIZE));
+          
+          if (page.length === 0) {
+            hasMore = false;
+          } else {
+            allCases.push(...page);
+            start += page.length;
+            
+            // If we got fewer than PAGE_SIZE, we've reached the end
+            if (page.length < PAGE_SIZE) {
+              hasMore = false;
+            }
+          }
+        }
+
+        return allCases;
       } catch (error: any) {
+        console.error('Server cases fetch error:', error);
+        
         if (error.message?.includes('Unauthorized')) {
           throw new Error('Not authorized to access cases');
         }
+        
+        // Re-throw with original error for proper error handling
         throw error;
       }
     },

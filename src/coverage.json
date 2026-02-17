@@ -1,63 +1,67 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-17T01:19:50.047Z",
+  "generatedAt": "2026-02-17T01:36:50.026Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
     "total": 3,
-    "implemented": 2,
+    "implemented": 3,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Modify the backend canister (Canister ID: tcbtk-yyaaa-aaaaa-qfanq-cai) to prevent trapping with \"heap out of bounds\" when calling the query method getAllSurgeryCases by making the retrieval memory-safe (e.g., by adding a bounded/paginated retrieval API and/or limiting allocations during sorting), while preserving existing access control behavior.",
-        "status": "unknown",
-        "plannedFiles": [],
-        "matchedFiles": []
+        "summary": "Update the frontend server-cases query to stop calling the backend method `getAllSurgeryCases()` and instead fetch cases using the paginated backend API `getSurgeryCases(start, limit)`, aggregating pages until completion, so the live app no longer traps with \"heap out of bounds\" during case list loading.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/hooks/useCasesStore.ts"
+        ],
+        "matchedFiles": [
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/hooks/useCasesStore.ts"
+        ]
       },
       {
         "id": "REQ-2",
-        "summary": "Update the frontend sync flow to avoid relying on unbounded getAllSurgeryCases calls (currently used in frontend/src/hooks/useSync.ts) by using the new bounded/paginated backend retrieval method(s) and/or using incremental retrieval (e.g., getUpdatedCases) so that sync works even when the user has many cases.",
+        "summary": "Change the merged-cases loading flow so that locally stored cases can render immediately even when the server-cases query is still loading or has errored, eliminating the indefinite spinner after \"Case created successfully\" when a new local case exists.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/hooks/useSync.ts"
+          "frontend/src/hooks/useCasesStore.ts",
+          "frontend/src/components/cases/CaseList.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/hooks/useSync.ts"
+          "frontend/src/hooks/useCasesStore.ts",
+          "frontend/src/components/cases/CaseList.tsx"
         ]
       },
       {
         "id": "REQ-3",
-        "summary": "Improve frontend error handling for backend trap/rejection errors during sync so the user sees a clear English message instead of the raw replica rejection details, while still logging the raw error to the console for debugging.",
+        "summary": "Add clear, English user-facing messaging when server case loading fails (e.g., due to backend rejection), so users do not see only a spinner; include an action to retry loading cases.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/utils/backendErrorMessages.ts",
-          "frontend/src/hooks/useSync.ts",
-          "frontend/src/components/sync/SyncStatusBar.tsx"
+          "frontend/src/components/cases/ServerCasesLoadError.tsx",
+          "frontend/src/components/cases/CaseList.tsx",
+          "frontend/src/hooks/useCasesStore.ts"
         ],
         "matchedFiles": [
-          "frontend/src/utils/backendErrorMessages.ts",
-          "frontend/src/hooks/useSync.ts",
-          "frontend/src/components/sync/SyncStatusBar.tsx"
+          "frontend/src/components/cases/ServerCasesLoadError.tsx",
+          "frontend/src/components/cases/CaseList.tsx",
+          "frontend/src/hooks/useCasesStore.ts"
         ]
       }
     ]
   },
   "changedFiles": [
-    "backend/main.mo",
     "build-request.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/backend.d.ts",
-    "frontend/src/backend.ts",
-    "frontend/src/components/sync/SyncStatusBar.tsx",
-    "frontend/src/declarations/backend.did.d.ts",
-    "frontend/src/declarations/backend.did.js",
-    "frontend/src/hooks/useSync.ts",
-    "frontend/src/utils/backendErrorMessages.ts",
+    "frontend/src/components/cases/CaseList.tsx",
+    "frontend/src/components/cases/ServerCasesLoadError.tsx",
+    "frontend/src/hooks/useCasesStore.ts",
+    "frontend/src/hooks/useQueries.ts",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

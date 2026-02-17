@@ -7,15 +7,18 @@ import { mergeCases } from '../utils/mergeCases';
 
 export function useCasesStore() {
   const queryClient = useQueryClient();
-  const { data: serverCases = [], isLoading: isLoadingServer } = useGetAllSurgeryCases();
+  const serverQuery = useGetAllSurgeryCases();
+  const { data: serverCases = [], isLoading: isLoadingServer, error: serverError, refetch: refetchServer } = serverQuery;
 
+  // Load local cases immediately without waiting for server
   const casesQuery = useQuery<LocalSurgeryCase[]>({
-    queryKey: ['mergedCases'],
+    queryKey: ['mergedCases', serverCases],
     queryFn: () => {
       const localCases = loadCasesFromLocal();
       return mergeCases(localCases, serverCases);
     },
-    enabled: !isLoadingServer,
+    // Always enabled - compute merged cases even while server is loading
+    enabled: true,
   });
 
   const addCase = useMutation({
@@ -27,7 +30,7 @@ export function useCasesStore() {
       return verifiedCases;
     },
     onSuccess: (verifiedCases) => {
-      queryClient.setQueryData(['mergedCases'], verifiedCases);
+      queryClient.setQueryData(['mergedCases', serverCases], verifiedCases);
     },
   });
 
@@ -66,13 +69,20 @@ export function useCasesStore() {
       return loadCasesFromLocal();
     },
     onSuccess: (verifiedCases) => {
-      queryClient.setQueryData(['mergedCases'], verifiedCases);
+      queryClient.setQueryData(['mergedCases', serverCases], verifiedCases);
     },
   });
 
+  const hasAnyCases = (casesQuery.data?.length ?? 0) > 0;
+  const isInitialLoad = !casesQuery.data && casesQuery.isLoading;
+
   return {
     cases: casesQuery.data,
-    isLoading: isLoadingServer || casesQuery.isLoading,
+    isLoading: isInitialLoad,
+    hasAnyCases,
+    serverError,
+    isLoadingServer,
+    refetchServer,
     addCase,
     updateCase,
   };

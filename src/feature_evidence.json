@@ -2,10 +2,32 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-update-the-frontend-sync-flow-to-avoid-relying-on-unbounded-getallsurgerycases-calls-currently-used-in-frontend-src-hooks-usesync-ts-by-using-the-new-bounded-paginated-backend-retrieval-method-s-and-or-using-incremental-retrieval-e-g-getupdatedcases-so-that-sync-works-even-when-the-user-has-many-cases",
-      "featureTitle": "Update the frontend sync flow to avoid relying on unbounded getAllSurgeryCases calls (currently used in frontend/src/hooks/useSync.ts) by using the new bounded/paginated backend retrieval method(s) and/or using incremental retrieval (e.g., getUpdatedCases) so that sync works even when the user has many cases.",
+      "featureId": "feature-update-the-frontend-server-cases-query-to-stop-calling-the-backend-method-getallsurgerycases-and-instead-fetch-cases-using-the-paginated-backend-api-getsurgerycases-start-limit-aggregating-pages-until-completion-so-the-live-app-no-longer-traps-with-heap-out-of-bounds-during-case-list-loading",
+      "featureTitle": "Update the frontend server-cases query to stop calling the backend method `getAllSurgeryCases()` and instead fetch cases using the paginated backend API `getSurgeryCases(start, limit)`, aggregating pages until completion, so the live app no longer traps with \"heap out of bounds\" during case list loading.",
       "files": [
-        "frontend/src/hooks/useSync.ts"
+        "frontend/src/hooks/useCasesStore.ts",
+        "frontend/src/hooks/useQueries.ts"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "camera@1.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-1"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-change-the-merged-cases-loading-flow-so-that-locally-stored-cases-can-render-immediately-even-when-the-server-cases-query-is-still-loading-or-has-errored-eliminating-the-indefinite-spinner-after-case-created-successfully-when-a-new-local-case-exists",
+      "featureTitle": "Change the merged-cases loading flow so that locally stored cases can render immediately even when the server-cases query is still loading or has errored, eliminating the indefinite spinner after \"Case created successfully\" when a new local case exists.",
+      "files": [
+        "frontend/src/components/cases/CaseList.tsx",
+        "frontend/src/hooks/useCasesStore.ts"
       ],
       "components": [
         "authorization@4.0.0",
@@ -22,12 +44,12 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-improve-frontend-error-handling-for-backend-trap-rejection-errors-during-sync-so-the-user-sees-a-clear-english-message-instead-of-the-raw-replica-rejection-details-while-still-logging-the-raw-error-to-the-console-for-debugging",
-      "featureTitle": "Improve frontend error handling for backend trap/rejection errors during sync so the user sees a clear English message instead of the raw replica rejection details, while still logging the raw error to the console for debugging.",
+      "featureId": "feature-add-clear-english-user-facing-messaging-when-server-case-loading-fails-e-g-due-to-backend-rejection-so-users-do-not-see-only-a-spinner-include-an-action-to-retry-loading-cases",
+      "featureTitle": "Add clear, English user-facing messaging when server case loading fails (e.g., due to backend rejection), so users do not see only a spinner; include an action to retry loading cases.",
       "files": [
-        "frontend/src/components/sync/SyncStatusBar.tsx",
-        "frontend/src/hooks/useSync.ts",
-        "frontend/src/utils/backendErrorMessages.ts"
+        "frontend/src/components/cases/CaseList.tsx",
+        "frontend/src/components/cases/ServerCasesLoadError.tsx",
+        "frontend/src/hooks/useCasesStore.ts"
       ],
       "components": [
         "authorization@4.0.0",

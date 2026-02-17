@@ -4,37 +4,36 @@
   "summary": "New project",
   "architectural_notes": [],
   "known_issues": [
-    "Live app Sync Error: Internet Computer canister tcbtk-yyaaa-aaaaa-qfanq-cai traps with 'heap out of bounds' (Reject code 5 / IC0502) when calling method getAllSurgeryCases, causing replica rejection."
+    "Production: after 'case created successfully', the case card does not load and remains on a spinning wheel."
   ],
   "isFixRequest": true,
   "existing_features": [
     {
-      "id": "feature-update-the-frontend-sync-flow-to-avoid-relying-on-unbounded-getallsurgerycases-calls-currently-used-in-frontend-src-hooks-usesync-ts-by-using-the-new-bounded-paginated-backend-retrieval-method-s-and-or-using-incremental-retrieval-e-g-getupdatedcases-so-that-sync-works-even-when-the-user-has-many-cases",
-      "title": "Update the frontend sync flow to avoid relying on unbounded getAllSurgeryCases calls (currently used in frontend/src/hooks/useSync.ts) by using the new bounded/paginated backend retrieval method(s) and/or using incremental retrieval (e.g., getUpdatedCases) so that sync works even when the user has many cases.",
+      "id": "feature-update-the-frontend-server-cases-query-to-stop-calling-the-backend-method-getallsurgerycases-and-instead-fetch-cases-using-the-paginated-backend-api-getsurgerycases-start-limit-aggregating-pages-until-completion-so-the-live-app-no-longer-traps-with-heap-out-of-bounds-during-case-list-loading",
+      "title": "Update the frontend server-cases query to stop calling the backend method `getAllSurgeryCases()` and instead fetch cases using the paginated backend API `getSurgeryCases(start, limit)`, aggregating pages until completion, so the live app no longer traps with \"heap out of bounds\" during case list loading.",
+      "reqIds": [
+        "REQ-1"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-change-the-merged-cases-loading-flow-so-that-locally-stored-cases-can-render-immediately-even-when-the-server-cases-query-is-still-loading-or-has-errored-eliminating-the-indefinite-spinner-after-case-created-successfully-when-a-new-local-case-exists",
+      "title": "Change the merged-cases loading flow so that locally stored cases can render immediately even when the server-cases query is still loading or has errored, eliminating the indefinite spinner after \"Case created successfully\" when a new local case exists.",
       "reqIds": [
         "REQ-2"
       ],
       "version": 1
     },
     {
-      "id": "feature-improve-frontend-error-handling-for-backend-trap-rejection-errors-during-sync-so-the-user-sees-a-clear-english-message-instead-of-the-raw-replica-rejection-details-while-still-logging-the-raw-error-to-the-console-for-debugging",
-      "title": "Improve frontend error handling for backend trap/rejection errors during sync so the user sees a clear English message instead of the raw replica rejection details, while still logging the raw error to the console for debugging.",
+      "id": "feature-add-clear-english-user-facing-messaging-when-server-case-loading-fails-e-g-due-to-backend-rejection-so-users-do-not-see-only-a-spinner-include-an-action-to-retry-loading-cases",
+      "title": "Add clear, English user-facing messaging when server case loading fails (e.g., due to backend rejection), so users do not see only a spinner; include an action to retry loading cases.",
       "reqIds": [
         "REQ-3"
       ],
       "version": 1
     }
   ],
-  "new_feature_requests": [
-    {
-      "id": "AR-1",
-      "summary": "Modify the backend canister (Canister ID: tcbtk-yyaaa-aaaaa-qfanq-cai) to prevent trapping with \"heap out of bounds\" when calling the query method getAllSurgeryCases by making the retrieval memory-safe (e.g., by adding a bounded/paginated retrieval API and/or limiting allocations during sorting), while preserving existing access control behavior.",
-      "reqIds": [
-        "REQ-1"
-      ],
-      "status": "pending"
-    }
-  ],
+  "new_feature_requests": [],
   "projectName": "Surgery Case Tracker",
   "clarification_mode": "instant",
   "clarification_rounds": 0

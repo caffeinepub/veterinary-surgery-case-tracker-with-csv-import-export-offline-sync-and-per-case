@@ -1,43 +1,78 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-17T01:19:50.045Z",
-  "summary": "Frontend sync logic was updated to fetch cases in bounded pages via a new actor method name (getSurgeryCases) and a new backend error-classification utility was added. However, the diff summary does not provide evidence that the backend was actually modified to make getAllSurgeryCases memory-safe or to implement the paginated retrieval method expected by the frontend. Also, the required console logging of raw sync errors cannot be verified due to truncation.",
-  "missing_requirements": [
+  "generatedAt": "2026-02-17T01:36:50.023Z",
+  "summary": "All three requested requirements appear implemented: server cases are fetched via bounded pagination using getSurgeryCases (not getAllSurgeryCases), local cases can render without being blocked by server fetch state, and a clear error UI with Retry is added for server-load failures.",
+  "missing_requirements": [],
+  "hallucinated_features": [
     {
-      "id": "REQ-1",
-      "requirement": "Modify the backend canister to prevent trapping with \"heap out of bounds\" when calling getAllSurgeryCases by making retrieval memory-safe (e.g., bounded/paginated retrieval and/or limiting allocations during sorting), while preserving existing access control behavior.",
-      "reason": "The backend diff snippet is truncated and does not show any change to getAllSurgeryCases, nor does it show implementation of a bounded/paginated retrieval API (e.g., getSurgeryCases(start, limit)) or other memory-safety changes. Therefore the core fix to prevent the trap is not evidenced.",
+      "description": "Added/changed case form to include a Case Notes textarea and persistence behavior beyond the loading/spinner fix scope.",
+      "reason": "BuildRequest focuses on paginated server fetching, unblocking local rendering, and error+retry messaging; it does not request adding or changing case notes fields.",
       "evidence": [
-        "backend/main.mo (truncated; no shown changes to getAllSurgeryCases or a new paginated query method)"
+        "frontend-file-summaries.txt (mentions frontend/src/components/cases/CaseForm.tsx notes field changes)",
+        "frontend-file-summaries.txt (mentions frontend/src/types/cases.ts notes field added)"
       ]
     },
     {
-      "id": "REQ-3",
-      "requirement": "During sync trap/rejection errors, show a clear English message instead of raw replica rejection details, while still logging the raw error to the console.",
-      "reason": "A classifier utility was added and imported in useSync, but the catch block in useSync (where the raw error should be logged and the friendly message set) is truncated, so it cannot be verified that raw errors are logged to the console and that raw rejection dumps are not shown to the user.",
+      "description": "Implemented timezone-safe date-only handling utilities and propagated YYYY-MM-DD string handling across dates and CSV import/export.",
+      "reason": "Not requested; BuildRequest is about preventing heap trap and fixing infinite loading/error UX around server case loading.",
       "evidence": [
-        "frontend/src/hooks/useSync.ts (truncated at catch block)",
-        "frontend/src/utils/backendErrorMessages.ts"
+        "frontend-file-summaries.txt (mentions frontend/src/utils/dates.ts)",
+        "frontend-file-summaries.txt (mentions frontend/src/utils/csv.ts)",
+        "frontend-file-summaries.txt (mentions frontend/src/types/cases.ts date fields as YYYY-MM-DD strings)"
       ]
-    }
-  ],
-  "hallucinated_features": [
+    },
     {
-      "description": "Expanded SyncStatusBar UI showing backend connection state (Connected/Disconnected/Connecting) and adding additional connection-related toasts.",
-      "reason": "The BuildRequest focuses on preventing heap-out-of-bounds traps and improving sync error handling; it does not request adding backend connection status UI elements in the sync bar.",
+      "description": "Modified local storage persistence utilities with BigInt-safe serialization, backward compatibility normalization, and stricter save verification/error throwing.",
+      "reason": "Not requested as part of the specific loading-after-creation / paginated fetch fix.",
       "evidence": [
-        "frontend/src/components/sync/SyncStatusBar.tsx (adds backend connection status UI and related toasts)"
+        "frontend-file-summaries.txt (mentions frontend/src/utils/localPersistence.ts)"
+      ]
+    },
+    {
+      "description": "Expanded/changed demographics prefill logic to extract additional fields including dateOfBirth and presenting complaint.",
+      "reason": "Not requested; unrelated to server pagination and case list loading/error flow.",
+      "evidence": [
+        "frontend-file-summaries.txt (mentions frontend/src/utils/prefill.ts)"
+      ]
+    },
+    {
+      "description": "Changed online/offline monitoring hook behavior (initialization to null state) and broader connectivity distinction logic.",
+      "reason": "Not explicitly requested; BuildRequest only mentions keeping troubleshooting banner behavior, not altering online-status semantics.",
+      "evidence": [
+        "frontend-file-summaries.txt (mentions frontend/src/hooks/useOnlineStatus.ts)"
+      ]
+    },
+    {
+      "description": "Updated manual sync hook to use paginated fetching, union/merge logic, and user-friendly classified error messaging.",
+      "reason": "REQ-1 applies to the case list server-cases query; updating sync behavior is additional scope not requested.",
+      "evidence": [
+        "frontend-file-summaries.txt (mentions frontend/src/hooks/useSync.ts)"
+      ]
+    },
+    {
+      "description": "Adjusted application header/footer behavior and branding/UTM link, including logout clearing query cache and local storage.",
+      "reason": "Not requested; unrelated to case list infinite loading and paginated server fetching.",
+      "evidence": [
+        "frontend-file-summaries.txt (mentions frontend/src/components/layout/Header.tsx)",
+        "frontend-file-summaries.txt (mentions frontend/src/components/layout/Footer.tsx)"
+      ]
+    },
+    {
+      "description": "Added a reusable date input component (DateField) with calendar picker/text entry and timezone-safe management.",
+      "reason": "Not requested as part of fixing server cases loading trap or unblocking local rendering.",
+      "evidence": [
+        "frontend-file-summaries.txt (mentions frontend/src/components/cases/DateField.tsx)"
       ]
     }
   ],
-  "confidence": 0.62,
+  "confidence": 0.73,
   "changed_files": [
-    "backend/main.mo",
     "frontend-file-summaries.txt",
-    "frontend/src/components/sync/SyncStatusBar.tsx",
-    "frontend/src/hooks/useSync.ts",
-    "frontend/src/utils/backendErrorMessages.ts",
+    "frontend/src/components/cases/CaseList.tsx",
+    "frontend/src/components/cases/ServerCasesLoadError.tsx",
+    "frontend/src/hooks/useCasesStore.ts",
+    "frontend/src/hooks/useQueries.ts",
     "project_state.json"
   ]
 }
