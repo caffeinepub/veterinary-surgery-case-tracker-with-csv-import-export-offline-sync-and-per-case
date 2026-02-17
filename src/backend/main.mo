@@ -8,11 +8,9 @@ import Order "mo:core/Order";
 import Int "mo:core/Int";
 import Nat "mo:core/Nat";
 
-import Migration "migration";
 import MixinAuthorization "authorization/MixinAuthorization";
 import AccessControl "authorization/access-control";
 
-(with migration = Migration.run)
 actor {
   let accessControlState = AccessControl.initState();
   include MixinAuthorization(accessControlState);
@@ -194,7 +192,6 @@ actor {
     };
   };
 
-  // Paginated getAllSurgeryCases
   public query ({ caller }) func getSurgeryCases(start : Nat, limit : Nat) : async [SurgeryCase] {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can view surgery cases");
@@ -204,31 +201,7 @@ actor {
       case (null) { [] };
       case (?userCases) {
         // Use streaming approach for pagination
-        var paginatedCount = 0;
         let filteredCases = userCases.entries().drop(start).take(effectiveLimit);
-        let casesList = List.empty<SurgeryCase>();
-        let iter = filteredCases;
-        iter.forEach(
-          func((_, caseItem)) {
-            casesList.add(caseItem);
-          }
-        );
-        casesList.toArray();
-      };
-    };
-  };
-
-  // LEGACY only - kept for backwards compatibility with old clients
-  // still paginates and will never return more than 1000 cases
-  public query ({ caller }) func getAllSurgeryCases() : async [SurgeryCase] {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can view surgery cases");
-    };
-    let legacyLimit = 1000;
-    switch (cases.get(caller)) {
-      case (null) { [] };
-      case (?userCases) {
-        let filteredCases = userCases.entries().take(legacyLimit);
         let casesList = List.empty<SurgeryCase>();
         let iter = filteredCases;
         iter.forEach(

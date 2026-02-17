@@ -1,7 +1,7 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-17T01:58:00.609Z",
+  "generatedAt": "2026-02-17T02:59:06.439Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
@@ -12,30 +12,35 @@
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Update the Motoko backend so loading surgery cases cannot trap due to large datasets (e.g., \"heap out of bounds\"), by refactoring the per-user surgery-case storage and all read paths to avoid materializing an unbounded list in memory.",
-        "status": "unknown",
-        "plannedFiles": [],
+        "summary": "Audit all frontend case-loading hooks and flows to ensure there are zero runtime call paths that invoke the deprecated backend method `getAllSurgeryCases()`, and update any remaining references to use the paginated API `getSurgeryCases(start, limit)` (directly or via existing pagination helpers).",
+        "status": "missing",
+        "plannedFiles": [
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/hooks/useSync.ts",
+          "frontend/src/hooks/useCasesStore.ts",
+          "frontend/src/components/cases/CaseList.tsx"
+        ],
         "matchedFiles": []
       },
       {
         "id": "REQ-2",
-        "summary": "Make `syncLocalChanges(localCases)` safe for large numbers of cases by ensuring it does not perform quadratic scans over the full dataset and does not require building full intermediate arrays/lists that scale with total case count beyond a bounded, linear pass.",
-        "status": "unknown",
-        "plannedFiles": [],
+        "summary": "Ensure the deployed frontend is using fresh generated backend bindings and is redeployed so that Live cannot call removed legacy APIs.",
+        "status": "missing",
+        "plannedFiles": [
+          "frontend/scripts/clean-rebuild-frontend.sh",
+          "frontend/redeploy.sh",
+          "frontend/DEPLOYMENT_NOTES.md",
+          "frontend/scripts/verify-live-backend-binding.md",
+          "frontend/src/declarations/backend/backend.did.d.ts"
+        ],
         "matchedFiles": []
       }
     ]
   },
   "changedFiles": [
-    "backend/main.mo",
-    "backend/migration.mo",
     "build-request.json",
     "feature_evidence.json",
     "frontend-implementation-plan.json",
-    "frontend/src/backend.d.ts",
-    "frontend/src/backend.ts",
-    "frontend/src/declarations/backend.did.d.ts",
-    "frontend/src/declarations/backend.did.js",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

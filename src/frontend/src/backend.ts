@@ -143,7 +143,6 @@ export interface backendInterface {
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
     createSurgeryCase(medicalRecordNumber: string, presentingComplaint: string, patientDemographics: CompletePatientDemographics, arrivalDate: Time, tasksChecklist: TasksChecklist, notes: string): Promise<bigint>;
     deleteSurgeryCase(caseId: bigint): Promise<boolean>;
-    getAllSurgeryCases(): Promise<Array<SurgeryCase>>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getSurgeryCases(start: bigint, limit: bigint): Promise<Array<SurgeryCase>>;
@@ -212,20 +211,6 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.deleteSurgeryCase(arg0);
-            return result;
-        }
-    }
-    async getAllSurgeryCases(): Promise<Array<SurgeryCase>> {
-        if (this.processError) {
-            try {
-                const result = await this.actor.getAllSurgeryCases();
-                return result;
-            } catch (e) {
-                this.processError(e);
-                throw new Error("unreachable");
-            }
-        } else {
-            const result = await this.actor.getAllSurgeryCases();
             return result;
         }
     }

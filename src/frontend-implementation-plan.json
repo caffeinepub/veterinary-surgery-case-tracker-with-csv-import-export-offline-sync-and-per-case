@@ -1,6 +1,74 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Frontend-only plan: no changes required for backend trap fix",
-  "requirements": []
+  "title": "Remove deprecated getAllSurgeryCases call paths and ensure fresh backend bindings in deployed frontend",
+  "requirements": [
+    {
+      "id": "REQ-1",
+      "summary": "Eliminate any remaining frontend runtime call paths to deprecated getAllSurgeryCases by standardizing all server-case loads on getSurgeryCases(start, limit) pagination helpers.",
+      "acceptanceCriteria": [
+        "A repo-wide search over `frontend/src` (excluding generated declarations) finds no references to `getAllSurgeryCases`.",
+        "All server-case loading continues to work via pagination (e.g., `useGetSurgeryCasesPaginated` and any sync loaders use `actor.getSurgeryCases(start, limit)`).",
+        "The production/live UI no longer shows the banner 'Server Cases Loading Failed' when loading server cases (assuming backend is reachable and user is authenticated)."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/hooks/useQueries.ts",
+          "operation": "modify",
+          "description": "Audit and update all surgery-case query hooks to ensure they exclusively use the paginated backend capability `getSurgeryCases(start, limit)` (and that no legacy `getAllSurgeryCases` references remain in code paths, comments, or dead code)."
+        },
+        {
+          "path": "frontend/src/hooks/useSync.ts",
+          "operation": "modify",
+          "description": "Audit sync-related server fetch logic to ensure all full-server refreshes use pagination via `actor.getSurgeryCases(start, limit)` and remove/replace any remaining legacy case-loading logic that could trigger the server error banner."
+        },
+        {
+          "path": "frontend/src/hooks/useCasesStore.ts",
+          "operation": "modify",
+          "description": "Verify the cases store uses only the paginated server query hook(s) for server data and remove/replace any fallback/alternate server-load paths that could still call a deprecated API and surface 'Server Cases Loading Failed'."
+        },
+        {
+          "path": "frontend/src/components/cases/CaseList.tsx",
+          "operation": "modify",
+          "description": "Confirm the server retry flow (`refetchServer`) and any conditional server fetch behavior is wired to the paginated query so retries cannot invoke deprecated case-loading methods."
+        }
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "summary": "Regenerate and validate frontend backend bindings, then ensure redeploy flow uses updated bindings so Live cannot call removed legacy APIs.",
+      "acceptanceCriteria": [
+        "`frontend/src/declarations/backend/backend.did.d.ts` does not include `getAllSurgeryCases`.",
+        "Frontend build succeeds without TypeScript errors related to missing backend methods.",
+        "Documented redeploy steps (or existing scripts) are followed/validated so the Live deployment uses updated bindings and correct backend canister interface."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/scripts/clean-rebuild-frontend.sh",
+          "operation": "modify",
+          "description": "Harden the clean rebuild to deterministically regenerate bindings, fail-fast if any legacy `getAllSurgeryCases` symbol is present in generated declarations or referenced in `frontend/src` (excluding declarations), and ensure the build uses the fresh declarations."
+        },
+        {
+          "path": "frontend/redeploy.sh",
+          "operation": "modify",
+          "description": "Ensure redeploy always runs the clean rebuild (including binding regeneration and legacy-symbol checks) before deploying the frontend, so Live cannot ship stale bindings referencing removed backend capabilities."
+        },
+        {
+          "path": "frontend/DEPLOYMENT_NOTES.md",
+          "operation": "modify",
+          "description": "Update redeploy documentation to explicitly require fresh binding regeneration and verification that generated declarations do not contain `getAllSurgeryCases`, and to clarify how to validate Live is using the updated interface."
+        },
+        {
+          "path": "frontend/scripts/verify-live-backend-binding.md",
+          "operation": "modify",
+          "description": "Complete/extend the verification guide to include explicit checks that `frontend/src/declarations/backend/backend.did.d.ts` omits `getAllSurgeryCases` and that the deployed Live frontend corresponds to the freshly generated bindings."
+        },
+        {
+          "path": "frontend/src/declarations/backend/backend.did.d.ts",
+          "operation": "modify",
+          "description": "Regenerate/refresh the committed generated TypeScript backend declarations so the interface no longer contains `getAllSurgeryCases` and aligns with the deployed backend canister interface."
+        }
+      ]
+    }
+  ]
 }

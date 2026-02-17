@@ -1,11 +1,10 @@
 # Specification
 
 ## Summary
-**Goal:** Refactor the Motoko backend to prevent traps when loading or syncing large surgery-case datasets, restoring reliable server case loading in the live frontend.
+**Goal:** Fix frontend server case loading so it no longer calls the deprecated `getAllSurgeryCases()` API and reliably loads cases via the paginated `getSurgeryCases(start, limit)` method.
 
 **Planned changes:**
-- Refactor per-user surgery-case storage and read paths so pagination (`getSurgeryCases(start, limit)`) never materializes an unbounded full list in memory and enforces a hard maximum page size of 100.
-- Update the legacy `getAllSurgeryCases()` to have a strict, documented upper bound on returned items and avoid serializing an unbounded dataset in a single response.
-- Rework `syncLocalChanges(localCases)` merge logic to avoid quadratic scans and large intermediate collections, using a bounded-memory, linear-time approach (e.g., indexing by `caseId`).
+- Audit and update all frontend case-loading hooks/flows to remove any runtime call paths invoking `getAllSurgeryCases()` and route server case loading through `getSurgeryCases(start, limit)` (directly or via existing pagination helpers).
+- Refresh generated backend bindings used by the frontend and validate redeploy steps so Live uses updated declarations and cannot call removed legacy APIs.
 
-**User-visible outcome:** The frontend can load server cases and sync large case sets without “Server Cases Loading Failed” or backend trapping, even for users with many saved cases.
+**User-visible outcome:** Server cases load successfully in the live/production UI without showing the “Server Cases Loading Failed” banner (assuming backend is reachable and the user is authenticated).

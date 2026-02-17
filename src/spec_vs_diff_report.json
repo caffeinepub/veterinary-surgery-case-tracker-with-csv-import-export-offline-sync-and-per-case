@@ -1,49 +1,29 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-17T01:58:00.606Z",
-  "summary": "Diff shows a refactor of per-user surgery case storage from List-based to Map-based and introduces a separate `backend/migration.mo` module wired into `backend/main.mo`. However, the diff summary is truncated before any updated read/sync methods, so key paging/safety behaviors for `getSurgeryCases`, `getAllSurgeryCases`, and `syncLocalChanges` cannot be verified from the provided evidence. Also, adding `backend/migration.mo` appears to violate the constraint that all backend logic must remain in `backend/main.mo`.",
+  "generatedAt": "2026-02-17T02:59:06.436Z",
+  "summary": "The diff only updates project_state.json to record the requested work items as pending. No frontend code, hooks, generated backend bindings, or deployment documentation/scripts were changed, so the BuildRequest requirements are not implemented.",
   "missing_requirements": [
     {
       "id": "REQ-1",
-      "requirement": "Ensure `getSurgeryCases(start, limit)` never traps on large datasets, enforces a hard max page size of 100, and paginates without materializing the entire per-user collection (no full `toArray()` equivalent).",
-      "reason": "The diff summary for `backend/main.mo` is truncated before any `getSurgeryCases` implementation, so there is no evidence that pagination exists, that a 100-item hard cap is enforced, or that it avoids full materialization.",
+      "requirement": "Audit all frontend case-loading hooks and flows to ensure there are zero runtime call paths that invoke deprecated backend method getAllSurgeryCases(), and update remaining references to use paginated API getSurgeryCases(start, limit).",
+      "reason": "No changes were made to any frontend/src code or hooks; only project_state.json was modified and it marks this work as pending, so there is no evidence that getAllSurgeryCases references/call paths were removed or replaced with getSurgeryCases pagination.",
       "evidence": [
-        "backend/main.mo (truncated)"
-      ]
-    },
-    {
-      "id": "REQ-1",
-      "requirement": "Implement legacy `getAllSurgeryCases()` with a strict, documented upper bound on returned items and without serializing an unbounded dataset in one response, so it never traps on large datasets.",
-      "reason": "No `getAllSurgeryCases()` implementation (or documented bounds) is shown in the provided truncated diff, so it cannot be confirmed that the legacy call is now bounded and safe.",
-      "evidence": [
-        "backend/main.mo (truncated)",
-        "project_state.json (mentions prior trapping in getAllSurgeryCases)"
+        "project_state.json"
       ]
     },
     {
       "id": "REQ-2",
-      "requirement": "Refactor `syncLocalChanges(localCases)` to be safe for large inputs and large server datasets (bounded-memory, linear-time merge using indexing by `caseId`, no quadratic nested scans), and ensure subsequent `getSurgeryCases` works on the merged dataset without trapping.",
-      "reason": "The diff summary does not include any `syncLocalChanges` code, so there is no evidence the merge algorithm was changed to linear-time/bounded-memory.",
+      "requirement": "Ensure the deployed frontend is using fresh generated backend bindings and is redeployed so Live cannot call removed legacy APIs.",
+      "reason": "No generated declaration files (e.g., frontend/src/declarations/backend/backend.did.d.ts) or redeploy steps/scripts were modified; only project_state.json was updated and indicates this is pending.",
       "evidence": [
-        "backend/main.mo (truncated)"
+        "project_state.json"
       ]
     }
   ],
-  "hallucinated_features": [
-    {
-      "description": "Added a separate backend module file `backend/migration.mo` and wired it into the actor via `(with migration = Migration.run)`.",
-      "reason": "The BuildRequest constraint requires the backend to remain a single Motoko actor with all logic in `backend/main.mo`. Introducing `backend/migration.mo` moves backend logic outside `backend/main.mo`.",
-      "evidence": [
-        "backend/migration.mo",
-        "backend/main.mo (imports Migration \"migration\" and uses `(with migration = Migration.run)`)"
-      ]
-    }
-  ],
-  "confidence": 0.62,
+  "hallucinated_features": [],
+  "confidence": 0.91,
   "changed_files": [
-    "backend/main.mo",
-    "backend/migration.mo",
     "project_state.json"
   ]
 }

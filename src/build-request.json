@@ -1,58 +1,53 @@
 {
   "kind": "build_request",
-  "title": "Stricter backend fix to prevent surgery-case loading traps",
+  "title": "Fix case-loading hooks to avoid deprecated getAllSurgeryCases calls",
   "projectName": "Surgery Case Tracker",
   "priority": "high",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Update the Motoko backend so loading surgery cases cannot trap due to large datasets (e.g., \"heap out of bounds\"), by refactoring the per-user surgery-case storage and all read paths to avoid materializing an unbounded list in memory.",
-      "target": "backend",
+      "text": "Audit all frontend case-loading hooks and flows to ensure there are zero runtime call paths that invoke the deprecated backend method `getAllSurgeryCases()`, and update any remaining references to use the paginated API `getSurgeryCases(start, limit)` (directly or via existing pagination helpers).",
+      "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1",
-          "msg-2"
+          "msg-1"
         ],
         "quotes": [
-          "On live app web page Server Cases Loading Failed",
-          "yes, apply stricter fix"
+          "Check the case-loading hooks."
         ]
       },
       "acceptanceCriteria": [
-        "Calling `getSurgeryCases(start, limit)` never traps due to dataset size and always enforces a hard maximum page size of 100 returned cases (or smaller if fewer remain).",
-        "`getSurgeryCases(start, limit)` does not convert the entire per-user case collection to an array as part of pagination (no full-list `toArray()`/equivalent on the complete dataset).",
-        "Calling the legacy `getAllSurgeryCases()` never traps due to dataset size; it must be implemented in a way that has a strict, documented upper bound on returned items and does not attempt to serialize an unbounded dataset in a single response.",
-        "The live frontend can load server cases successfully (no \"Server Cases Loading Failed\" caused by backend trapping) even when the user has a large number of cases."
+        "A repo-wide search over `frontend/src` (excluding generated declarations) finds no references to `getAllSurgeryCases`.",
+        "All server-case loading continues to work via pagination (e.g., `useGetSurgeryCasesPaginated` and any sync loaders use `actor.getSurgeryCases(start, limit)`).",
+        "The production/live UI no longer shows the banner 'Server Cases Loading Failed' when loading server cases (assuming backend is reachable and user is authenticated)."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Make `syncLocalChanges(localCases)` safe for large numbers of cases by ensuring it does not perform quadratic scans over the full dataset and does not require building full intermediate arrays/lists that scale with total case count beyond a bounded, linear pass.",
-      "target": "backend",
+      "text": "Ensure the deployed frontend is using fresh generated backend bindings and is redeployed so that Live cannot call removed legacy APIs.",
+      "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1",
-          "msg-2"
+          "msg-1"
         ],
         "quotes": [
-          "The backend encountered an error processing your request.",
-          "yes, apply stricter fix"
+          "Check the case-loading hooks."
         ]
       },
       "acceptanceCriteria": [
-        "`syncLocalChanges` completes without trapping for large `localCases` inputs and large existing server datasets (no heap/memory traps caused by merge logic).",
-        "The merge logic uses a bounded-memory, linear-time approach (e.g., indexing by `caseId`) rather than nested loops over both collections.",
-        "After a sync, subsequent `getSurgeryCases` calls succeed and return the merged dataset without trapping."
+        "`frontend/src/declarations/backend/backend.did.d.ts` does not include `getAllSurgeryCases`.",
+        "Frontend build succeeds without TypeScript errors related to missing backend methods.",
+        "Documented redeploy steps (or existing scripts) are followed/validated so the Live deployment uses updated bindings and correct backend canister interface."
       ]
     }
   ],
   "constraints": [
-    "Backend must remain a single Motoko actor with all logic in `backend/main.mo`.",
-    "Do not edit frontend files under `frontend/src/hooks/useInternetIdentity.ts`, `frontend/src/hooks/useInternetIdentity.tsx`, `frontend/src/hooks/useActor.ts`, `frontend/src/main.tsx`, or anything in `frontend/src/components/ui`."
+    "Do not edit files under frontend/src/components/ui (shadcn components); compose them instead.",
+    "Do not edit immutable hook files: frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useInternetIdentity.tsx, frontend/src/hooks/useActor.ts, frontend/src/main.tsx."
   ],
   "nonGoals": [
-    "Adding new user-facing features unrelated to fixing the backend trap and restoring stable case loading.",
-    "Introducing additional backend services, external databases, or non-Motoko backend components."
+    "Adding new case-management features beyond fixing the broken server case loading.",
+    "Changing backend data models or reintroducing the removed `getAllSurgeryCases` method."
   ],
   "imageRequirements": {
     "required": [],

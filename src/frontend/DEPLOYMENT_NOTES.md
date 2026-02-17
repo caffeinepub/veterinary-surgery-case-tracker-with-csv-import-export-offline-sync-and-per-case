@@ -12,6 +12,7 @@ Perform a redeploy when:
 - Frontend bindings appear out of sync with the deployed backend
 - You need to deploy frontend code changes to the Live environment
 - Troubleshooting persistent connection issues between frontend and backend
+- **Backend interface has changed** (methods added, removed, or renamed)
 
 ### Quick Redeploy (Recommended)
 

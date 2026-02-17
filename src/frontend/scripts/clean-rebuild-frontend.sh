@@ -62,15 +62,36 @@ else
 fi
 echo ""
 
-# Step 6: Build frontend
-echo "🏗️  Step 6: Building frontend with fresh bindings..."
+# Step 6: Verify no legacy method references in bindings
+echo "🔍 Step 6: Checking for removed legacy methods in bindings..."
+if grep -q "getAllSurgeryCases" frontend/src/declarations/backend/backend.did.d.ts 2>/dev/null; then
+    echo "❌ ERROR: Legacy method 'getAllSurgeryCases' found in generated bindings!"
+    echo "This indicates the backend still exports the removed method."
+    echo "Please ensure the backend has been deployed with the updated code."
+    exit 1
+fi
+echo "✅ No legacy methods found in bindings"
+echo ""
+
+# Step 7: Verify no legacy method calls in frontend source
+echo "🔍 Step 7: Checking for legacy method calls in frontend source..."
+if grep -r "getAllSurgeryCases" frontend/src --exclude-dir=declarations --exclude-dir=node_modules 2>/dev/null; then
+    echo "❌ ERROR: Found references to legacy method 'getAllSurgeryCases' in frontend source!"
+    echo "Please remove all calls to this method and use getSurgeryCases(start, limit) instead."
+    exit 1
+fi
+echo "✅ No legacy method calls found in frontend source"
+echo ""
+
+# Step 8: Build frontend
+echo "🏗️  Step 8: Building frontend with fresh bindings..."
 cd frontend
 pnpm run build:skip-bindings
 cd ..
 echo "✅ Frontend built successfully"
 echo ""
 
-# Step 7: Summary
+# Step 9: Summary
 echo "✨ Clean rebuild complete!"
 echo ""
 echo "Next steps:"

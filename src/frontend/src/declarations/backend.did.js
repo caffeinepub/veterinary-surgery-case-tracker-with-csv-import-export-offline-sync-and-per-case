@@ -35,6 +35,7 @@ export const TasksChecklist = IDL.Record({
   'imaging' : TaskItem,
   'dischargeNotes' : TaskItem,
 });
+export const UserProfile = IDL.Record({ 'name' : IDL.Text });
 export const SurgeryCase = IDL.Record({
   'arrivalDate' : Time,
   'presentingComplaint' : IDL.Text,
@@ -46,7 +47,6 @@ export const SurgeryCase = IDL.Record({
   'tasksChecklist' : TasksChecklist,
   'patientDemographics' : CompletePatientDemographics,
 });
-export const UserProfile = IDL.Record({ 'name' : IDL.Text });
 export const SurgeryCaseUpdate = IDL.Record({
   'arrivalDate' : IDL.Opt(Time),
   'presentingComplaint' : IDL.Opt(IDL.Text),
@@ -72,7 +72,6 @@ export const idlService = IDL.Service({
       [],
     ),
   'deleteSurgeryCase' : IDL.Func([IDL.Nat], [IDL.Bool], []),
-  'getAllSurgeryCases' : IDL.Func([], [IDL.Vec(SurgeryCase)], ['query']),
   'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
   'getSurgeryCases' : IDL.Func(
@@ -121,6 +120,7 @@ export const idlFactory = ({ IDL }) => {
     'imaging' : TaskItem,
     'dischargeNotes' : TaskItem,
   });
+  const UserProfile = IDL.Record({ 'name' : IDL.Text });
   const SurgeryCase = IDL.Record({
     'arrivalDate' : Time,
     'presentingComplaint' : IDL.Text,
@@ -132,7 +132,6 @@ export const idlFactory = ({ IDL }) => {
     'tasksChecklist' : TasksChecklist,
     'patientDemographics' : CompletePatientDemographics,
   });
-  const UserProfile = IDL.Record({ 'name' : IDL.Text });
   const SurgeryCaseUpdate = IDL.Record({
     'arrivalDate' : IDL.Opt(Time),
     'presentingComplaint' : IDL.Opt(IDL.Text),
@@ -158,7 +157,6 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'deleteSurgeryCase' : IDL.Func([IDL.Nat], [IDL.Bool], []),
-    'getAllSurgeryCases' : IDL.Func([], [IDL.Vec(SurgeryCase)], ['query']),
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
     'getSurgeryCases' : IDL.Func(

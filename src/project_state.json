@@ -1,33 +1,27 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "App deployment with backend canister for loading surgery cases; live app currently failing to load cases due to backend error/trap and user requested applying a stricter fix to prevent large-list traps.",
+  "summary": "New project",
   "architectural_notes": [
-    "Backend canister case-loading should use a safer storage/loading pattern to avoid trapping on large datasets (e.g., avoid returning/processing full large lists in one call)."
+    "Case-loading logic is implemented in frontend hooks (e.g., hooks/useQueries.ts or hooks/useBackendConnection.ts) which call backend queries."
   ],
   "known_issues": [
-    "Live app shows 'Server Cases Loading Failed' due to backend canister error/trap when loading surgery cases (previously observed heap out-of-bounds in getAllSurgeryCases)."
+    "Live app web page shows 'Server Cases Loading Failed' when loading cases; likely caused by frontend still calling deprecated backend query getAllSurgeryCases from case-loading hooks."
   ],
   "isFixRequest": true,
   "existing_features": [],
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Apply stricter backend fix: switch surgery-cases storage/loading to a safer pattern to prevent traps (e.g., large list/heap out-of-bounds) and restore stable case loading.",
-      "reqIds": [],
-      "status": "in_progress"
-    },
-    {
-      "id": "AR-2",
-      "summary": "Update the Motoko backend so loading surgery cases cannot trap due to large datasets (e.g., \"heap out of bounds\"), by refactoring the per-user surgery-case storage and all read paths to avoid materializing an unbounded list in memory.",
+      "summary": "Audit all frontend case-loading hooks and flows to ensure there are zero runtime call paths that invoke the deprecated backend method `getAllSurgeryCases()`, and update any remaining references to use the paginated API `getSurgeryCases(start, limit)` (directly or via existing pagination helpers).",
       "reqIds": [
         "REQ-1"
       ],
       "status": "pending"
     },
     {
-      "id": "AR-3",
-      "summary": "Make `syncLocalChanges(localCases)` safe for large numbers of cases by ensuring it does not perform quadratic scans over the full dataset and does not require building full intermediate arrays/lists that scale with total case count beyond a bounded, linear pass.",
+      "id": "AR-2",
+      "summary": "Ensure the deployed frontend is using fresh generated backend bindings and is redeployed so that Live cannot call removed legacy APIs.",
       "reqIds": [
         "REQ-2"
       ],

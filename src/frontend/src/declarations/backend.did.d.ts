@@ -60,7 +60,6 @@ export interface _SERVICE {
     bigint
   >,
   'deleteSurgeryCase' : ActorMethod<[bigint], boolean>,
-  'getAllSurgeryCases' : ActorMethod<[], Array<SurgeryCase>>,
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
   'getSurgeryCases' : ActorMethod<[bigint, bigint], Array<SurgeryCase>>,
