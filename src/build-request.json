@@ -1,93 +1,94 @@
 {
   "kind": "build_request",
-  "title": "Add delete option for patient cards and highlight presenting complaint",
+  "title": "Add case notes field and visual highlights on patient card and tasks",
   "projectName": "Surgery Case Tracker",
   "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Add a delete action on each patient (surgery case) card that allows the user to delete that case, with a confirmation step before deletion.",
-      "target": "frontend",
+      "text": "Add a \"Case Notes\" field to the New Case / Edit Case form and save it with the case data so that notes persist across reloads and sync.",
+      "target": "both",
       "source": {
         "messageIds": [
-          "msg-user-1"
+          "msg-1"
         ],
         "quotes": [
-          "add option to delete patient card"
+          "Add a field to the New Case form that allows for notes about the case to be added."
         ]
       },
       "acceptanceCriteria": [
-        "Each rendered case card includes a clearly discoverable delete control (e.g., trash icon button) in addition to the existing edit button.",
-        "Clicking delete prompts the user to confirm (confirmation UI may be a simple confirm dialog).",
-        "On confirm, the case is removed from the UI list immediately.",
-        "If the app is connected to the backend, the deletion is also sent to the backend; if not connected, deletion still removes the case locally without crashing.",
-        "If backend deletion fails, the app shows a user-visible error (toast/alert) and logs the error to the console."
+        "The CaseForm renders a textarea (or equivalent multi-line input) labeled \"Case Notes\".",
+        "When creating a new case, the entered notes are stored in the local case object and included in pending sync data.",
+        "When editing an existing case, the notes field is prefilled from the case and updates are persisted.",
+        "The backend SurgeryCase type includes a notes field, and create/update/sync flows preserve the notes value.",
+        "After syncing and reloading the app, notes remain present for the case."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Implement a backend API to delete a surgery case by caseId for the authenticated caller, enforcing the same authorization rules as other case mutations.",
-      "target": "backend",
+      "text": "On the patient card (case card), display the case notes in a visually distinct colored boxed section so the notes stand out more than regular demographic rows.",
+      "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-user-1"
+          "msg-1"
         ],
         "quotes": [
-          "add option to delete patient card"
+          "In the patient card put a color box around this field so it stands otu more."
         ]
       },
       "acceptanceCriteria": [
-        "Backend exposes a new shared method to delete a case by caseId for the caller (e.g., deleteSurgeryCase(caseId : Nat) : async Bool).",
-        "If the caller is not authorized as a user, the method traps with an Unauthorized message consistent with existing CRUD methods.",
-        "When a matching case exists, it is removed from the caller’s stored list and the method returns true; when not found, it returns false.",
-        "No state migration is required (no changes to persisted data schema/types)."
+        "CaseCard displays a \"Case Notes\" section when notes exist; if notes are empty/missing it displays an em dash (—) or hides the section (choose one behavior and apply consistently).",
+        "The notes section uses a clearly visible colored background and border (a boxed callout style) distinct from the surrounding card content.",
+        "The layout handles long notes with wrapping without breaking the card layout."
       ]
     },
     {
       "id": "REQ-3",
-      "text": "Update the patient (surgery case) card UI so the presenting complaint is visually emphasized using a colored box around the complaint value.",
+      "text": "On the patient card task list UI, add a purple outlined box around the Histo task row and a blue outlined box around the Imaging task row.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-user-1"
+          "msg-1"
         ],
         "quotes": [
-          "on patient card put a color box around presenting complaint so it stands out more"
+          "On the patient card put a Purple box around the Histo task; Blue box around the Imaging task"
         ]
       },
       "acceptanceCriteria": [
-        "On each case card, the presenting complaint section is wrapped in a clearly visible colored container (background + border) that contrasts with surrounding rows.",
-        "The presenting complaint label remains readable and the complaint text wraps gracefully for long text.",
-        "The styling works in both light and dark modes using Tailwind/theme variables (no hard-to-read low-contrast combinations)."
+        "In the TasksChecklist rendering used by CaseCard, the Histo task row is visually wrapped/outlined with a purple border/box.",
+        "In the TasksChecklist rendering used by CaseCard, the Imaging task row is visually wrapped/outlined with a blue border/box.",
+        "The highlight styling applies regardless of whether the tasks are checked, and does not block checkbox interaction."
       ]
     },
     {
       "id": "REQ-4",
-      "text": "Wire the new backend delete API into the frontend data layer so deletions invalidate/refresh server case queries and keep the merged local/server list consistent.",
-      "target": "both",
+      "text": "Ensure the updated application builds successfully and can be redeployed after the changes (retry the previously failing build/deploy process).",
+      "target": "unknown",
       "source": {
         "messageIds": [
-          "msg-user-1"
+          "msg-2"
         ],
         "quotes": [
-          "add option to delete patient card"
+          "Try running it again with the updates"
         ]
       },
       "acceptanceCriteria": [
-        "Frontend includes a React Query mutation hook for deleting a surgery case via the backend actor.",
-        "After a successful backend deletion, queries for server cases and merged cases are invalidated/refreshed (consistent with create/update patterns in frontend/src/hooks/useQueries.ts).",
-        "The deletion flow does not require editing any files under frontend/src/components/ui or frontend/src/hooks/useActor*."
+        "A clean build succeeds without TypeScript or Motoko compile errors.",
+        "Frontend bindings are regenerated as needed so the frontend type definitions match the updated backend types.",
+        "Deployment produces a working app where the new notes field and task highlights are visible."
       ]
     }
   ],
   "constraints": [
-    "Backend must remain a single Motoko actor in backend/main.mo; do not introduce additional backend services.",
-    "Do not modify files under frontend/src/components/ui or the immutable hook paths listed in SYSTEM_CONTEXT."
+    "Backend must remain a single Motoko actor (all logic in backend/main.mo).",
+    "If the backend state schema changes (adding notes to SurgeryCase), include a conditional backend migration (backend/migration.mo) to safely upgrade existing stored cases by setting notes to an empty string for existing records.",
+    "Do not edit files under frontend/src/components/ui or any frontend immutablePaths listed in SYSTEM_CONTEXT.",
+    "Use English for all user-facing labels and text."
   ],
   "nonGoals": [
-    "Adding role-based admin deletion of other users’ cases.",
-    "Adding undo/restore, trash bin, or audit history for deletions.",
-    "Changing case sorting, search behavior, or CSV import/export behavior beyond what is needed to keep lists consistent after deletion."
+    "Implement camera capture or image upload features.",
+    "Add third-party authentication providers (only Internet Identity is supported).",
+    "Add real-time updates (no WebSockets/chat)."
   ],
   "imageRequirements": {
     "required": [],

@@ -1,65 +1,101 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Case card deletion + presenting complaint emphasis",
+  "title": "Case notes persistence + patient card highlights",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Add a per-case delete control with confirmation that removes the case from the UI immediately and gracefully handles offline/backend failure.",
+      "summary": "Add a Case Notes field to the CaseForm and ensure notes persist locally and through sync flows.",
       "acceptanceCriteria": [
-        "Each rendered case card includes a clearly discoverable delete control (e.g., trash icon button) in addition to the existing edit button.",
-        "Clicking delete prompts the user to confirm (confirmation UI may be a simple confirm dialog).",
-        "On confirm, the case is removed from the UI list immediately.",
-        "If the app is connected to the backend, the deletion is also sent to the backend; if not connected, deletion still removes the case locally without crashing.",
-        "If backend deletion fails, the app shows a user-visible error (toast/alert) and logs the error to the console."
+        "The CaseForm renders a textarea (or equivalent multi-line input) labeled \"Case Notes\".",
+        "When creating a new case, the entered notes are stored in the local case object and included in pending sync data.",
+        "When editing an existing case, the notes field is prefilled from the case and updates are persisted.",
+        "The backend SurgeryCase type includes a notes field, and create/update/sync flows preserve the notes value.",
+        "After syncing and reloading the app, notes remain present for the case."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/cases/CaseForm.tsx",
+          "operation": "modify",
+          "description": "Render a \"Case Notes\" Textarea bound to formData.notes; when editing, prefill from the selected case's notes (instead of resetting to empty), and include notes in both the local new-case object and updateCase mutation updates so pending sync includes notes."
+        },
+        {
+          "path": "frontend/src/utils/localPersistence.ts",
+          "operation": "modify",
+          "description": "Extend localStorage normalization to include a notes string (default to empty string for older stored records) so notes persist across reloads and remain backward compatible."
+        },
+        {
+          "path": "frontend/src/hooks/useCasesStore.ts",
+          "operation": "modify",
+          "description": "Update case normalization to ensure notes is always present (default empty string) so merged/local state consistently carries notes through add/update/delete and into pending sync."
+        },
+        {
+          "path": "frontend/src/utils/mergeCases.ts",
+          "operation": "modify",
+          "description": "Ensure merge behavior does not inadvertently drop notes when combining server and local cases (server data should win for shared caseIds, with local-only fields still preserved)."
+        },
+        {
+          "path": "frontend/src/hooks/useQueries.ts",
+          "operation": "modify",
+          "description": "Update create-case mutation typing/arguments to include the notes parameter when calling the backend create function (align with generated backend typings and avoid build/type errors)."
+        }
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "summary": "Display case notes on the patient (case) card in a distinct colored boxed section.",
+      "acceptanceCriteria": [
+        "CaseCard displays a \"Case Notes\" section when notes exist; if notes are empty/missing it displays an em dash (—) or hides the section (choose one behavior and apply consistently).",
+        "The notes section uses a clearly visible colored background and border (a boxed callout style) distinct from the surrounding card content.",
+        "The layout handles long notes with wrapping without breaking the card layout."
       ],
       "file_operations": [
         {
           "path": "frontend/src/components/cases/CaseCard.tsx",
           "operation": "modify",
-          "description": "Add a trash/delete icon button on each case card (next to the existing edit button). On click, show a confirmation step (e.g., window.confirm). If confirmed, call the local deletion mutation (useCasesStore().deleteCase) so the item disappears immediately; then attempt server deletion via the frontend delete mutation hook (added in REQ-4) when backend connectivity/actor is available. If server deletion fails, log to console and show a toast error via sonner. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/cases/CaseList.tsx",
-          "operation": "modify",
-          "description": "Ensure the CaseCard props/wiring still works after adding delete UI (no orphan controls). Keep list rendering stable by continuing to key by caseId string and relying on mergedCases updates after local deletion. Verify the component's usage instructions before implementing."
+          "description": "Add a \"Case Notes\" boxed/callout section to the card content using Tailwind classes (colored background + border) and safe long-text wrapping; choose a consistent behavior for empty notes (e.g., show an em dash)."
         }
       ]
     },
     {
       "id": "REQ-3",
-      "summary": "Visually emphasize the presenting complaint on each case card using a contrasting colored container that works in light/dark modes and wraps long text.",
+      "summary": "Highlight Histo and Imaging task rows on the patient card task list with purple/blue outlined boxes.",
       "acceptanceCriteria": [
-        "On each case card, the presenting complaint section is wrapped in a clearly visible colored container (background + border) that contrasts with surrounding rows.",
-        "The presenting complaint label remains readable and the complaint text wraps gracefully for long text.",
-        "The styling works in both light and dark modes using Tailwind/theme variables (no hard-to-read low-contrast combinations)."
+        "In the TasksChecklist rendering used by CaseCard, the Histo task row is visually wrapped/outlined with a purple border/box.",
+        "In the TasksChecklist rendering used by CaseCard, the Imaging task row is visually wrapped/outlined with a blue border/box.",
+        "The highlight styling applies regardless of whether the tasks are checked, and does not block checkbox interaction."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/cases/CaseCard.tsx",
+          "path": "frontend/src/components/cases/TasksChecklist.tsx",
           "operation": "modify",
-          "description": "Update the presenting complaint row to render inside a colored container (e.g., rounded border + subtle background using Tailwind theme colors like accent/primary/destructive-neutral variants). Adjust layout to prevent truncation and support long-text wrapping (e.g., align items-start, add min-w-0, break-words/whitespace-normal on the value). Ensure the label remains readable and contrasts appropriately in both light and dark modes. Verify the component's usage instructions before implementing."
+          "description": "Apply conditional wrapper styling per task key so the histo row has a purple outlined box and the imaging row has a blue outlined box; keep checkbox/label interactions unchanged and ensure styling works for checked/unchecked states."
         }
       ]
     },
     {
       "id": "REQ-4",
-      "summary": "Add a React Query delete-case mutation hook that calls the backend delete capability and invalidates server and merged case queries without touching forbidden files.",
+      "summary": "Ensure the frontend clean build/redeploy flow succeeds with updated bindings and the new UI changes.",
       "acceptanceCriteria": [
-        "Frontend includes a React Query mutation hook for deleting a surgery case via the backend actor.",
-        "After a successful backend deletion, queries for server cases and merged cases are invalidated/refreshed (consistent with create/update patterns in frontend/src/hooks/useQueries.ts).",
-        "The deletion flow does not require editing any files under frontend/src/components/ui or frontend/src/hooks/useActor*."
+        "A clean build succeeds without TypeScript or Motoko compile errors.",
+        "Frontend bindings are regenerated as needed so the frontend type definitions match the updated backend types.",
+        "Deployment produces a working app where the new notes field and task highlights are visible."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/hooks/useQueries.ts",
+          "path": "frontend/DEPLOYMENT_NOTES.md",
           "operation": "modify",
-          "description": "Implement a new React Query mutation hook (e.g., useDeleteSurgeryCase) that calls the backend actor's deleteSurgeryCase(caseId) capability. Mirror existing error handling patterns (including Unauthorized messaging) and, on success, invalidate both ['serverSurgeryCases'] and ['mergedCases'] to refresh the merged local/server view."
+          "description": "Update redeploy/build troubleshooting guidance to explicitly include regenerating frontend bindings after backend type changes (notes), and add a short verification checklist for Case Notes persistence and task-row highlights post-deploy."
         },
         {
-          "path": "frontend/src/components/cases/CaseCard.tsx",
+          "path": "frontend/scripts/clean-rebuild-frontend.sh",
           "operation": "modify",
-          "description": "Wire the new useDeleteSurgeryCase mutation into the card delete flow so that, after local removal, a connected backend attempt triggers query invalidation/refresh on success. Ensure this wiring does not modify any files under frontend/src/components/ui or frontend/src/hooks/useActor*. Verify the component's usage instructions before implementing."
+          "description": "Ensure the script continues to deterministically remove stale declaration artifacts and regenerate bindings before the build; adjust any messaging/guards as needed to reduce recurrence of the previously failing build flow."
+        },
+        {
+          "path": "frontend/redeploy.sh",
+          "operation": "modify",
+          "description": "Ensure redeploy remains end-to-end deterministic (clean rebuild + deploy) and reflects any updated guidance needed after binding/type changes."
         }
       ]
     }

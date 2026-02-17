@@ -1,63 +1,75 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-17T00:40:47.917Z",
-  "summary": "Diff implements a frontend delete control on case cards with confirmation, local-first deletion, attempted backend deletion, and user-visible error toast + console logging on backend failure. Evidence for the backend delete API, React Query delete mutation wiring/invalidation, and presenting-complaint highlight styling is not present in the provided truncated code excerpts.",
+  "generatedAt": "2026-02-17T01:08:58.498Z",
+  "summary": "REQ-1 appears implemented end-to-end (frontend form/state + backend type/API + migration). REQ-2 is not evidenced in the provided CaseCard diff (truncated before any notes callout). REQ-3 highlight styling is added, but the current TasksChecklist hides checked tasks, so highlights do not apply regardless of checked state as required. REQ-4 (clean build/redeploy, regenerated bindings) cannot be confirmed from diff summary alone.",
   "missing_requirements": [
     {
       "id": "REQ-2",
-      "requirement": "Implement a backend API to delete a surgery case by caseId for the authenticated caller, enforcing the same authorization rules as other case mutations.",
-      "reason": "backend/main.mo excerpt is truncated before any deleteSurgeryCase (or equivalent) method is shown; cannot confirm method exists, traps on Unauthorized, or returns true/false per AC.",
+      "requirement": "On the patient card (case card), display the case notes in a visually distinct colored boxed section so the notes stand out more than regular demographic rows.",
+      "reason": "The provided CaseCard.tsx diff excerpt does not show any rendering of a \"Case Notes\" section or a colored boxed/callout UI; file content is truncated before any such section is evidenced.",
       "evidence": [
-        "backend/main.mo (truncated; no delete method visible)"
+        "frontend/src/components/cases/CaseCard.tsx (truncated excerpt shows no Case Notes section)"
       ]
     },
     {
       "id": "REQ-3",
-      "requirement": "Update the patient (surgery case) card UI so the presenting complaint is visually emphasized using a colored box around the complaint value.",
-      "reason": "CaseCard.tsx excerpt shows delete button wiring but does not show any presenting-complaint section or highlighted container styling (background + border, light/dark support).",
+      "requirement": "In the TasksChecklist rendering used by CaseCard, the Histo task row is visually wrapped/outlined with a purple border/box and Imaging with a blue border/box, and the highlight styling applies regardless of whether the tasks are checked.",
+      "reason": "TasksChecklist adds border classes for histo/imaging, but it filters visible tasks to only required tasks that are not yet completed (\"!taskItem.checked\"). If a task is checked, it is not rendered, so the highlight cannot apply regardless of checked state.",
       "evidence": [
-        "frontend/src/components/cases/CaseCard.tsx (truncated; no presenting complaint highlight visible)"
+        "frontend/src/components/cases/TasksChecklist.tsx (visibleTasks filter excludes checked tasks)"
       ]
     },
     {
       "id": "REQ-4",
-      "requirement": "Wire the new backend delete API into the frontend data layer so deletions invalidate/refresh server case queries and keep the merged local/server list consistent.",
-      "reason": "useQueries.ts excerpt is truncated before any delete mutation hook implementation and onSuccess invalidation for both serverSurgeryCases and mergedCases is shown; cannot verify wiring or invalidation behavior.",
+      "requirement": "Ensure the updated application builds successfully and can be redeployed; frontend bindings regenerated as needed.",
+      "reason": "The diff summary does not include build output, deployment steps, or explicit evidence that frontend bindings were regenerated/updated to match backend candid/types; cannot verify from code excerpts alone.",
       "evidence": [
-        "frontend/src/hooks/useQueries.ts (truncated; delete mutation not visible)"
+        "backend/main.mo (type changes shown, but no binding regeneration evidence in diff summary)",
+        "frontend/src/hooks/useQueries.ts (imports types from '../backend', but no explicit binding regen artifacts shown)"
       ]
     }
   ],
   "hallucinated_features": [
     {
-      "description": "Add capturedImageUrl support to LocalSurgeryCase/CaseFormData (camera-captured reference images).",
-      "reason": "Not requested in BuildRequest; appears as an additional feature described in the summaries.",
+      "description": "CSV export button and CSV import dialog for cases",
+      "reason": "Not requested in the BuildRequest (no CSV import/export requirement).",
       "evidence": [
-        "frontend-file-summaries.txt (mentions capturedImageUrl added)"
+        "frontend/src/components/csv/CsvExportButton.tsx",
+        "frontend/src/components/csv/CsvImportDialog.tsx",
+        "frontend-file-summaries.txt (mentions frontend/src/utils/csv.ts updates)"
       ]
     },
     {
-      "description": "Change arrivalDate/dateOfBirth representation to YYYY-MM-DD strings and update multiple utilities (dates, csv, prefill) for timezone-safe handling.",
-      "reason": "Not requested (and explicitly a non-goal to change CSV behavior beyond what is needed for deletion consistency); appears as broader date/CSV behavior changes described in the summaries.",
+      "description": "Local persistence changes adding verification readback and additional normalization fields (e.g., capturedImageUrl, demographicsRawText) beyond the notes requirement",
+      "reason": "BuildRequest only asks to add notes persistence; added storage verification and other field normalization is extra functionality not explicitly requested.",
       "evidence": [
-        "frontend-file-summaries.txt (mentions date type changes and CSV handling changes)"
+        "frontend/src/utils/localPersistence.ts"
       ]
     },
     {
-      "description": "Overhaul local persistence behavior (verification reload, error throwing on save failures) and broader sync logic changes.",
-      "reason": "Not requested; BuildRequest only asks for deletion and list consistency after deletion, not general persistence/sync redesign.",
+      "description": "CaseList empty-state \"migration guidance\" behavior based on auth/connection/online status",
+      "reason": "Not requested; BuildRequest did not ask for new empty-state guidance logic.",
       "evidence": [
-        "frontend-file-summaries.txt (mentions localPersistence verification and useSync changes)"
+        "frontend/src/components/cases/CaseList.tsx"
       ]
     }
   ],
-  "confidence": 0.56,
+  "confidence": 0.72,
   "changed_files": [
     "backend/main.mo",
+    "backend/migration.mo",
     "frontend-file-summaries.txt",
     "frontend/src/components/cases/CaseCard.tsx",
+    "frontend/src/components/cases/CaseForm.tsx",
+    "frontend/src/components/cases/CaseList.tsx",
+    "frontend/src/components/cases/TasksChecklist.tsx",
+    "frontend/src/components/csv/CsvExportButton.tsx",
+    "frontend/src/components/csv/CsvImportDialog.tsx",
+    "frontend/src/hooks/useCasesStore.ts",
     "frontend/src/hooks/useQueries.ts",
+    "frontend/src/types/cases.ts",
+    "frontend/src/utils/localPersistence.ts",
     "project_state.json"
   ]
 }

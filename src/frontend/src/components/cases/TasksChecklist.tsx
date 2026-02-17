@@ -1,52 +1,64 @@
 import { Checkbox } from '../ui/checkbox';
 import { Label } from '../ui/label';
-import type { TasksChecklist } from '../../types/cases';
-import { getRequiredTasks, toggleTaskChecked, normalizeTasksChecklist } from '../../utils/tasksChecklist';
+import type { TasksChecklist as TasksChecklistType } from '../../types/cases';
+import { TASK_DEFINITIONS, normalizeTasksChecklist } from '../../utils/tasksChecklist';
 
 interface TasksChecklistProps {
-  tasks: TasksChecklist;
-  onChange: (tasks: TasksChecklist) => void;
-  disabled?: boolean;
+  tasksChecklist: TasksChecklistType;
+  onTaskToggle: (taskKey: keyof TasksChecklistType) => void;
 }
 
-export default function TasksChecklist({ tasks, onChange, disabled }: TasksChecklistProps) {
-  // Normalize the tasks to ensure all required fields are present
-  const normalizedTasks = normalizeTasksChecklist(tasks);
-  const requiredTasks = getRequiredTasks(normalizedTasks);
+export default function TasksChecklist({ tasksChecklist, onTaskToggle }: TasksChecklistProps) {
+  const normalized = normalizeTasksChecklist(tasksChecklist);
 
-  const handleToggle = (taskKey: keyof TasksChecklist) => {
-    onChange(toggleTaskChecked(normalizedTasks, taskKey));
-  };
+  // Filter to show only required tasks that are not yet completed
+  const visibleTasks = TASK_DEFINITIONS.filter((task) => {
+    const taskItem = normalized[task.key];
+    return taskItem.required && !taskItem.checked;
+  });
 
-  if (requiredTasks.length === 0) {
+  if (visibleTasks.length === 0) {
     return (
-      <div className="space-y-3">
-        <h4 className="text-sm font-semibold text-foreground">Tasks</h4>
-        <p className="text-xs text-muted-foreground">All tasks completed</p>
+      <div className="text-sm text-muted-foreground italic">
+        All tasks completed
       </div>
     );
   }
 
   return (
-    <div className="space-y-3">
-      <h4 className="text-sm font-semibold text-foreground">Tasks</h4>
+    <div className="space-y-2">
+      <h4 className="text-sm font-medium text-foreground">Tasks</h4>
       <div className="space-y-2">
-        {requiredTasks.map((task) => (
-          <div key={task.key} className="flex items-center space-x-2">
-            <Checkbox
-              id={`${task.key}-checkbox`}
-              checked={task.checked}
-              onCheckedChange={() => handleToggle(task.key)}
-              disabled={disabled}
-            />
-            <Label
-              htmlFor={`${task.key}-checkbox`}
-              className="text-sm cursor-pointer"
+        {visibleTasks.map((task) => {
+          const taskItem = normalized[task.key];
+          
+          // Determine if this task needs a colored border
+          let borderClass = '';
+          if (task.key === 'histo') {
+            borderClass = 'border-2 border-purple-400 dark:border-purple-600 bg-purple-50 dark:bg-purple-950/20';
+          } else if (task.key === 'imaging') {
+            borderClass = 'border-2 border-blue-400 dark:border-blue-600 bg-blue-50 dark:bg-blue-950/20';
+          }
+
+          return (
+            <div
+              key={task.key}
+              className={`flex items-center space-x-2 p-2 rounded-md ${borderClass}`}
             >
-              {task.label}
-            </Label>
-          </div>
-        ))}
+              <Checkbox
+                id={`task-${task.key}`}
+                checked={taskItem.checked}
+                onCheckedChange={() => onTaskToggle(task.key)}
+              />
+              <Label
+                htmlFor={`task-${task.key}`}
+                className="text-sm font-normal cursor-pointer flex-1"
+              >
+                {task.label}
+              </Label>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

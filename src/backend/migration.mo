@@ -1,137 +1,74 @@
 import Map "mo:core/Map";
 import List "mo:core/List";
+import Nat "mo:core/Nat";
 import Principal "mo:core/Principal";
 
 module {
-  // Old task item definition
-  type OldTaskItem = {
-    checked : Bool;
-  };
-
-  // Old tasks checklist definition
-  type OldTasksChecklist = {
-    dischargeNotes : OldTaskItem;
-    pdvmNotified : OldTaskItem;
-  };
-
-  // Old patient demographics definition
-  type OldPatientDemographics = {
-    name : Text;
-    species : Text;
-    breed : Text;
-    age : Nat;
-  };
-
-  // Old surgery case definition
-  type OldSurgeryCase = {
-    caseId : Nat;
-    medicalRecordNumber : Text;
-    patientDemographics : OldPatientDemographics;
-    arrivalDate : Int;
-    tasksChecklist : OldTasksChecklist;
-    lastSyncTimestamp : Int;
-    isSynchronized : Bool;
-  };
-
-  // Old actor type
-  type OldActor = {
-    nextCaseId : Nat;
-    cases : Map.Map<Principal, List.List<OldSurgeryCase>>;
-    userProfiles : Map.Map<Principal, { name : Text }>;
-  };
-
-  // New task item definition
-  type NewTaskItem = {
+  type TaskItem = {
     required : Bool;
     checked : Bool;
   };
 
-  // New tasks checklist definition
-  type NewTasksChecklist = {
-    dischargeNotes : NewTaskItem;
-    pdvmNotified : NewTaskItem;
-    labs : NewTaskItem;
-    histo : NewTaskItem;
-    surgeryReport : NewTaskItem;
-    imaging : NewTaskItem;
-    culture : NewTaskItem;
+  type TasksChecklist = {
+    dischargeNotes : TaskItem;
+    pdvmNotified : TaskItem;
+    labs : TaskItem;
+    histo : TaskItem;
+    surgeryReport : TaskItem;
+    imaging : TaskItem;
+    culture : TaskItem;
   };
 
-  // New patient demographics definition
-  type NewPatientDemographics = {
+  type CompletePatientDemographics = {
     name : Text;
+    ownerLastName : Text;
     species : Text;
     breed : Text;
-    age : Nat;
+    sex : Text;
+    dateOfBirth : Text;
   };
 
-  // New surgery case definition
-  type NewSurgeryCase = {
+  type OldSurgeryCase = {
     caseId : Nat;
     medicalRecordNumber : Text;
-    patientDemographics : NewPatientDemographics;
+    presentingComplaint : Text;
+    patientDemographics : CompletePatientDemographics;
     arrivalDate : Int;
-    tasksChecklist : NewTasksChecklist;
+    tasksChecklist : TasksChecklist;
     lastSyncTimestamp : Int;
     isSynchronized : Bool;
   };
 
-  // New actor type
-  type NewActor = {
-    nextCaseId : Nat;
-    cases : Map.Map<Principal, List.List<NewSurgeryCase>>;
-    userProfiles : Map.Map<Principal, { name : Text }>;
+  type OldActor = {
+    cases : Map.Map<Principal, List.List<OldSurgeryCase>>;
   };
 
-  // Migration function called by the main actor via the with-clause
+  type NewSurgeryCase = {
+    caseId : Nat;
+    medicalRecordNumber : Text;
+    presentingComplaint : Text;
+    patientDemographics : CompletePatientDemographics;
+    arrivalDate : Int;
+    tasksChecklist : TasksChecklist;
+    notes : Text;
+    lastSyncTimestamp : Int;
+    isSynchronized : Bool;
+  };
+
+  type NewActor = {
+    cases : Map.Map<Principal, List.List<NewSurgeryCase>>;
+  };
+
   public func run(old : OldActor) : NewActor {
     let newCases = old.cases.map<Principal, List.List<OldSurgeryCase>, List.List<NewSurgeryCase>>(
-      func(_principal, oldCases) {
+      func(_userId, oldCases) {
         oldCases.map<OldSurgeryCase, NewSurgeryCase>(
           func(oldCase) {
-            {
-              oldCase with
-              patientDemographics = oldCase.patientDemographics;
-              tasksChecklist = {
-                dischargeNotes = {
-                  required = true;
-                  checked = oldCase.tasksChecklist.dischargeNotes.checked;
-                };
-                pdvmNotified = {
-                  required = true;
-                  checked = oldCase.tasksChecklist.pdvmNotified.checked;
-                };
-                // Default values for new tasks set to not required and unchecked
-                labs = {
-                  required = false;
-                  checked = false;
-                };
-                histo = {
-                  required = false;
-                  checked = false;
-                };
-                surgeryReport = {
-                  required = false;
-                  checked = false;
-                };
-                imaging = {
-                  required = false;
-                  checked = false;
-                };
-                culture = {
-                  required = false;
-                  checked = false;
-                };
-              };
-            };
+            { oldCase with notes = "" };
           }
         );
       }
     );
-
-    {
-      old with
-      cases = newCases;
-    };
+    { cases = newCases };
   };
 };

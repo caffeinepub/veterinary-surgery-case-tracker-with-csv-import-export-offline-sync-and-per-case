@@ -84,12 +84,14 @@ export function useCreateSurgeryCase() {
       patientDemographics,
       arrivalDate,
       tasksChecklist,
+      notes,
     }: {
       medicalRecordNumber: string;
       presentingComplaint: string;
       patientDemographics: CompletePatientDemographics;
       arrivalDate: bigint;
       tasksChecklist: TasksChecklist;
+      notes: string;
     }) => {
       if (!actor) throw new Error('Backend connection not available');
       try {
@@ -98,7 +100,8 @@ export function useCreateSurgeryCase() {
           presentingComplaint,
           patientDemographics,
           arrivalDate,
-          tasksChecklist
+          tasksChecklist,
+          notes
         );
       } catch (error: any) {
         if (error.message?.includes('Unauthorized')) {

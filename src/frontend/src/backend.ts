@@ -94,6 +94,7 @@ export interface SurgeryCaseUpdate {
     arrivalDate?: Time;
     presentingComplaint?: string;
     medicalRecordNumber?: string;
+    notes?: string;
     tasksChecklist?: TasksChecklist;
     patientDemographics?: CompletePatientDemographics;
 }
@@ -107,6 +108,7 @@ export interface SurgeryCase {
     medicalRecordNumber: string;
     isSynchronized: boolean;
     lastSyncTimestamp: Time;
+    notes: string;
     caseId: bigint;
     tasksChecklist: TasksChecklist;
     patientDemographics: CompletePatientDemographics;
@@ -139,7 +141,7 @@ export enum UserRole {
 export interface backendInterface {
     _initializeAccessControlWithSecret(userSecret: string): Promise<void>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
-    createSurgeryCase(medicalRecordNumber: string, presentingComplaint: string, patientDemographics: CompletePatientDemographics, arrivalDate: Time, tasksChecklist: TasksChecklist): Promise<bigint>;
+    createSurgeryCase(medicalRecordNumber: string, presentingComplaint: string, patientDemographics: CompletePatientDemographics, arrivalDate: Time, tasksChecklist: TasksChecklist, notes: string): Promise<bigint>;
     deleteSurgeryCase(caseId: bigint): Promise<boolean>;
     getAllSurgeryCases(): Promise<Array<SurgeryCase>>;
     getCallerUserProfile(): Promise<UserProfile | null>;
@@ -184,17 +186,17 @@ export class Backend implements backendInterface {
             return result;
         }
     }
-    async createSurgeryCase(arg0: string, arg1: string, arg2: CompletePatientDemographics, arg3: Time, arg4: TasksChecklist): Promise<bigint> {
+    async createSurgeryCase(arg0: string, arg1: string, arg2: CompletePatientDemographics, arg3: Time, arg4: TasksChecklist, arg5: string): Promise<bigint> {
         if (this.processError) {
             try {
-                const result = await this.actor.createSurgeryCase(arg0, arg1, arg2, arg3, arg4);
+                const result = await this.actor.createSurgeryCase(arg0, arg1, arg2, arg3, arg4, arg5);
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.createSurgeryCase(arg0, arg1, arg2, arg3, arg4);
+            const result = await this.actor.createSurgeryCase(arg0, arg1, arg2, arg3, arg4, arg5);
             return result;
         }
     }
@@ -392,12 +394,14 @@ function to_candid_record_n7(_uploadFile: (file: ExternalBlob) => Promise<Uint8A
     arrivalDate?: Time;
     presentingComplaint?: string;
     medicalRecordNumber?: string;
+    notes?: string;
     tasksChecklist?: TasksChecklist;
     patientDemographics?: CompletePatientDemographics;
 }): {
     arrivalDate: [] | [_Time];
     presentingComplaint: [] | [string];
     medicalRecordNumber: [] | [string];
+    notes: [] | [string];
     tasksChecklist: [] | [_TasksChecklist];
     patientDemographics: [] | [_CompletePatientDemographics];
 } {
@@ -405,6 +409,7 @@ function to_candid_record_n7(_uploadFile: (file: ExternalBlob) => Promise<Uint8A
         arrivalDate: value.arrivalDate ? candid_some(value.arrivalDate) : candid_none(),
         presentingComplaint: value.presentingComplaint ? candid_some(value.presentingComplaint) : candid_none(),
         medicalRecordNumber: value.medicalRecordNumber ? candid_some(value.medicalRecordNumber) : candid_none(),
+        notes: value.notes ? candid_some(value.notes) : candid_none(),
         tasksChecklist: value.tasksChecklist ? candid_some(value.tasksChecklist) : candid_none(),
         patientDemographics: value.patientDemographics ? candid_some(value.patientDemographics) : candid_none()
     };

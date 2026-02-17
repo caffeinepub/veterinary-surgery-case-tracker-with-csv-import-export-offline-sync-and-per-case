@@ -67,7 +67,7 @@ export default function CaseForm({ editingCaseId, onCancelEdit, onSaveComplete }
           sex: caseToEdit.patientDemographics.sex as any,
           dateOfBirth: caseToEdit.patientDemographics.dateOfBirth || '',
           presentingComplaint: caseToEdit.presentingComplaint || '',
-          notes: '',
+          notes: caseToEdit.notes || '',
           demographicsRawText: caseToEdit.demographicsRawText || '',
           capturedImageUrl: caseToEdit.capturedImageUrl,
           requiredTasks: normalizeTasksChecklist(caseToEdit.tasksChecklist),
@@ -244,6 +244,7 @@ export default function CaseForm({ editingCaseId, onCancelEdit, onSaveComplete }
               dateOfBirth: formData.dateOfBirth,
             },
             tasksChecklist: normalizedTasks,
+            notes: formData.notes,
             demographicsRawText: formData.demographicsRawText,
             capturedImageUrl: formData.capturedImageUrl,
           },
@@ -273,6 +274,7 @@ export default function CaseForm({ editingCaseId, onCancelEdit, onSaveComplete }
             dateOfBirth: formData.dateOfBirth,
           },
           tasksChecklist: newCaseTasks,
+          notes: formData.notes,
           lastSyncTimestamp: BigInt(timestamp) * BigInt(1000000),
           isSynchronized: false,
           pendingSync: true,
@@ -416,6 +418,17 @@ export default function CaseForm({ editingCaseId, onCancelEdit, onSaveComplete }
           onChange={(e) => handleFieldChange('presentingComplaint', e.target.value)}
           placeholder="Brief description of the patient's condition..."
           rows={3}
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="notes">Case Notes</Label>
+        <Textarea
+          id="notes"
+          value={formData.notes}
+          onChange={(e) => handleFieldChange('notes', e.target.value)}
+          placeholder="Additional notes about this case..."
+          rows={4}
         />
       </div>
 

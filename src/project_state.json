@@ -1,32 +1,34 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "Patient card UI enhancements: add delete option and improve visibility of presenting complaint with a highlighted color box.",
+  "summary": "New project",
   "architectural_notes": [],
-  "known_issues": [],
-  "isFixRequest": false,
+  "known_issues": [
+    "Build/deploy process failed ('Something broke on our end'); user requested retry."
+  ],
+  "isFixRequest": true,
   "existing_features": [
     {
-      "id": "feature-add-a-delete-action-on-each-patient-surgery-case-card-that-allows-the-user-to-delete-that-case-with-a-confirmation-step-before-deletion",
-      "title": "Add a delete action on each patient (surgery case) card that allows the user to delete that case, with a confirmation step before deletion.",
+      "id": "feature-add-a-case-notes-field-to-the-new-case-edit-case-form-and-save-it-with-the-case-data-so-that-notes-persist-across-reloads-and-sync",
+      "title": "Add a \"Case Notes\" field to the New Case / Edit Case form and save it with the case data so that notes persist across reloads and sync.",
       "reqIds": [
         "REQ-1"
       ],
       "version": 1
     },
     {
-      "id": "feature-update-the-patient-surgery-case-card-ui-so-the-presenting-complaint-is-visually-emphasized-using-a-colored-box-around-the-complaint-value",
-      "title": "Update the patient (surgery case) card UI so the presenting complaint is visually emphasized using a colored box around the complaint value.",
+      "id": "feature-on-the-patient-card-case-card-display-the-case-notes-in-a-visually-distinct-colored-boxed-section-so-the-notes-stand-out-more-than-regular-demographic-rows",
+      "title": "On the patient card (case card), display the case notes in a visually distinct colored boxed section so the notes stand out more than regular demographic rows.",
       "reqIds": [
-        "REQ-3"
+        "REQ-2"
       ],
       "version": 1
     },
     {
-      "id": "feature-wire-the-new-backend-delete-api-into-the-frontend-data-layer-so-deletions-invalidate-refresh-server-case-queries-and-keep-the-merged-local-server-list-consistent",
-      "title": "Wire the new backend delete API into the frontend data layer so deletions invalidate/refresh server case queries and keep the merged local/server list consistent.",
+      "id": "feature-on-the-patient-card-task-list-ui-add-a-purple-outlined-box-around-the-histo-task-row-and-a-blue-outlined-box-around-the-imaging-task-row",
+      "title": "On the patient card task list UI, add a purple outlined box around the Histo task row and a blue outlined box around the Imaging task row.",
       "reqIds": [
-        "REQ-4"
+        "REQ-3"
       ],
       "version": 1
     }
@@ -34,26 +36,31 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Add option to delete a patient card",
+      "summary": "Add a notes field to the New Case form to capture case notes",
       "reqIds": [],
       "status": "pending"
     },
     {
       "id": "AR-2",
-      "summary": "Highlight presenting complaint on patient card with a color box for better visibility",
+      "summary": "On the patient card, visually highlight the case notes field with a colored box so it stands out",
       "reqIds": [],
       "status": "pending"
     },
     {
-      "id": "AR-4",
-      "summary": "Implement a backend API to delete a surgery case by caseId for the authenticated caller, enforcing the same authorization rules as other case mutations.",
+      "id": "AR-3",
+      "summary": "On the patient card, add a purple box around the Histo task and a blue box around the Imaging task",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-7",
+      "summary": "Ensure the updated application builds successfully and can be redeployed after the changes (retry the previously failing build/deploy process).",
       "reqIds": [
-        "REQ-2"
+        "REQ-4"
       ],
       "status": "pending"
     }
   ],
-  "gameProjectType": "none",
   "projectName": "Surgery Case Tracker",
   "clarification_mode": "instant",
   "clarification_rounds": 0

@@ -1,7 +1,7 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-17T00:40:47.920Z",
+  "generatedAt": "2026-02-17T01:08:58.501Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
@@ -12,51 +12,60 @@
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Add a delete action on each patient (surgery case) card that allows the user to delete that case, with a confirmation step before deletion.",
+        "summary": "Add a \"Case Notes\" field to the New Case / Edit Case form and save it with the case data so that notes persist across reloads and sync.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/cases/CaseCard.tsx",
-          "frontend/src/components/cases/CaseList.tsx"
+          "frontend/src/components/cases/CaseForm.tsx",
+          "frontend/src/utils/localPersistence.ts",
+          "frontend/src/hooks/useCasesStore.ts",
+          "frontend/src/utils/mergeCases.ts",
+          "frontend/src/hooks/useQueries.ts"
         ],
         "matchedFiles": [
-          "frontend/src/components/cases/CaseCard.tsx"
+          "frontend/src/components/cases/CaseForm.tsx",
+          "frontend/src/utils/localPersistence.ts",
+          "frontend/src/hooks/useCasesStore.ts",
+          "frontend/src/hooks/useQueries.ts"
         ]
       },
       {
         "id": "REQ-2",
-        "summary": "Implement a backend API to delete a surgery case by caseId for the authenticated caller, enforcing the same authorization rules as other case mutations.",
-        "status": "unknown",
-        "plannedFiles": [],
-        "matchedFiles": []
-      },
-      {
-        "id": "REQ-3",
-        "summary": "Update the patient (surgery case) card UI so the presenting complaint is visually emphasized using a colored box around the complaint value.",
+        "summary": "On the patient card (case card), display the case notes in a visually distinct colored boxed section so the notes stand out more than regular demographic rows.",
         "status": "implemented",
         "plannedFiles": [
           "frontend/src/components/cases/CaseCard.tsx"
         ],
         "matchedFiles": [
           "frontend/src/components/cases/CaseCard.tsx"
+        ]
+      },
+      {
+        "id": "REQ-3",
+        "summary": "On the patient card task list UI, add a purple outlined box around the Histo task row and a blue outlined box around the Imaging task row.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/cases/TasksChecklist.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/cases/TasksChecklist.tsx"
         ]
       },
       {
         "id": "REQ-4",
-        "summary": "Wire the new backend delete API into the frontend data layer so deletions invalidate/refresh server case queries and keep the merged local/server list consistent.",
-        "status": "implemented",
+        "summary": "Ensure the updated application builds successfully and can be redeployed after the changes (retry the previously failing build/deploy process).",
+        "status": "missing",
         "plannedFiles": [
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/components/cases/CaseCard.tsx"
+          "frontend/DEPLOYMENT_NOTES.md",
+          "frontend/scripts/clean-rebuild-frontend.sh",
+          "frontend/redeploy.sh"
         ],
-        "matchedFiles": [
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/components/cases/CaseCard.tsx"
-        ]
+        "matchedFiles": []
       }
     ]
   },
   "changedFiles": [
     "backend/main.mo",
+    "backend/migration.mo",
     "build-request.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
@@ -64,9 +73,17 @@
     "frontend/src/backend.d.ts",
     "frontend/src/backend.ts",
     "frontend/src/components/cases/CaseCard.tsx",
+    "frontend/src/components/cases/CaseForm.tsx",
+    "frontend/src/components/cases/CaseList.tsx",
+    "frontend/src/components/cases/TasksChecklist.tsx",
+    "frontend/src/components/csv/CsvExportButton.tsx",
+    "frontend/src/components/csv/CsvImportDialog.tsx",
     "frontend/src/declarations/backend.did.d.ts",
     "frontend/src/declarations/backend.did.js",
+    "frontend/src/hooks/useCasesStore.ts",
     "frontend/src/hooks/useQueries.ts",
+    "frontend/src/types/cases.ts",
+    "frontend/src/utils/localPersistence.ts",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

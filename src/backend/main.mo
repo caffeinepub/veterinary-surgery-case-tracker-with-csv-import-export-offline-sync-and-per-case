@@ -8,10 +8,12 @@ import List "mo:core/List";
 import Order "mo:core/Order";
 import Int "mo:core/Int";
 import Nat "mo:core/Nat";
+import Migration "migration";
 
 import MixinAuthorization "authorization/MixinAuthorization";
 import AccessControl "authorization/access-control";
 
+(with migration = Migration.run)
 actor {
   let accessControlState = AccessControl.initState();
   include MixinAuthorization(accessControlState);
@@ -51,6 +53,7 @@ actor {
     patientDemographics : CompletePatientDemographics;
     arrivalDate : Time.Time;
     tasksChecklist : TasksChecklist;
+    notes : Text;
     lastSyncTimestamp : Time.Time;
     isSynchronized : Bool;
   };
@@ -74,6 +77,7 @@ actor {
     patientDemographics : ?CompletePatientDemographics;
     arrivalDate : ?Time.Time;
     tasksChecklist : ?TasksChecklist;
+    notes : ?Text;
   };
 
   var nextCaseId = 1;
@@ -105,7 +109,7 @@ actor {
     userProfiles.add(caller, profile);
   };
 
-  public shared ({ caller }) func createSurgeryCase(medicalRecordNumber : Text, presentingComplaint : Text, patientDemographics : CompletePatientDemographics, arrivalDate : Time.Time, tasksChecklist : TasksChecklist) : async Nat {
+  public shared ({ caller }) func createSurgeryCase(medicalRecordNumber : Text, presentingComplaint : Text, patientDemographics : CompletePatientDemographics, arrivalDate : Time.Time, tasksChecklist : TasksChecklist, notes : Text) : async Nat {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can create surgery cases");
     };
@@ -125,6 +129,7 @@ actor {
       patientDemographics;
       arrivalDate;
       tasksChecklist;
+      notes;
       lastSyncTimestamp = Time.now();
       isSynchronized = false;
     };
@@ -168,6 +173,10 @@ actor {
               tasksChecklist = switch (updates.tasksChecklist) {
                 case (null) { surgeryCase.tasksChecklist };
                 case (?checklist) { checklist };
+              };
+              notes = switch (updates.notes) {
+                case (null) { surgeryCase.notes };
+                case (?update) { update };
               };
               lastSyncTimestamp = Time.now();
               isSynchronized = false;

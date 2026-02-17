@@ -2,10 +2,13 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-add-a-delete-action-on-each-patient-surgery-case-card-that-allows-the-user-to-delete-that-case-with-a-confirmation-step-before-deletion",
-      "featureTitle": "Add a delete action on each patient (surgery case) card that allows the user to delete that case, with a confirmation step before deletion.",
+      "featureId": "feature-add-a-case-notes-field-to-the-new-case-edit-case-form-and-save-it-with-the-case-data-so-that-notes-persist-across-reloads-and-sync",
+      "featureTitle": "Add a \"Case Notes\" field to the New Case / Edit Case form and save it with the case data so that notes persist across reloads and sync.",
       "files": [
-        "frontend/src/components/cases/CaseCard.tsx"
+        "frontend/src/components/cases/CaseForm.tsx",
+        "frontend/src/hooks/useCasesStore.ts",
+        "frontend/src/hooks/useQueries.ts",
+        "frontend/src/utils/localPersistence.ts"
       ],
       "components": [
         "authorization@4.0.0",
@@ -22,8 +25,8 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-update-the-patient-surgery-case-card-ui-so-the-presenting-complaint-is-visually-emphasized-using-a-colored-box-around-the-complaint-value",
-      "featureTitle": "Update the patient (surgery case) card UI so the presenting complaint is visually emphasized using a colored box around the complaint value.",
+      "featureId": "feature-on-the-patient-card-case-card-display-the-case-notes-in-a-visually-distinct-colored-boxed-section-so-the-notes-stand-out-more-than-regular-demographic-rows",
+      "featureTitle": "On the patient card (case card), display the case notes in a visually distinct colored boxed section so the notes stand out more than regular demographic rows.",
       "files": [
         "frontend/src/components/cases/CaseCard.tsx"
       ],
@@ -37,16 +40,15 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-3"
+        "REQ-2"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-wire-the-new-backend-delete-api-into-the-frontend-data-layer-so-deletions-invalidate-refresh-server-case-queries-and-keep-the-merged-local-server-list-consistent",
-      "featureTitle": "Wire the new backend delete API into the frontend data layer so deletions invalidate/refresh server case queries and keep the merged local/server list consistent.",
+      "featureId": "feature-on-the-patient-card-task-list-ui-add-a-purple-outlined-box-around-the-histo-task-row-and-a-blue-outlined-box-around-the-imaging-task-row",
+      "featureTitle": "On the patient card task list UI, add a purple outlined box around the Histo task row and a blue outlined box around the Imaging task row.",
       "files": [
-        "frontend/src/components/cases/CaseCard.tsx",
-        "frontend/src/hooks/useQueries.ts"
+        "frontend/src/components/cases/TasksChecklist.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -58,7 +60,7 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-4"
+        "REQ-3"
       ],
       "confidence": "high"
     }

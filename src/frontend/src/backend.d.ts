@@ -12,6 +12,7 @@ export interface SurgeryCaseUpdate {
     arrivalDate?: Time;
     presentingComplaint?: string;
     medicalRecordNumber?: string;
+    notes?: string;
     tasksChecklist?: TasksChecklist;
     patientDemographics?: CompletePatientDemographics;
 }
@@ -25,6 +26,7 @@ export interface SurgeryCase {
     medicalRecordNumber: string;
     isSynchronized: boolean;
     lastSyncTimestamp: Time;
+    notes: string;
     caseId: bigint;
     tasksChecklist: TasksChecklist;
     patientDemographics: CompletePatientDemographics;
@@ -56,7 +58,7 @@ export enum UserRole {
 }
 export interface backendInterface {
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
-    createSurgeryCase(medicalRecordNumber: string, presentingComplaint: string, patientDemographics: CompletePatientDemographics, arrivalDate: Time, tasksChecklist: TasksChecklist): Promise<bigint>;
+    createSurgeryCase(medicalRecordNumber: string, presentingComplaint: string, patientDemographics: CompletePatientDemographics, arrivalDate: Time, tasksChecklist: TasksChecklist, notes: string): Promise<bigint>;
     deleteSurgeryCase(caseId: bigint): Promise<boolean>;
     getAllSurgeryCases(): Promise<Array<SurgeryCase>>;
     getCallerUserProfile(): Promise<UserProfile | null>;

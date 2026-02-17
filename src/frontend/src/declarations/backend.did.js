@@ -41,6 +41,7 @@ export const SurgeryCase = IDL.Record({
   'medicalRecordNumber' : IDL.Text,
   'isSynchronized' : IDL.Bool,
   'lastSyncTimestamp' : Time,
+  'notes' : IDL.Text,
   'caseId' : IDL.Nat,
   'tasksChecklist' : TasksChecklist,
   'patientDemographics' : CompletePatientDemographics,
@@ -50,6 +51,7 @@ export const SurgeryCaseUpdate = IDL.Record({
   'arrivalDate' : IDL.Opt(Time),
   'presentingComplaint' : IDL.Opt(IDL.Text),
   'medicalRecordNumber' : IDL.Opt(IDL.Text),
+  'notes' : IDL.Opt(IDL.Text),
   'tasksChecklist' : IDL.Opt(TasksChecklist),
   'patientDemographics' : IDL.Opt(CompletePatientDemographics),
 });
@@ -58,7 +60,14 @@ export const idlService = IDL.Service({
   '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
   'createSurgeryCase' : IDL.Func(
-      [IDL.Text, IDL.Text, CompletePatientDemographics, Time, TasksChecklist],
+      [
+        IDL.Text,
+        IDL.Text,
+        CompletePatientDemographics,
+        Time,
+        TasksChecklist,
+        IDL.Text,
+      ],
       [IDL.Nat],
       [],
     ),
@@ -113,6 +122,7 @@ export const idlFactory = ({ IDL }) => {
     'medicalRecordNumber' : IDL.Text,
     'isSynchronized' : IDL.Bool,
     'lastSyncTimestamp' : Time,
+    'notes' : IDL.Text,
     'caseId' : IDL.Nat,
     'tasksChecklist' : TasksChecklist,
     'patientDemographics' : CompletePatientDemographics,
@@ -122,6 +132,7 @@ export const idlFactory = ({ IDL }) => {
     'arrivalDate' : IDL.Opt(Time),
     'presentingComplaint' : IDL.Opt(IDL.Text),
     'medicalRecordNumber' : IDL.Opt(IDL.Text),
+    'notes' : IDL.Opt(IDL.Text),
     'tasksChecklist' : IDL.Opt(TasksChecklist),
     'patientDemographics' : IDL.Opt(CompletePatientDemographics),
   });
@@ -130,7 +141,14 @@ export const idlFactory = ({ IDL }) => {
     '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
     'createSurgeryCase' : IDL.Func(
-        [IDL.Text, IDL.Text, CompletePatientDemographics, Time, TasksChecklist],
+        [
+          IDL.Text,
+          IDL.Text,
+          CompletePatientDemographics,
+          Time,
+          TasksChecklist,
+          IDL.Text,
+        ],
         [IDL.Nat],
         [],
       ),

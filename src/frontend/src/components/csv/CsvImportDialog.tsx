@@ -13,7 +13,8 @@ export default function CsvImportDialog() {
   const [open, setOpen] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [parseResult, setParseResult] = useState<any>(null);
-  const { importCases } = useCasesStore();
+  const [isImporting, setIsImporting] = useState(false);
+  const { addCase } = useCasesStore();
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -29,12 +30,17 @@ export default function CsvImportDialog() {
   const handleImport = async () => {
     if (!parseResult || parseResult.errors.length > 0) return;
 
+    setIsImporting(true);
     try {
       const cases: Partial<LocalSurgeryCase>[] = parseResult.rows.map((row: any, index: number) =>
         csvRowToCase(row, BigInt(Date.now() + index))
       );
 
-      await importCases.mutateAsync(cases as LocalSurgeryCase[]);
+      // Import cases one by one
+      for (const caseData of cases) {
+        await addCase.mutateAsync(caseData as LocalSurgeryCase);
+      }
+
       toast.success(`Imported ${cases.length} cases successfully`);
       
       // Reset state and close dialog on success
@@ -46,6 +52,8 @@ export default function CsvImportDialog() {
       const errorMessage = error?.message || 'Failed to import cases. Please try again.';
       toast.error(errorMessage);
       // Keep dialog open and usable on error
+    } finally {
+      setIsImporting(false);
     }
   };
 
@@ -126,14 +134,14 @@ export default function CsvImportDialog() {
           )}
 
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={handleClose} disabled={importCases.isPending}>
+            <Button variant="outline" onClick={handleClose} disabled={isImporting}>
               Cancel
             </Button>
             <Button
               onClick={handleImport}
-              disabled={!parseResult || parseResult.errors.length > 0 || importCases.isPending}
+              disabled={!parseResult || parseResult.errors.length > 0 || isImporting}
             >
-              {importCases.isPending ? (
+              {isImporting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Importing...

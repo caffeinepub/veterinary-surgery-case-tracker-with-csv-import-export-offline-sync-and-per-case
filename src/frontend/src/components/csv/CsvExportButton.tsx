@@ -8,7 +8,7 @@ export default function CsvExportButton() {
   const { cases } = useCasesStore();
 
   const handleExport = () => {
-    if (cases.length === 0) {
+    if (!cases || cases.length === 0) {
       toast.error('No cases to export');
       return;
     }
@@ -30,7 +30,7 @@ export default function CsvExportButton() {
   };
 
   return (
-    <Button variant="outline" size="sm" onClick={handleExport} disabled={cases.length === 0}>
+    <Button variant="outline" size="sm" onClick={handleExport} disabled={!cases || cases.length === 0}>
       <Download className="h-4 w-4 mr-2" />
       Export CSV
     </Button>

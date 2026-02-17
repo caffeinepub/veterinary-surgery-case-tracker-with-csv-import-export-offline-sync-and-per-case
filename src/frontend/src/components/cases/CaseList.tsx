@@ -23,7 +23,7 @@ export default function CaseList({ sortField, sortDirection, searchQuery, onEdit
   const isAuthenticated = !!identity;
 
   // Filter cases by search query
-  const filteredCases = cases.filter((surgeryCase) => {
+  const filteredCases = (cases || []).filter((surgeryCase) => {
     if (!searchQuery.trim()) return true;
 
     const query = searchQuery.toLowerCase();
@@ -64,7 +64,7 @@ export default function CaseList({ sortField, sortDirection, searchQuery, onEdit
     );
   }
 
-  if (cases.length === 0) {
+  if (!cases || cases.length === 0) {
     // Show migration guidance only when:
     // - User is authenticated
     // - Backend is connected
@@ -93,7 +93,7 @@ export default function CaseList({ sortField, sortDirection, searchQuery, onEdit
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {sortedCases.map((surgeryCase) => (
-        <CaseCard key={surgeryCase.caseId.toString()} case={surgeryCase} onEdit={onEditCase} />
+        <CaseCard key={surgeryCase.caseId.toString()} surgeryCase={surgeryCase} onEdit={onEditCase} />
       ))}
     </div>
   );
