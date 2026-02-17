@@ -1,74 +1,58 @@
 {
   "kind": "build_request",
-  "title": "Fix infinite loading after case creation by preventing getAllSurgeryCases trap and unblocking local case rendering",
+  "title": "Stricter backend fix to prevent surgery-case loading traps",
   "projectName": "Surgery Case Tracker",
   "priority": "high",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Update the frontend server-cases query to stop calling the backend method `getAllSurgeryCases()` and instead fetch cases using the paginated backend API `getSurgeryCases(start, limit)`, aggregating pages until completion, so the live app no longer traps with \"heap out of bounds\" during case list loading.",
-      "target": "frontend",
+      "text": "Update the Motoko backend so loading surgery cases cannot trap due to large datasets (e.g., \"heap out of bounds\"), by refactoring the per-user surgery-case storage and all read paths to avoid materializing an unbounded list in memory.",
+      "target": "backend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-1",
+          "msg-2"
         ],
         "quotes": [
-          "live app says case created successfully but then case card does not load, just get the spinning wheel"
+          "On live app web page Server Cases Loading Failed",
+          "yes, apply stricter fix"
         ]
       },
       "acceptanceCriteria": [
-        "On production, loading the case list does not call `getAllSurgeryCases()`.",
-        "The app fetches server cases via repeated calls to `getSurgeryCases(start, limit)` with a bounded page size (<= 100).",
-        "If the backend rejects/traps during any page fetch, the error is surfaced to the UI (not an indefinite spinner), and the raw error is still logged to the console for debugging.",
-        "After creating a case, the case list screen can render without being blocked by a failing/unavailable server-cases fetch."
+        "Calling `getSurgeryCases(start, limit)` never traps due to dataset size and always enforces a hard maximum page size of 100 returned cases (or smaller if fewer remain).",
+        "`getSurgeryCases(start, limit)` does not convert the entire per-user case collection to an array as part of pagination (no full-list `toArray()`/equivalent on the complete dataset).",
+        "Calling the legacy `getAllSurgeryCases()` never traps due to dataset size; it must be implemented in a way that has a strict, documented upper bound on returned items and does not attempt to serialize an unbounded dataset in a single response.",
+        "The live frontend can load server cases successfully (no \"Server Cases Loading Failed\" caused by backend trapping) even when the user has a large number of cases."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Change the merged-cases loading flow so that locally stored cases can render immediately even when the server-cases query is still loading or has errored, eliminating the indefinite spinner after \"Case created successfully\" when a new local case exists.",
-      "target": "frontend",
+      "text": "Make `syncLocalChanges(localCases)` safe for large numbers of cases by ensuring it does not perform quadratic scans over the full dataset and does not require building full intermediate arrays/lists that scale with total case count beyond a bounded, linear pass.",
+      "target": "backend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-1",
+          "msg-2"
         ],
         "quotes": [
-          "case created successfully but then case card does not load, just get the spinning wheel"
+          "The backend encountered an error processing your request.",
+          "yes, apply stricter fix"
         ]
       },
       "acceptanceCriteria": [
-        "Creating a new case shows the new CaseCard in the grid immediately after the modal closes (without waiting for the server-cases query to finish).",
-        "`CaseList` only shows the centered spinning loader when there is genuinely no merged/local data to show yet; it does not block rendering solely because the server-cases query is loading.",
-        "If there are local cases present, `CaseList` renders them even when backend connectivity is degraded, while still allowing the existing troubleshooting banner to appear when appropriate."
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "text": "Add clear, English user-facing messaging when server case loading fails (e.g., due to backend rejection), so users do not see only a spinner; include an action to retry loading cases.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ],
-        "quotes": [
-          "just get the spinning wheel"
-        ]
-      },
-      "acceptanceCriteria": [
-        "When the server-cases fetch fails, the UI shows a readable error state for case loading (in English) instead of an endless spinner.",
-        "The error state provides a Retry action that re-attempts fetching server cases (and subsequently recomputes merged cases).",
-        "The error state does not prevent viewing any already-available local cases."
+        "`syncLocalChanges` completes without trapping for large `localCases` inputs and large existing server datasets (no heap/memory traps caused by merge logic).",
+        "The merge logic uses a bounded-memory, linear-time approach (e.g., indexing by `caseId`) rather than nested loops over both collections.",
+        "After a sync, subsequent `getSurgeryCases` calls succeed and return the merged dataset without trapping."
       ]
     }
   ],
   "constraints": [
-    "Do not edit any files under `frontend/src/components/ui` (compose existing UI components instead).",
-    "Do not modify immutable frontend paths listed in SYSTEM_CONTEXT (e.g., `frontend/src/hooks/useInternetIdentity.ts`, `frontend/src/hooks/useActor.ts`, `frontend/src/main.tsx`).",
-    "Keep the backend as a single Motoko actor in `backend/main.mo`; only add `backend/migration.mo` if a state upgrade is required (not expected for this fix)."
+    "Backend must remain a single Motoko actor with all logic in `backend/main.mo`.",
+    "Do not edit frontend files under `frontend/src/hooks/useInternetIdentity.ts`, `frontend/src/hooks/useInternetIdentity.tsx`, `frontend/src/hooks/useActor.ts`, `frontend/src/main.tsx`, or anything in `frontend/src/components/ui`."
   ],
   "nonGoals": [
-    "Changing the data model or access-control rules for surgery cases and user profiles beyond what is necessary to fix loading.",
-    "Adding real-time updates, websockets, or push notifications.",
-    "Introducing external databases or third-party services."
+    "Adding new user-facing features unrelated to fixing the backend trap and restoring stable case loading.",
+    "Introducing additional backend services, external databases, or non-Motoko backend components."
   ],
   "imageRequirements": {
     "required": [],

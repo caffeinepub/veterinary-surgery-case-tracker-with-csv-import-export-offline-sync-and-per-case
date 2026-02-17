@@ -2,8 +2,18 @@ import Map "mo:core/Map";
 import List "mo:core/List";
 import Nat "mo:core/Nat";
 import Principal "mo:core/Principal";
+import Time "mo:core/Time";
 
 module {
+  type CompletePatientDemographics = {
+    name : Text;
+    ownerLastName : Text;
+    species : Text;
+    breed : Text;
+    sex : Text;
+    dateOfBirth : Text;
+  };
+
   type TaskItem = {
     required : Bool;
     checked : Bool;
@@ -19,54 +29,34 @@ module {
     culture : TaskItem;
   };
 
-  type CompletePatientDemographics = {
-    name : Text;
-    ownerLastName : Text;
-    species : Text;
-    breed : Text;
-    sex : Text;
-    dateOfBirth : Text;
-  };
-
-  type OldSurgeryCase = {
+  type SurgeryCase = {
     caseId : Nat;
     medicalRecordNumber : Text;
     presentingComplaint : Text;
     patientDemographics : CompletePatientDemographics;
-    arrivalDate : Int;
+    arrivalDate : Time.Time;
     tasksChecklist : TasksChecklist;
-    lastSyncTimestamp : Int;
+    notes : Text;
+    lastSyncTimestamp : Time.Time;
     isSynchronized : Bool;
   };
 
   type OldActor = {
-    cases : Map.Map<Principal, List.List<OldSurgeryCase>>;
-  };
-
-  type NewSurgeryCase = {
-    caseId : Nat;
-    medicalRecordNumber : Text;
-    presentingComplaint : Text;
-    patientDemographics : CompletePatientDemographics;
-    arrivalDate : Int;
-    tasksChecklist : TasksChecklist;
-    notes : Text;
-    lastSyncTimestamp : Int;
-    isSynchronized : Bool;
+    cases : Map.Map<Principal, List.List<SurgeryCase>>;
   };
 
   type NewActor = {
-    cases : Map.Map<Principal, List.List<NewSurgeryCase>>;
+    cases : Map.Map<Principal, Map.Map<Nat, SurgeryCase>>;
   };
 
   public func run(old : OldActor) : NewActor {
-    let newCases = old.cases.map<Principal, List.List<OldSurgeryCase>, List.List<NewSurgeryCase>>(
-      func(_userId, oldCases) {
-        oldCases.map<OldSurgeryCase, NewSurgeryCase>(
-          func(oldCase) {
-            { oldCase with notes = "" };
-          }
-        );
+    let newCases = old.cases.map<Principal, List.List<SurgeryCase>, Map.Map<Nat, SurgeryCase>>(
+      func(_principal, caseList) {
+        let casesMap = Map.empty<Nat, SurgeryCase>();
+        for (c in caseList.values()) {
+          casesMap.add(c.caseId, c);
+        };
+        casesMap;
       }
     );
     { cases = newCases };

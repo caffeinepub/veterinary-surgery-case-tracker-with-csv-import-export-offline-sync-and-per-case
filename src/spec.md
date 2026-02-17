@@ -1,12 +1,11 @@
 # Specification
 
 ## Summary
-**Goal:** Stop the case list from getting stuck in an infinite loading state after creating a case by switching to paginated server fetching, rendering local cases immediately, and showing a clear error state with retry when server loading fails.
+**Goal:** Refactor the Motoko backend to prevent traps when loading or syncing large surgery-case datasets, restoring reliable server case loading in the live frontend.
 
 **Planned changes:**
-- Update the frontend server-cases query to use `getSurgeryCases(start, limit)` (page size <= 100) and aggregate results across pages instead of calling `getAllSurgeryCases()`.
-- Ensure server-cases page fetch failures are surfaced in the UI (not an indefinite spinner) while still logging raw errors to the console.
-- Adjust merged-cases rendering so locally stored cases render immediately and are not blocked by server-cases loading/errored states.
-- Add an English error state for server case loading failures that includes a Retry action to re-attempt server fetching and recompute merged cases.
+- Refactor per-user surgery-case storage and read paths so pagination (`getSurgeryCases(start, limit)`) never materializes an unbounded full list in memory and enforces a hard maximum page size of 100.
+- Update the legacy `getAllSurgeryCases()` to have a strict, documented upper bound on returned items and avoid serializing an unbounded dataset in a single response.
+- Rework `syncLocalChanges(localCases)` merge logic to avoid quadratic scans and large intermediate collections, using a bounded-memory, linear-time approach (e.g., indexing by `caseId`).
 
-**User-visible outcome:** After creating a case, the new case card appears right away, and the case list no longer spins indefinitely; if server loading fails, users see a readable error with a Retry button while still being able to view any local cases.
+**User-visible outcome:** The frontend can load server cases and sync large case sets without “Server Cases Loading Failed” or backend trapping, even for users with many saved cases.

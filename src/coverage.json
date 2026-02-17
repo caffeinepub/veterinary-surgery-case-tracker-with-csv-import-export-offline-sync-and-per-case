@@ -1,67 +1,41 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-17T01:36:50.026Z",
+  "generatedAt": "2026-02-17T01:58:00.609Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 3,
-    "implemented": 3,
+    "total": 2,
+    "implemented": 0,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Update the frontend server-cases query to stop calling the backend method `getAllSurgeryCases()` and instead fetch cases using the paginated backend API `getSurgeryCases(start, limit)`, aggregating pages until completion, so the live app no longer traps with \"heap out of bounds\" during case list loading.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/hooks/useCasesStore.ts"
-        ],
-        "matchedFiles": [
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/hooks/useCasesStore.ts"
-        ]
+        "summary": "Update the Motoko backend so loading surgery cases cannot trap due to large datasets (e.g., \"heap out of bounds\"), by refactoring the per-user surgery-case storage and all read paths to avoid materializing an unbounded list in memory.",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
       },
       {
         "id": "REQ-2",
-        "summary": "Change the merged-cases loading flow so that locally stored cases can render immediately even when the server-cases query is still loading or has errored, eliminating the indefinite spinner after \"Case created successfully\" when a new local case exists.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/hooks/useCasesStore.ts",
-          "frontend/src/components/cases/CaseList.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/hooks/useCasesStore.ts",
-          "frontend/src/components/cases/CaseList.tsx"
-        ]
-      },
-      {
-        "id": "REQ-3",
-        "summary": "Add clear, English user-facing messaging when server case loading fails (e.g., due to backend rejection), so users do not see only a spinner; include an action to retry loading cases.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/components/cases/ServerCasesLoadError.tsx",
-          "frontend/src/components/cases/CaseList.tsx",
-          "frontend/src/hooks/useCasesStore.ts"
-        ],
-        "matchedFiles": [
-          "frontend/src/components/cases/ServerCasesLoadError.tsx",
-          "frontend/src/components/cases/CaseList.tsx",
-          "frontend/src/hooks/useCasesStore.ts"
-        ]
+        "summary": "Make `syncLocalChanges(localCases)` safe for large numbers of cases by ensuring it does not perform quadratic scans over the full dataset and does not require building full intermediate arrays/lists that scale with total case count beyond a bounded, linear pass.",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
       }
     ]
   },
   "changedFiles": [
+    "backend/main.mo",
+    "backend/migration.mo",
     "build-request.json",
     "feature_evidence.json",
-    "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/components/cases/CaseList.tsx",
-    "frontend/src/components/cases/ServerCasesLoadError.tsx",
-    "frontend/src/hooks/useCasesStore.ts",
-    "frontend/src/hooks/useQueries.ts",
+    "frontend/src/backend.d.ts",
+    "frontend/src/backend.ts",
+    "frontend/src/declarations/backend.did.d.ts",
+    "frontend/src/declarations/backend.did.js",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

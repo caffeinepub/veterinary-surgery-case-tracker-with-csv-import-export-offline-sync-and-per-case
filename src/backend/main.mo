@@ -1,4 +1,3 @@
-import Array "mo:core/Array";
 import Map "mo:core/Map";
 import Iter "mo:core/Iter";
 import Time "mo:core/Time";
@@ -9,11 +8,11 @@ import Order "mo:core/Order";
 import Int "mo:core/Int";
 import Nat "mo:core/Nat";
 
-
+import Migration "migration";
 import MixinAuthorization "authorization/MixinAuthorization";
 import AccessControl "authorization/access-control";
 
-
+(with migration = Migration.run)
 actor {
   let accessControlState = AccessControl.initState();
   include MixinAuthorization(accessControlState);
@@ -81,7 +80,7 @@ actor {
   };
 
   var nextCaseId = 1;
-  let cases = Map.empty<Principal, List.List<SurgeryCase>>();
+  var cases = Map.empty<Principal, Map.Map<Nat, SurgeryCase>>();
   let userProfiles = Map.empty<Principal, UserProfile>();
 
   public query ({ caller }) func ping() : async () {
@@ -109,13 +108,20 @@ actor {
     userProfiles.add(caller, profile);
   };
 
-  public shared ({ caller }) func createSurgeryCase(medicalRecordNumber : Text, presentingComplaint : Text, patientDemographics : CompletePatientDemographics, arrivalDate : Time.Time, tasksChecklist : TasksChecklist, notes : Text) : async Nat {
+  public shared ({ caller }) func createSurgeryCase(
+    medicalRecordNumber : Text,
+    presentingComplaint : Text,
+    patientDemographics : CompletePatientDemographics,
+    arrivalDate : Time.Time,
+    tasksChecklist : TasksChecklist,
+    notes : Text,
+  ) : async Nat {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can create surgery cases");
     };
 
     let userCases = switch (cases.get(caller)) {
-      case (null) { List.empty<SurgeryCase>() };
+      case (null) { Map.empty<Nat, SurgeryCase>() };
       case (?existing) { existing };
     };
 
@@ -134,7 +140,7 @@ actor {
       isSynchronized = false;
     };
 
-    userCases.add(newCase);
+    userCases.add(caseId, newCase);
     cases.add(caller, userCases);
     caseId;
   };
@@ -147,11 +153,9 @@ actor {
     switch (cases.get(caller)) {
       case (null) { false };
       case (?userCases) {
-        let caseIndex = userCases.findIndex(func(c) { c.caseId == caseId });
-        switch (caseIndex) {
+        switch (userCases.get(caseId)) {
           case (null) { false };
-          case (?index) {
-            let surgeryCase = userCases.at(index);
+          case (?surgeryCase) {
             let updatedCase : SurgeryCase = {
               caseId = surgeryCase.caseId;
               medicalRecordNumber = switch (updates.medicalRecordNumber) {
@@ -182,18 +186,7 @@ actor {
               isSynchronized = false;
             };
 
-            let updatedCases = List.empty<SurgeryCase>();
-            let iter = userCases.values();
-            var currentIndex = 0;
-            for (caseItem in iter) {
-              if (currentIndex == index) {
-                updatedCases.add(updatedCase);
-              } else {
-                updatedCases.add(caseItem);
-              };
-              currentIndex += 1;
-            };
-            cases.add(caller, updatedCases);
+            userCases.add(caseId, updatedCase);
             true;
           };
         };
@@ -210,31 +203,40 @@ actor {
     switch (cases.get(caller)) {
       case (null) { [] };
       case (?userCases) {
-        let totalLength = userCases.size();
+        // Use streaming approach for pagination
         var paginatedCount = 0;
-        userCases.toArray().sliceToArray(start, totalLength).filter(
-          func(_item) {
-            if (paginatedCount < effectiveLimit) {
-              paginatedCount += 1;
-              true;
-            } else {
-              false;
-            };
+        let filteredCases = userCases.entries().drop(start).take(effectiveLimit);
+        let casesList = List.empty<SurgeryCase>();
+        let iter = filteredCases;
+        iter.forEach(
+          func((_, caseItem)) {
+            casesList.add(caseItem);
           }
         );
+        casesList.toArray();
       };
     };
   };
 
-  // Retain original method for backwards compatibility
+  // LEGACY only - kept for backwards compatibility with old clients
+  // still paginates and will never return more than 1000 cases
   public query ({ caller }) func getAllSurgeryCases() : async [SurgeryCase] {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can view surgery cases");
     };
+    let legacyLimit = 1000;
     switch (cases.get(caller)) {
       case (null) { [] };
       case (?userCases) {
-        userCases.toArray();
+        let filteredCases = userCases.entries().take(legacyLimit);
+        let casesList = List.empty<SurgeryCase>();
+        let iter = filteredCases;
+        iter.forEach(
+          func((_, caseItem)) {
+            casesList.add(caseItem);
+          }
+        );
+        casesList.toArray();
       };
     };
   };
@@ -244,33 +246,22 @@ actor {
       Runtime.trap("Unauthorized: Only users can sync surgery cases");
     };
 
-    let mergedCases = List.empty<SurgeryCase>();
+    let mergedCases = Map.empty<Nat, SurgeryCase>();
     let currentCases = switch (cases.get(caller)) {
-      case (null) { List.empty<SurgeryCase>() };
+      case (null) { Map.empty<Nat, SurgeryCase>() };
       case (?userCases) { userCases };
     };
 
     // Add or update cases from incoming localChanges
     for (newCase in localCases.values()) {
-      var found = false;
-      for (c in currentCases.values()) {
-        if (c.caseId == newCase.caseId) {
-          found := true;
-        };
-      };
-      mergedCases.add(newCase);
+      mergedCases.add(newCase.caseId, newCase);
     };
 
     // Add cases from the current persistent list that are not in the localChanges
-    for (persistentCase in currentCases.values()) {
-      var found = false;
-      for (c in localCases.values()) {
-        if (c.caseId == persistentCase.caseId) {
-          found := true;
-        };
-      };
-      if (not found) {
-        mergedCases.add(persistentCase);
+    for ((caseId, persistentCase) in currentCases.entries()) {
+      switch (mergedCases.get(caseId)) {
+        case (?_) { () }; // Local changes takes precedence
+        case (null) { mergedCases.add(caseId, persistentCase) };
       };
     };
 
@@ -278,14 +269,12 @@ actor {
     cases.add(caller, mergedCases);
   };
 
-  func updateNextCaseId(mergedCases : List.List<SurgeryCase>, startingId : Nat) {
-    let casesArray = mergedCases.toArray();
-    let maxId = casesArray.foldLeft<Nat, Nat>(startingId, maxNat);
+  func updateNextCaseId(mergedCases : Map.Map<Nat, SurgeryCase>, startingId : Nat) {
+    var maxId = startingId;
+    for ((caseId, _) in mergedCases.entries()) {
+      if (caseId > maxId) { maxId := caseId };
+    };
     nextCaseId := maxId + 1;
-  };
-
-  func maxNat(x : Nat, y : Nat) : Nat {
-    if (x >= y) { x } else { y };
   };
 
   public query ({ caller }) func hasUnsyncedChanges() : async Bool {
@@ -295,9 +284,8 @@ actor {
     switch (cases.get(caller)) {
       case (null) { false };
       case (?userCases) {
-        let casesArray = userCases.toArray();
         var hasUnsynced = false;
-        for (c in casesArray.values()) {
+        for ((_, c) in userCases.entries()) {
           if (not c.isSynchronized) {
             hasUnsynced := true;
           };
@@ -314,9 +302,16 @@ actor {
     switch (cases.get(caller)) {
       case (null) { [] };
       case (?userCases) {
-        let casesArray = userCases.toArray();
-        let filteredCases = casesArray.filter(func(c) { c.lastSyncTimestamp > since });
-        filteredCases.sort(SurgeryCase.compareByLastSyncTimestamp);
+        let filteredCases = userCases.filter(
+          func(_, c) {
+            c.lastSyncTimestamp > since;
+          }
+        );
+        let casesList = List.empty<SurgeryCase>();
+        for ((_, caseItem) in filteredCases.entries()) {
+          casesList.add(caseItem);
+        };
+        casesList.toArray().sort(SurgeryCase.compareByLastSyncTimestamp);
       };
     };
   };
@@ -329,20 +324,10 @@ actor {
     switch (cases.get(caller)) {
       case (null) { false };
       case (?userCases) {
-        let caseIndex = userCases.findIndex(func(c) { c.caseId == caseId });
-        switch (caseIndex) {
+        switch (userCases.get(caseId)) {
           case (null) { false };
-          case (?index) {
-            let updatedCases = List.empty<SurgeryCase>();
-            let iter = userCases.values();
-            var currentIndex = 0;
-            for (caseItem in iter) {
-              if (currentIndex != index) {
-                updatedCases.add(caseItem);
-              };
-              currentIndex += 1;
-            };
-            cases.add(caller, updatedCases);
+          case (?_) {
+            userCases.remove(caseId);
             true;
           };
         };
@@ -350,4 +335,3 @@ actor {
     };
   };
 };
-

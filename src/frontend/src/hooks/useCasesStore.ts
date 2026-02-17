@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useGetAllSurgeryCases } from './useQueries';
+import { useGetSurgeryCasesPaginated } from './useQueries';
 import type { LocalSurgeryCase } from '../types/cases';
 import type { SurgeryCaseUpdate } from '../backend';
 import { loadCasesFromLocal, saveCasesToLocal } from '../utils/localPersistence';
@@ -7,7 +7,7 @@ import { mergeCases } from '../utils/mergeCases';
 
 export function useCasesStore() {
   const queryClient = useQueryClient();
-  const serverQuery = useGetAllSurgeryCases();
+  const serverQuery = useGetSurgeryCasesPaginated();
   const { data: serverCases = [], isLoading: isLoadingServer, error: serverError, refetch: refetchServer } = serverQuery;
 
   // Load local cases immediately without waiting for server

@@ -52,7 +52,12 @@ export function useSaveCallerUserProfile() {
   });
 }
 
-export function useGetAllSurgeryCases() {
+/**
+ * Fetches all surgery cases using paginated requests to avoid heap overflow.
+ * Uses getSurgeryCases(start, limit) in a loop with conservative page size.
+ * NEVER calls the legacy getAllSurgeryCases() method.
+ */
+export function useGetSurgeryCasesPaginated() {
   const { actor, isFetching: actorFetching } = useActor();
 
   return useQuery<SurgeryCase[]>({

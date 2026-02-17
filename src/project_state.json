@@ -1,39 +1,39 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "New project",
-  "architectural_notes": [],
+  "summary": "App deployment with backend canister for loading surgery cases; live app currently failing to load cases due to backend error/trap and user requested applying a stricter fix to prevent large-list traps.",
+  "architectural_notes": [
+    "Backend canister case-loading should use a safer storage/loading pattern to avoid trapping on large datasets (e.g., avoid returning/processing full large lists in one call)."
+  ],
   "known_issues": [
-    "Production: after 'case created successfully', the case card does not load and remains on a spinning wheel."
+    "Live app shows 'Server Cases Loading Failed' due to backend canister error/trap when loading surgery cases (previously observed heap out-of-bounds in getAllSurgeryCases)."
   ],
   "isFixRequest": true,
-  "existing_features": [
+  "existing_features": [],
+  "new_feature_requests": [
     {
-      "id": "feature-update-the-frontend-server-cases-query-to-stop-calling-the-backend-method-getallsurgerycases-and-instead-fetch-cases-using-the-paginated-backend-api-getsurgerycases-start-limit-aggregating-pages-until-completion-so-the-live-app-no-longer-traps-with-heap-out-of-bounds-during-case-list-loading",
-      "title": "Update the frontend server-cases query to stop calling the backend method `getAllSurgeryCases()` and instead fetch cases using the paginated backend API `getSurgeryCases(start, limit)`, aggregating pages until completion, so the live app no longer traps with \"heap out of bounds\" during case list loading.",
+      "id": "AR-1",
+      "summary": "Apply stricter backend fix: switch surgery-cases storage/loading to a safer pattern to prevent traps (e.g., large list/heap out-of-bounds) and restore stable case loading.",
+      "reqIds": [],
+      "status": "in_progress"
+    },
+    {
+      "id": "AR-2",
+      "summary": "Update the Motoko backend so loading surgery cases cannot trap due to large datasets (e.g., \"heap out of bounds\"), by refactoring the per-user surgery-case storage and all read paths to avoid materializing an unbounded list in memory.",
       "reqIds": [
         "REQ-1"
       ],
-      "version": 1
+      "status": "pending"
     },
     {
-      "id": "feature-change-the-merged-cases-loading-flow-so-that-locally-stored-cases-can-render-immediately-even-when-the-server-cases-query-is-still-loading-or-has-errored-eliminating-the-indefinite-spinner-after-case-created-successfully-when-a-new-local-case-exists",
-      "title": "Change the merged-cases loading flow so that locally stored cases can render immediately even when the server-cases query is still loading or has errored, eliminating the indefinite spinner after \"Case created successfully\" when a new local case exists.",
+      "id": "AR-3",
+      "summary": "Make `syncLocalChanges(localCases)` safe for large numbers of cases by ensuring it does not perform quadratic scans over the full dataset and does not require building full intermediate arrays/lists that scale with total case count beyond a bounded, linear pass.",
       "reqIds": [
         "REQ-2"
       ],
-      "version": 1
-    },
-    {
-      "id": "feature-add-clear-english-user-facing-messaging-when-server-case-loading-fails-e-g-due-to-backend-rejection-so-users-do-not-see-only-a-spinner-include-an-action-to-retry-loading-cases",
-      "title": "Add clear, English user-facing messaging when server case loading fails (e.g., due to backend rejection), so users do not see only a spinner; include an action to retry loading cases.",
-      "reqIds": [
-        "REQ-3"
-      ],
-      "version": 1
+      "status": "pending"
     }
   ],
-  "new_feature_requests": [],
   "projectName": "Surgery Case Tracker",
   "clarification_mode": "instant",
   "clarification_rounds": 0

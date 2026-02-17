@@ -1,78 +1,49 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-17T01:36:50.023Z",
-  "summary": "All three requested requirements appear implemented: server cases are fetched via bounded pagination using getSurgeryCases (not getAllSurgeryCases), local cases can render without being blocked by server fetch state, and a clear error UI with Retry is added for server-load failures.",
-  "missing_requirements": [],
-  "hallucinated_features": [
+  "generatedAt": "2026-02-17T01:58:00.606Z",
+  "summary": "Diff shows a refactor of per-user surgery case storage from List-based to Map-based and introduces a separate `backend/migration.mo` module wired into `backend/main.mo`. However, the diff summary is truncated before any updated read/sync methods, so key paging/safety behaviors for `getSurgeryCases`, `getAllSurgeryCases`, and `syncLocalChanges` cannot be verified from the provided evidence. Also, adding `backend/migration.mo` appears to violate the constraint that all backend logic must remain in `backend/main.mo`.",
+  "missing_requirements": [
     {
-      "description": "Added/changed case form to include a Case Notes textarea and persistence behavior beyond the loading/spinner fix scope.",
-      "reason": "BuildRequest focuses on paginated server fetching, unblocking local rendering, and error+retry messaging; it does not request adding or changing case notes fields.",
+      "id": "REQ-1",
+      "requirement": "Ensure `getSurgeryCases(start, limit)` never traps on large datasets, enforces a hard max page size of 100, and paginates without materializing the entire per-user collection (no full `toArray()` equivalent).",
+      "reason": "The diff summary for `backend/main.mo` is truncated before any `getSurgeryCases` implementation, so there is no evidence that pagination exists, that a 100-item hard cap is enforced, or that it avoids full materialization.",
       "evidence": [
-        "frontend-file-summaries.txt (mentions frontend/src/components/cases/CaseForm.tsx notes field changes)",
-        "frontend-file-summaries.txt (mentions frontend/src/types/cases.ts notes field added)"
+        "backend/main.mo (truncated)"
       ]
     },
     {
-      "description": "Implemented timezone-safe date-only handling utilities and propagated YYYY-MM-DD string handling across dates and CSV import/export.",
-      "reason": "Not requested; BuildRequest is about preventing heap trap and fixing infinite loading/error UX around server case loading.",
+      "id": "REQ-1",
+      "requirement": "Implement legacy `getAllSurgeryCases()` with a strict, documented upper bound on returned items and without serializing an unbounded dataset in one response, so it never traps on large datasets.",
+      "reason": "No `getAllSurgeryCases()` implementation (or documented bounds) is shown in the provided truncated diff, so it cannot be confirmed that the legacy call is now bounded and safe.",
       "evidence": [
-        "frontend-file-summaries.txt (mentions frontend/src/utils/dates.ts)",
-        "frontend-file-summaries.txt (mentions frontend/src/utils/csv.ts)",
-        "frontend-file-summaries.txt (mentions frontend/src/types/cases.ts date fields as YYYY-MM-DD strings)"
+        "backend/main.mo (truncated)",
+        "project_state.json (mentions prior trapping in getAllSurgeryCases)"
       ]
     },
     {
-      "description": "Modified local storage persistence utilities with BigInt-safe serialization, backward compatibility normalization, and stricter save verification/error throwing.",
-      "reason": "Not requested as part of the specific loading-after-creation / paginated fetch fix.",
+      "id": "REQ-2",
+      "requirement": "Refactor `syncLocalChanges(localCases)` to be safe for large inputs and large server datasets (bounded-memory, linear-time merge using indexing by `caseId`, no quadratic nested scans), and ensure subsequent `getSurgeryCases` works on the merged dataset without trapping.",
+      "reason": "The diff summary does not include any `syncLocalChanges` code, so there is no evidence the merge algorithm was changed to linear-time/bounded-memory.",
       "evidence": [
-        "frontend-file-summaries.txt (mentions frontend/src/utils/localPersistence.ts)"
-      ]
-    },
-    {
-      "description": "Expanded/changed demographics prefill logic to extract additional fields including dateOfBirth and presenting complaint.",
-      "reason": "Not requested; unrelated to server pagination and case list loading/error flow.",
-      "evidence": [
-        "frontend-file-summaries.txt (mentions frontend/src/utils/prefill.ts)"
-      ]
-    },
-    {
-      "description": "Changed online/offline monitoring hook behavior (initialization to null state) and broader connectivity distinction logic.",
-      "reason": "Not explicitly requested; BuildRequest only mentions keeping troubleshooting banner behavior, not altering online-status semantics.",
-      "evidence": [
-        "frontend-file-summaries.txt (mentions frontend/src/hooks/useOnlineStatus.ts)"
-      ]
-    },
-    {
-      "description": "Updated manual sync hook to use paginated fetching, union/merge logic, and user-friendly classified error messaging.",
-      "reason": "REQ-1 applies to the case list server-cases query; updating sync behavior is additional scope not requested.",
-      "evidence": [
-        "frontend-file-summaries.txt (mentions frontend/src/hooks/useSync.ts)"
-      ]
-    },
-    {
-      "description": "Adjusted application header/footer behavior and branding/UTM link, including logout clearing query cache and local storage.",
-      "reason": "Not requested; unrelated to case list infinite loading and paginated server fetching.",
-      "evidence": [
-        "frontend-file-summaries.txt (mentions frontend/src/components/layout/Header.tsx)",
-        "frontend-file-summaries.txt (mentions frontend/src/components/layout/Footer.tsx)"
-      ]
-    },
-    {
-      "description": "Added a reusable date input component (DateField) with calendar picker/text entry and timezone-safe management.",
-      "reason": "Not requested as part of fixing server cases loading trap or unblocking local rendering.",
-      "evidence": [
-        "frontend-file-summaries.txt (mentions frontend/src/components/cases/DateField.tsx)"
+        "backend/main.mo (truncated)"
       ]
     }
   ],
-  "confidence": 0.73,
+  "hallucinated_features": [
+    {
+      "description": "Added a separate backend module file `backend/migration.mo` and wired it into the actor via `(with migration = Migration.run)`.",
+      "reason": "The BuildRequest constraint requires the backend to remain a single Motoko actor with all logic in `backend/main.mo`. Introducing `backend/migration.mo` moves backend logic outside `backend/main.mo`.",
+      "evidence": [
+        "backend/migration.mo",
+        "backend/main.mo (imports Migration \"migration\" and uses `(with migration = Migration.run)`)"
+      ]
+    }
+  ],
+  "confidence": 0.62,
   "changed_files": [
-    "frontend-file-summaries.txt",
-    "frontend/src/components/cases/CaseList.tsx",
-    "frontend/src/components/cases/ServerCasesLoadError.tsx",
-    "frontend/src/hooks/useCasesStore.ts",
-    "frontend/src/hooks/useQueries.ts",
+    "backend/main.mo",
+    "backend/migration.mo",
     "project_state.json"
   ]
 }
