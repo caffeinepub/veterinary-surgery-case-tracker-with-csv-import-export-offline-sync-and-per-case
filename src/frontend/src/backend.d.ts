@@ -63,6 +63,7 @@ export interface backendInterface {
     getAllSurgeryCases(): Promise<Array<SurgeryCase>>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
+    getSurgeryCases(start: bigint, limit: bigint): Promise<Array<SurgeryCase>>;
     getUpdatedCases(since: Time): Promise<Array<SurgeryCase>>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
     hasUnsyncedChanges(): Promise<boolean>;

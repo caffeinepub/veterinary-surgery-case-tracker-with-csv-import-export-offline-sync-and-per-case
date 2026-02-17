@@ -75,6 +75,11 @@ export const idlService = IDL.Service({
   'getAllSurgeryCases' : IDL.Func([], [IDL.Vec(SurgeryCase)], ['query']),
   'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
+  'getSurgeryCases' : IDL.Func(
+      [IDL.Nat, IDL.Nat],
+      [IDL.Vec(SurgeryCase)],
+      ['query'],
+    ),
   'getUpdatedCases' : IDL.Func([Time], [IDL.Vec(SurgeryCase)], ['query']),
   'getUserProfile' : IDL.Func(
       [IDL.Principal],
@@ -156,6 +161,11 @@ export const idlFactory = ({ IDL }) => {
     'getAllSurgeryCases' : IDL.Func([], [IDL.Vec(SurgeryCase)], ['query']),
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
+    'getSurgeryCases' : IDL.Func(
+        [IDL.Nat, IDL.Nat],
+        [IDL.Vec(SurgeryCase)],
+        ['query'],
+      ),
     'getUpdatedCases' : IDL.Func([Time], [IDL.Vec(SurgeryCase)], ['query']),
     'getUserProfile' : IDL.Func(
         [IDL.Principal],

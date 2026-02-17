@@ -146,6 +146,7 @@ export interface backendInterface {
     getAllSurgeryCases(): Promise<Array<SurgeryCase>>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
+    getSurgeryCases(start: bigint, limit: bigint): Promise<Array<SurgeryCase>>;
     getUpdatedCases(since: Time): Promise<Array<SurgeryCase>>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
     hasUnsyncedChanges(): Promise<boolean>;
@@ -254,6 +255,20 @@ export class Backend implements backendInterface {
         } else {
             const result = await this.actor.getCallerUserRole();
             return from_candid_UserRole_n4(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getSurgeryCases(arg0: bigint, arg1: bigint): Promise<Array<SurgeryCase>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getSurgeryCases(arg0, arg1);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getSurgeryCases(arg0, arg1);
+            return result;
         }
     }
     async getUpdatedCases(arg0: Time): Promise<Array<SurgeryCase>> {

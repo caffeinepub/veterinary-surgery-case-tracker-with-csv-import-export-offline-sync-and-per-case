@@ -4,29 +4,21 @@
   "summary": "New project",
   "architectural_notes": [],
   "known_issues": [
-    "Build/deploy process failed ('Something broke on our end'); user requested retry."
+    "Live app Sync Error: Internet Computer canister tcbtk-yyaaa-aaaaa-qfanq-cai traps with 'heap out of bounds' (Reject code 5 / IC0502) when calling method getAllSurgeryCases, causing replica rejection."
   ],
   "isFixRequest": true,
   "existing_features": [
     {
-      "id": "feature-add-a-case-notes-field-to-the-new-case-edit-case-form-and-save-it-with-the-case-data-so-that-notes-persist-across-reloads-and-sync",
-      "title": "Add a \"Case Notes\" field to the New Case / Edit Case form and save it with the case data so that notes persist across reloads and sync.",
-      "reqIds": [
-        "REQ-1"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-on-the-patient-card-case-card-display-the-case-notes-in-a-visually-distinct-colored-boxed-section-so-the-notes-stand-out-more-than-regular-demographic-rows",
-      "title": "On the patient card (case card), display the case notes in a visually distinct colored boxed section so the notes stand out more than regular demographic rows.",
+      "id": "feature-update-the-frontend-sync-flow-to-avoid-relying-on-unbounded-getallsurgerycases-calls-currently-used-in-frontend-src-hooks-usesync-ts-by-using-the-new-bounded-paginated-backend-retrieval-method-s-and-or-using-incremental-retrieval-e-g-getupdatedcases-so-that-sync-works-even-when-the-user-has-many-cases",
+      "title": "Update the frontend sync flow to avoid relying on unbounded getAllSurgeryCases calls (currently used in frontend/src/hooks/useSync.ts) by using the new bounded/paginated backend retrieval method(s) and/or using incremental retrieval (e.g., getUpdatedCases) so that sync works even when the user has many cases.",
       "reqIds": [
         "REQ-2"
       ],
       "version": 1
     },
     {
-      "id": "feature-on-the-patient-card-task-list-ui-add-a-purple-outlined-box-around-the-histo-task-row-and-a-blue-outlined-box-around-the-imaging-task-row",
-      "title": "On the patient card task list UI, add a purple outlined box around the Histo task row and a blue outlined box around the Imaging task row.",
+      "id": "feature-improve-frontend-error-handling-for-backend-trap-rejection-errors-during-sync-so-the-user-sees-a-clear-english-message-instead-of-the-raw-replica-rejection-details-while-still-logging-the-raw-error-to-the-console-for-debugging",
+      "title": "Improve frontend error handling for backend trap/rejection errors during sync so the user sees a clear English message instead of the raw replica rejection details, while still logging the raw error to the console for debugging.",
       "reqIds": [
         "REQ-3"
       ],
@@ -36,27 +28,9 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Add a notes field to the New Case form to capture case notes",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-2",
-      "summary": "On the patient card, visually highlight the case notes field with a colored box so it stands out",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-3",
-      "summary": "On the patient card, add a purple box around the Histo task and a blue box around the Imaging task",
-      "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-7",
-      "summary": "Ensure the updated application builds successfully and can be redeployed after the changes (retry the previously failing build/deploy process).",
+      "summary": "Modify the backend canister (Canister ID: tcbtk-yyaaa-aaaaa-qfanq-cai) to prevent trapping with \"heap out of bounds\" when calling the query method getAllSurgeryCases by making the retrieval memory-safe (e.g., by adding a bounded/paginated retrieval API and/or limiting allocations during sorting), while preserving existing access control behavior.",
       "reqIds": [
-        "REQ-4"
+        "REQ-1"
       ],
       "status": "pending"
     }

@@ -2,33 +2,10 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-add-a-case-notes-field-to-the-new-case-edit-case-form-and-save-it-with-the-case-data-so-that-notes-persist-across-reloads-and-sync",
-      "featureTitle": "Add a \"Case Notes\" field to the New Case / Edit Case form and save it with the case data so that notes persist across reloads and sync.",
+      "featureId": "feature-update-the-frontend-sync-flow-to-avoid-relying-on-unbounded-getallsurgerycases-calls-currently-used-in-frontend-src-hooks-usesync-ts-by-using-the-new-bounded-paginated-backend-retrieval-method-s-and-or-using-incremental-retrieval-e-g-getupdatedcases-so-that-sync-works-even-when-the-user-has-many-cases",
+      "featureTitle": "Update the frontend sync flow to avoid relying on unbounded getAllSurgeryCases calls (currently used in frontend/src/hooks/useSync.ts) by using the new bounded/paginated backend retrieval method(s) and/or using incremental retrieval (e.g., getUpdatedCases) so that sync works even when the user has many cases.",
       "files": [
-        "frontend/src/components/cases/CaseForm.tsx",
-        "frontend/src/hooks/useCasesStore.ts",
-        "frontend/src/hooks/useQueries.ts",
-        "frontend/src/utils/localPersistence.ts"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "camera@1.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-1"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-on-the-patient-card-case-card-display-the-case-notes-in-a-visually-distinct-colored-boxed-section-so-the-notes-stand-out-more-than-regular-demographic-rows",
-      "featureTitle": "On the patient card (case card), display the case notes in a visually distinct colored boxed section so the notes stand out more than regular demographic rows.",
-      "files": [
-        "frontend/src/components/cases/CaseCard.tsx"
+        "frontend/src/hooks/useSync.ts"
       ],
       "components": [
         "authorization@4.0.0",
@@ -45,10 +22,12 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-on-the-patient-card-task-list-ui-add-a-purple-outlined-box-around-the-histo-task-row-and-a-blue-outlined-box-around-the-imaging-task-row",
-      "featureTitle": "On the patient card task list UI, add a purple outlined box around the Histo task row and a blue outlined box around the Imaging task row.",
+      "featureId": "feature-improve-frontend-error-handling-for-backend-trap-rejection-errors-during-sync-so-the-user-sees-a-clear-english-message-instead-of-the-raw-replica-rejection-details-while-still-logging-the-raw-error-to-the-console-for-debugging",
+      "featureTitle": "Improve frontend error handling for backend trap/rejection errors during sync so the user sees a clear English message instead of the raw replica rejection details, while still logging the raw error to the console for debugging.",
       "files": [
-        "frontend/src/components/cases/TasksChecklist.tsx"
+        "frontend/src/components/sync/SyncStatusBar.tsx",
+        "frontend/src/hooks/useSync.ts",
+        "frontend/src/utils/backendErrorMessages.ts"
       ],
       "components": [
         "authorization@4.0.0",

@@ -30,7 +30,9 @@ export default function SyncStatusBar() {
     if (success) {
       toast.success('Sync completed successfully');
     } else {
-      toast.error('Sync failed. Please try again.');
+      // Use the friendly error message from syncError if available
+      const errorMessage = syncError || 'Sync failed. Please try again.';
+      toast.error(errorMessage);
     }
   };
 

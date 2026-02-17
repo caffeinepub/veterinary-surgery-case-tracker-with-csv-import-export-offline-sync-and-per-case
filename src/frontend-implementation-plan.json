@@ -1,101 +1,47 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Case notes persistence + patient card highlights",
+  "title": "Frontend sync pagination + friendly trap error messaging",
   "requirements": [
     {
-      "id": "REQ-1",
-      "summary": "Add a Case Notes field to the CaseForm and ensure notes persist locally and through sync flows.",
-      "acceptanceCriteria": [
-        "The CaseForm renders a textarea (or equivalent multi-line input) labeled \"Case Notes\".",
-        "When creating a new case, the entered notes are stored in the local case object and included in pending sync data.",
-        "When editing an existing case, the notes field is prefilled from the case and updates are persisted.",
-        "The backend SurgeryCase type includes a notes field, and create/update/sync flows preserve the notes value.",
-        "After syncing and reloading the app, notes remain present for the case."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/components/cases/CaseForm.tsx",
-          "operation": "modify",
-          "description": "Render a \"Case Notes\" Textarea bound to formData.notes; when editing, prefill from the selected case's notes (instead of resetting to empty), and include notes in both the local new-case object and updateCase mutation updates so pending sync includes notes."
-        },
-        {
-          "path": "frontend/src/utils/localPersistence.ts",
-          "operation": "modify",
-          "description": "Extend localStorage normalization to include a notes string (default to empty string for older stored records) so notes persist across reloads and remain backward compatible."
-        },
-        {
-          "path": "frontend/src/hooks/useCasesStore.ts",
-          "operation": "modify",
-          "description": "Update case normalization to ensure notes is always present (default empty string) so merged/local state consistently carries notes through add/update/delete and into pending sync."
-        },
-        {
-          "path": "frontend/src/utils/mergeCases.ts",
-          "operation": "modify",
-          "description": "Ensure merge behavior does not inadvertently drop notes when combining server and local cases (server data should win for shared caseIds, with local-only fields still preserved)."
-        },
-        {
-          "path": "frontend/src/hooks/useQueries.ts",
-          "operation": "modify",
-          "description": "Update create-case mutation typing/arguments to include the notes parameter when calling the backend create function (align with generated backend typings and avoid build/type errors)."
-        }
-      ]
-    },
-    {
       "id": "REQ-2",
-      "summary": "Display case notes on the patient (case) card in a distinct colored boxed section.",
+      "summary": "Update sync to use bounded/paginated case retrieval instead of unbounded getAllSurgeryCases so sync works with many cases.",
       "acceptanceCriteria": [
-        "CaseCard displays a \"Case Notes\" section when notes exist; if notes are empty/missing it displays an em dash (—) or hides the section (choose one behavior and apply consistently).",
-        "The notes section uses a clearly visible colored background and border (a boxed callout style) distinct from the surrounding card content.",
-        "The layout handles long notes with wrapping without breaking the card layout."
+        "The Sync action in the live app completes successfully without triggering a canister trap when the user has many cases.",
+        "frontend/src/hooks/useSync.ts no longer makes assumptions that the entire case list can be fetched in a single call.",
+        "Sync still correctly merges server and local cases and clears pendingSync on success."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/cases/CaseCard.tsx",
+          "path": "frontend/src/hooks/useSync.ts",
           "operation": "modify",
-          "description": "Add a \"Case Notes\" boxed/callout section to the card content using Tailwind classes (colored background + border) and safe long-text wrapping; choose a consistent behavior for empty notes (e.g., show an em dash)."
+          "description": "Replace sync’s reliance on actor.getAllSurgeryCases() with a bounded retrieval strategy using the existing paginated backend capability actor.getSurgeryCases(start, limit). Implement a loop to fetch server cases in pages (with a conservative page size), accumulating results until exhaustion, and use that bounded retrieval both before sync (for prepareCasesForSync) and after sync (for mergeCases + pendingSync clearing). Ensure sync continues to update local persistence and React Query caches as it does today."
         }
       ]
     },
     {
       "id": "REQ-3",
-      "summary": "Highlight Histo and Imaging task rows on the patient card task list with purple/blue outlined boxes.",
+      "summary": "Improve sync error handling so replica rejection/trap errors show a clear English message while logging raw details to the console.",
       "acceptanceCriteria": [
-        "In the TasksChecklist rendering used by CaseCard, the Histo task row is visually wrapped/outlined with a purple border/box.",
-        "In the TasksChecklist rendering used by CaseCard, the Imaging task row is visually wrapped/outlined with a blue border/box.",
-        "The highlight styling applies regardless of whether the tasks are checked, and does not block checkbox interaction."
+        "If the backend returns a replica rejection/trap during sync, the UI displays an English, user-friendly error (e.g., indicating the backend failed and to retry), and does not display the full raw request/rejection dump.",
+        "The raw error details remain available in developer console logs for debugging.",
+        "All user-facing error text added/modified for this fix is in English."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/cases/TasksChecklist.tsx",
+          "path": "frontend/src/utils/backendErrorMessages.ts",
           "operation": "modify",
-          "description": "Apply conditional wrapper styling per task key so the histo row has a purple outlined box and the imaging row has a blue outlined box; keep checkbox/label interactions unchanged and ensure styling works for checked/unchecked states."
-        }
-      ]
-    },
-    {
-      "id": "REQ-4",
-      "summary": "Ensure the frontend clean build/redeploy flow succeeds with updated bindings and the new UI changes.",
-      "acceptanceCriteria": [
-        "A clean build succeeds without TypeScript or Motoko compile errors.",
-        "Frontend bindings are regenerated as needed so the frontend type definitions match the updated backend types.",
-        "Deployment produces a working app where the new notes field and task highlights are visible."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/DEPLOYMENT_NOTES.md",
-          "operation": "modify",
-          "description": "Update redeploy/build troubleshooting guidance to explicitly include regenerating frontend bindings after backend type changes (notes), and add a short verification checklist for Case Notes persistence and task-row highlights post-deploy."
+          "description": "Enhance error classification to explicitly recognize replica rejection/trap-style errors (e.g., messages containing “replica”, “reject”, “trapped”, “heap out of bounds”) and map them to a concise, user-friendly English message suitable for showing in the Sync UI, while keeping the raw details available for console logging by callers."
         },
         {
-          "path": "frontend/scripts/clean-rebuild-frontend.sh",
+          "path": "frontend/src/hooks/useSync.ts",
           "operation": "modify",
-          "description": "Ensure the script continues to deterministically remove stale declaration artifacts and regenerate bindings before the build; adjust any messaging/guards as needed to reduce recurrence of the previously failing build flow."
+          "description": "Update sync error handling to never surface raw backend/replica dumps to users. Keep console.error logging the raw error object/details, but set syncError using the classified user-friendly message from classifyBackendError (instead of falling back to error.message). Ensure Unauthorized remains clearly communicated in English without exposing low-level rejection payloads."
         },
         {
-          "path": "frontend/redeploy.sh",
+          "path": "frontend/src/components/sync/SyncStatusBar.tsx",
           "operation": "modify",
-          "description": "Ensure redeploy remains end-to-end deterministic (clean rebuild + deploy) and reflects any updated guidance needed after binding/type changes."
+          "description": "Update Sync failure toast behavior to prefer displaying the friendly syncError message (when available) rather than a generic failure string, ensuring the user sees clear English guidance while the detailed raw error remains only in the developer console."
         }
       ]
     }

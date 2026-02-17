@@ -1,13 +1,11 @@
 # Specification
 
 ## Summary
-**Goal:** Add persistent case notes to surgery cases and make notes and key tasks more visually prominent on the patient card.
+**Goal:** Prevent the live Sync flow from failing due to a backend canister trap (“heap out of bounds”) triggered by unbounded retrieval in `getAllSurgeryCases`, while keeping existing authorization behavior intact.
 
 **Planned changes:**
-- Add a multi-line “Case Notes” field to the New Case / Edit Case form and persist it with the case data through create/edit/sync and reloads.
-- Extend the backend case data model to store notes, including a safe migration to default existing cases’ notes to an empty string.
-- Display case notes on the patient (case) card in a visually distinct colored boxed section, with consistent handling when notes are empty.
-- Add visual task highlights on the patient card task list: purple outlined box for “Histo” and blue outlined box for “Imaging”.
-- Re-run/repair the build and deploy flow so updated backend types and frontend bindings compile and the app redeploys successfully.
+- Update the backend `getAllSurgeryCases` retrieval approach to be memory-safe for large datasets (e.g., introduce bounded/paginated retrieval and/or reduce allocation pressure during sorting) and avoid trapping, while preserving current access control rules.
+- Update the frontend sync logic in `frontend/src/hooks/useSync.ts` to use bounded/paginated and/or incremental retrieval instead of assuming all cases can be fetched in a single call, and keep the existing merge + `pendingSync` clearing behavior.
+- Improve frontend sync error handling so replica rejection/trap errors show a clear English message to the user while logging the raw error details to the developer console.
 
-**User-visible outcome:** Users can enter and edit case notes that persist across sync and reloads, see notes clearly highlighted on the patient card, and quickly spot Histo and Imaging tasks via colored outlines in the task list.
+**User-visible outcome:** Sync completes successfully even for users with many surgery cases, and if a backend error occurs the app shows a clear English error message instead of a raw replica rejection dump.

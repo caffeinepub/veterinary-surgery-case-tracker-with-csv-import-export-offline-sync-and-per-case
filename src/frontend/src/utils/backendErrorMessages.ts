@@ -1,10 +1,10 @@
 /**
  * Classifies backend errors into user-facing English messages.
  * Distinguishes between authorization failures, network/service unavailability,
- * and initialization failures.
+ * replica traps, and initialization failures.
  */
 
-export type ErrorCategory = 'authorization' | 'network' | 'initialization' | 'unknown';
+export type ErrorCategory = 'authorization' | 'network' | 'initialization' | 'trap' | 'unknown';
 
 export interface ClassifiedError {
   category: ErrorCategory;
@@ -32,10 +32,22 @@ export function classifyBackendError(error: unknown, context?: string): Classifi
     };
   }
 
+  // Check for replica rejection/trap errors (heap out of bounds, trapped, etc.)
+  if (lowerMessage.includes('replica') || 
+      lowerMessage.includes('reject') ||
+      lowerMessage.includes('trapped') ||
+      lowerMessage.includes('heap out of bounds') ||
+      lowerMessage.includes('canister trapped') ||
+      lowerMessage.includes('reject code')) {
+    return {
+      category: 'trap',
+      message: 'The backend encountered an error processing your request. Please try again or contact support if the issue persists.',
+    };
+  }
+
   // Check for canister/service unavailability
   if (lowerMessage.includes('canister') || 
       lowerMessage.includes('service unavailable') ||
-      lowerMessage.includes('replica') ||
       lowerMessage.includes('could not be reached') ||
       lowerMessage.includes('not found')) {
     return {

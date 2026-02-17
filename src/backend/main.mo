@@ -8,12 +8,12 @@ import List "mo:core/List";
 import Order "mo:core/Order";
 import Int "mo:core/Int";
 import Nat "mo:core/Nat";
-import Migration "migration";
+
 
 import MixinAuthorization "authorization/MixinAuthorization";
 import AccessControl "authorization/access-control";
 
-(with migration = Migration.run)
+
 actor {
   let accessControlState = AccessControl.initState();
   include MixinAuthorization(accessControlState);
@@ -201,15 +201,40 @@ actor {
     };
   };
 
+  // Paginated getAllSurgeryCases
+  public query ({ caller }) func getSurgeryCases(start : Nat, limit : Nat) : async [SurgeryCase] {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can view surgery cases");
+    };
+    let effectiveLimit = if (limit == 0) { 10 } else if (limit > 100) { 100 } else { limit };
+    switch (cases.get(caller)) {
+      case (null) { [] };
+      case (?userCases) {
+        let totalLength = userCases.size();
+        var paginatedCount = 0;
+        userCases.toArray().sliceToArray(start, totalLength).filter(
+          func(_item) {
+            if (paginatedCount < effectiveLimit) {
+              paginatedCount += 1;
+              true;
+            } else {
+              false;
+            };
+          }
+        );
+      };
+    };
+  };
+
+  // Retain original method for backwards compatibility
   public query ({ caller }) func getAllSurgeryCases() : async [SurgeryCase] {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can view surgery cases");
     };
-
     switch (cases.get(caller)) {
       case (null) { [] };
       case (?userCases) {
-        userCases.toArray().sort();
+        userCases.toArray();
       };
     };
   };
@@ -325,3 +350,4 @@ actor {
     };
   };
 };
+

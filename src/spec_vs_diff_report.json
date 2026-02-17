@@ -1,75 +1,43 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-17T01:08:58.498Z",
-  "summary": "REQ-1 appears implemented end-to-end (frontend form/state + backend type/API + migration). REQ-2 is not evidenced in the provided CaseCard diff (truncated before any notes callout). REQ-3 highlight styling is added, but the current TasksChecklist hides checked tasks, so highlights do not apply regardless of checked state as required. REQ-4 (clean build/redeploy, regenerated bindings) cannot be confirmed from diff summary alone.",
+  "generatedAt": "2026-02-17T01:19:50.045Z",
+  "summary": "Frontend sync logic was updated to fetch cases in bounded pages via a new actor method name (getSurgeryCases) and a new backend error-classification utility was added. However, the diff summary does not provide evidence that the backend was actually modified to make getAllSurgeryCases memory-safe or to implement the paginated retrieval method expected by the frontend. Also, the required console logging of raw sync errors cannot be verified due to truncation.",
   "missing_requirements": [
     {
-      "id": "REQ-2",
-      "requirement": "On the patient card (case card), display the case notes in a visually distinct colored boxed section so the notes stand out more than regular demographic rows.",
-      "reason": "The provided CaseCard.tsx diff excerpt does not show any rendering of a \"Case Notes\" section or a colored boxed/callout UI; file content is truncated before any such section is evidenced.",
+      "id": "REQ-1",
+      "requirement": "Modify the backend canister to prevent trapping with \"heap out of bounds\" when calling getAllSurgeryCases by making retrieval memory-safe (e.g., bounded/paginated retrieval and/or limiting allocations during sorting), while preserving existing access control behavior.",
+      "reason": "The backend diff snippet is truncated and does not show any change to getAllSurgeryCases, nor does it show implementation of a bounded/paginated retrieval API (e.g., getSurgeryCases(start, limit)) or other memory-safety changes. Therefore the core fix to prevent the trap is not evidenced.",
       "evidence": [
-        "frontend/src/components/cases/CaseCard.tsx (truncated excerpt shows no Case Notes section)"
+        "backend/main.mo (truncated; no shown changes to getAllSurgeryCases or a new paginated query method)"
       ]
     },
     {
       "id": "REQ-3",
-      "requirement": "In the TasksChecklist rendering used by CaseCard, the Histo task row is visually wrapped/outlined with a purple border/box and Imaging with a blue border/box, and the highlight styling applies regardless of whether the tasks are checked.",
-      "reason": "TasksChecklist adds border classes for histo/imaging, but it filters visible tasks to only required tasks that are not yet completed (\"!taskItem.checked\"). If a task is checked, it is not rendered, so the highlight cannot apply regardless of checked state.",
+      "requirement": "During sync trap/rejection errors, show a clear English message instead of raw replica rejection details, while still logging the raw error to the console.",
+      "reason": "A classifier utility was added and imported in useSync, but the catch block in useSync (where the raw error should be logged and the friendly message set) is truncated, so it cannot be verified that raw errors are logged to the console and that raw rejection dumps are not shown to the user.",
       "evidence": [
-        "frontend/src/components/cases/TasksChecklist.tsx (visibleTasks filter excludes checked tasks)"
-      ]
-    },
-    {
-      "id": "REQ-4",
-      "requirement": "Ensure the updated application builds successfully and can be redeployed; frontend bindings regenerated as needed.",
-      "reason": "The diff summary does not include build output, deployment steps, or explicit evidence that frontend bindings were regenerated/updated to match backend candid/types; cannot verify from code excerpts alone.",
-      "evidence": [
-        "backend/main.mo (type changes shown, but no binding regeneration evidence in diff summary)",
-        "frontend/src/hooks/useQueries.ts (imports types from '../backend', but no explicit binding regen artifacts shown)"
+        "frontend/src/hooks/useSync.ts (truncated at catch block)",
+        "frontend/src/utils/backendErrorMessages.ts"
       ]
     }
   ],
   "hallucinated_features": [
     {
-      "description": "CSV export button and CSV import dialog for cases",
-      "reason": "Not requested in the BuildRequest (no CSV import/export requirement).",
+      "description": "Expanded SyncStatusBar UI showing backend connection state (Connected/Disconnected/Connecting) and adding additional connection-related toasts.",
+      "reason": "The BuildRequest focuses on preventing heap-out-of-bounds traps and improving sync error handling; it does not request adding backend connection status UI elements in the sync bar.",
       "evidence": [
-        "frontend/src/components/csv/CsvExportButton.tsx",
-        "frontend/src/components/csv/CsvImportDialog.tsx",
-        "frontend-file-summaries.txt (mentions frontend/src/utils/csv.ts updates)"
-      ]
-    },
-    {
-      "description": "Local persistence changes adding verification readback and additional normalization fields (e.g., capturedImageUrl, demographicsRawText) beyond the notes requirement",
-      "reason": "BuildRequest only asks to add notes persistence; added storage verification and other field normalization is extra functionality not explicitly requested.",
-      "evidence": [
-        "frontend/src/utils/localPersistence.ts"
-      ]
-    },
-    {
-      "description": "CaseList empty-state \"migration guidance\" behavior based on auth/connection/online status",
-      "reason": "Not requested; BuildRequest did not ask for new empty-state guidance logic.",
-      "evidence": [
-        "frontend/src/components/cases/CaseList.tsx"
+        "frontend/src/components/sync/SyncStatusBar.tsx (adds backend connection status UI and related toasts)"
       ]
     }
   ],
-  "confidence": 0.72,
+  "confidence": 0.62,
   "changed_files": [
     "backend/main.mo",
-    "backend/migration.mo",
     "frontend-file-summaries.txt",
-    "frontend/src/components/cases/CaseCard.tsx",
-    "frontend/src/components/cases/CaseForm.tsx",
-    "frontend/src/components/cases/CaseList.tsx",
-    "frontend/src/components/cases/TasksChecklist.tsx",
-    "frontend/src/components/csv/CsvExportButton.tsx",
-    "frontend/src/components/csv/CsvImportDialog.tsx",
-    "frontend/src/hooks/useCasesStore.ts",
-    "frontend/src/hooks/useQueries.ts",
-    "frontend/src/types/cases.ts",
-    "frontend/src/utils/localPersistence.ts",
+    "frontend/src/components/sync/SyncStatusBar.tsx",
+    "frontend/src/hooks/useSync.ts",
+    "frontend/src/utils/backendErrorMessages.ts",
     "project_state.json"
   ]
 }

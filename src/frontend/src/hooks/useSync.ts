@@ -5,6 +5,8 @@ import { loadCasesFromLocal, saveCasesToLocal } from '../utils/localPersistence'
 import { mergeCases, prepareCasesForSync } from '../utils/mergeCases';
 import type { LocalSurgeryCase } from '../types/cases';
 import { normalizeTasksChecklist } from '../utils/tasksChecklist';
+import { classifyBackendError } from '../utils/backendErrorMessages';
+import type { SurgeryCase } from '../backend';
 
 function normalizeDemographics(demographics: any) {
   return {
@@ -27,6 +29,36 @@ function normalizeCase(c: LocalSurgeryCase): LocalSurgeryCase {
   };
 }
 
+/**
+ * Fetches all surgery cases using pagination to avoid heap overflow.
+ * @param actor - The backend actor
+ * @returns Array of all surgery cases
+ */
+async function fetchAllCasesPaginated(actor: any): Promise<SurgeryCase[]> {
+  const pageSize = 50; // Conservative page size to avoid heap issues
+  let allCases: SurgeryCase[] = [];
+  let start = 0;
+  let hasMore = true;
+
+  while (hasMore) {
+    const page = await actor.getSurgeryCases(BigInt(start), BigInt(pageSize));
+    
+    if (page.length === 0) {
+      hasMore = false;
+    } else {
+      allCases = allCases.concat(page);
+      start += page.length;
+      
+      // If we got fewer results than requested, we've reached the end
+      if (page.length < pageSize) {
+        hasMore = false;
+      }
+    }
+  }
+
+  return allCases;
+}
+
 export function useSync() {
   const { actor } = useActor();
   const queryClient = useQueryClient();
@@ -46,8 +78,8 @@ export function useSync() {
       const localCases = loadCasesFromLocal().map(normalizeCase);
       const pendingCases = localCases.filter((c) => c.pendingSync);
 
-      // Fetch current server state first
-      const currentServerCases = await actor.getAllSurgeryCases();
+      // Fetch current server state using pagination
+      const currentServerCases = await fetchAllCasesPaginated(actor);
 
       // If there are pending changes, prepare full union for sync
       if (pendingCases.length > 0) {
@@ -56,7 +88,7 @@ export function useSync() {
       }
 
       // Re-fetch after sync to get the complete server state
-      const serverCases = await actor.getAllSurgeryCases();
+      const serverCases = await fetchAllCasesPaginated(actor);
       
       // Merge server cases with local cases (preserving local-only fields)
       const mergedCases = mergeCases(localCases, serverCases);
@@ -82,17 +114,10 @@ export function useSync() {
     } catch (error: any) {
       console.error('Sync failed:', error);
       
-      // Provide clear error messages
-      let errorMessage = 'Sync failed';
-      if (error.message?.includes('Unauthorized')) {
-        errorMessage = 'Not authorized to sync with backend';
-      } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
-        errorMessage = 'Network error during sync';
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
+      // Use classified error for user-facing message
+      const classified = classifyBackendError(error, 'sync');
+      setSyncError(classified.message);
       
-      setSyncError(errorMessage);
       setIsSyncing(false);
       return false;
     }

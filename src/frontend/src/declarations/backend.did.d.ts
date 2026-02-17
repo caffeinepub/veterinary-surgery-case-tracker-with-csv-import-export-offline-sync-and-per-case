@@ -63,6 +63,7 @@ export interface _SERVICE {
   'getAllSurgeryCases' : ActorMethod<[], Array<SurgeryCase>>,
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
+  'getSurgeryCases' : ActorMethod<[bigint, bigint], Array<SurgeryCase>>,
   'getUpdatedCases' : ActorMethod<[Time], Array<SurgeryCase>>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
   'hasUnsyncedChanges' : ActorMethod<[], boolean>,
