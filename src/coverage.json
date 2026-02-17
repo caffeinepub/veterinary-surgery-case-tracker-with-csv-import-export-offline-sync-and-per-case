@@ -1,7 +1,7 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-17T02:59:06.439Z",
+  "generatedAt": "2026-02-17T03:37:13.777Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
@@ -11,27 +11,26 @@
     "implemented": 0,
     "items": [
       {
-        "id": "REQ-1",
-        "summary": "Audit all frontend case-loading hooks and flows to ensure there are zero runtime call paths that invoke the deprecated backend method `getAllSurgeryCases()`, and update any remaining references to use the paginated API `getSurgeryCases(start, limit)` (directly or via existing pagination helpers).",
+        "id": "REQ-3",
+        "summary": "Inspect `frontend/src/components/cases/CaseList.tsx` and any directly invoked case-loading flows it depends on (via `useCasesStore()` / `useGetSurgeryCasesPaginated()`) to ensure there are zero runtime call paths that invoke the deprecated backend method `getAllSurgeryCases()`. Replace any remaining legacy calls with the paginated API `getSurgeryCases(start, limit)` (directly or via the existing pagination helper).",
         "status": "missing",
         "plannedFiles": [
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/hooks/useSync.ts",
+          "frontend/src/components/cases/CaseList.tsx",
           "frontend/src/hooks/useCasesStore.ts",
-          "frontend/src/components/cases/CaseList.tsx"
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/hooks/useSync.ts"
         ],
         "matchedFiles": []
       },
       {
-        "id": "REQ-2",
-        "summary": "Ensure the deployed frontend is using fresh generated backend bindings and is redeployed so that Live cannot call removed legacy APIs.",
+        "id": "REQ-4",
+        "summary": "Ensure the deployed Live frontend is rebuilt and redeployed using freshly generated backend TypeScript bindings so it cannot call removed legacy APIs. Follow the existing clean rebuild flow and confirm the generated bindings do not include `getAllSurgeryCases`.",
         "status": "missing",
         "plannedFiles": [
           "frontend/scripts/clean-rebuild-frontend.sh",
           "frontend/redeploy.sh",
           "frontend/DEPLOYMENT_NOTES.md",
-          "frontend/scripts/verify-live-backend-binding.md",
-          "frontend/src/declarations/backend/backend.did.d.ts"
+          "frontend/scripts/verify-live-backend-binding.md"
         ],
         "matchedFiles": []
       }

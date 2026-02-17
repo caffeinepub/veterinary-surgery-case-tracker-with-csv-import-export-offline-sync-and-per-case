@@ -1,12 +1,14 @@
 {
   "schemaVersion": "1.0.0",
-  "projectStateVersion": 3,
+  "projectStateVersion": 5,
   "summary": "New project",
   "architectural_notes": [
-    "Case-loading logic is implemented in frontend hooks (e.g., hooks/useQueries.ts or hooks/useBackendConnection.ts) which call backend queries."
+    "Case-loading logic is implemented in frontend hooks (e.g., hooks/useQueries.ts or hooks/useBackendConnection.ts) which call backend queries.",
+    "Although case-loading hooks appear updated, a deprecated backend call path may still exist in a UI component (likely `CaseList.tsx`) rather than in hooks."
   ],
   "known_issues": [
-    "Live app web page shows 'Server Cases Loading Failed' when loading cases; likely caused by frontend still calling deprecated backend query getAllSurgeryCases from case-loading hooks."
+    "Live app web page shows 'Server Cases Loading Failed' when loading cases; likely caused by frontend still calling deprecated backend query getAllSurgeryCases from case-loading hooks.",
+    "Live production site still shows 'Server Cases Loading Failed'; likely due to a remaining `getAllSurgeryCases()` call in a component (suspected `CaseList.tsx`) despite hooks being cleaned."
   ],
   "isFixRequest": true,
   "existing_features": [],
@@ -24,6 +26,28 @@
       "summary": "Ensure the deployed frontend is using fresh generated backend bindings and is redeployed so that Live cannot call removed legacy APIs.",
       "reqIds": [
         "REQ-2"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-3",
+      "summary": "Inspect `CaseList.tsx` (and any directly related case-list components) for remaining calls to deprecated `getAllSurgeryCases()` and replace with `getSurgeryCases(start, limit)` / pagination helpers so the live app stops showing 'Server Cases Loading Failed'.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-4",
+      "summary": "Inspect `frontend/src/components/cases/CaseList.tsx` and any directly invoked case-loading flows it depends on (via `useCasesStore()` / `useGetSurgeryCasesPaginated()`) to ensure there are zero runtime call paths that invoke the deprecated backend method `getAllSurgeryCases()`. Replace any remaining legacy calls with the paginated API `getSurgeryCases(start, limit)` (directly or via the existing pagination helper).",
+      "reqIds": [
+        "REQ-3"
+      ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-5",
+      "summary": "Ensure the deployed Live frontend is rebuilt and redeployed using freshly generated backend TypeScript bindings so it cannot call removed legacy APIs. Follow the existing clean rebuild flow and confirm the generated bindings do not include `getAllSurgeryCases`.",
+      "reqIds": [
+        "REQ-4"
       ],
       "status": "pending"
     }

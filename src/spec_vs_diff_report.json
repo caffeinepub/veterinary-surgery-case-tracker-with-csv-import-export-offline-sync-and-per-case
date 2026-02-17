@@ -1,28 +1,36 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-17T02:59:06.436Z",
-  "summary": "The diff only updates project_state.json to record the requested work items as pending. No frontend code, hooks, generated backend bindings, or deployment documentation/scripts were changed, so the BuildRequest requirements are not implemented.",
+  "generatedAt": "2026-02-17T03:37:13.774Z",
+  "summary": "The diff only modifies `project_state.json` and does not implement any frontend code changes or regenerated backend TypeScript bindings required to remove `getAllSurgeryCases()` call paths or update declarations.",
   "missing_requirements": [
     {
-      "id": "REQ-1",
-      "requirement": "Audit all frontend case-loading hooks and flows to ensure there are zero runtime call paths that invoke deprecated backend method getAllSurgeryCases(), and update remaining references to use paginated API getSurgeryCases(start, limit).",
-      "reason": "No changes were made to any frontend/src code or hooks; only project_state.json was modified and it marks this work as pending, so there is no evidence that getAllSurgeryCases references/call paths were removed or replaced with getSurgeryCases pagination.",
+      "id": "REQ-3",
+      "requirement": "Ensure `frontend/src/components/cases/CaseList.tsx` and its dependent case-loading flows have zero runtime call paths invoking deprecated `getAllSurgeryCases()`, replacing with paginated `getSurgeryCases(start, limit)` via existing store/query path.",
+      "reason": "No frontend source files were changed; the only modification is to `project_state.json`, so there is no evidence that `CaseList.tsx` or related hooks/stores were updated to remove `getAllSurgeryCases()` usage.",
       "evidence": [
         "project_state.json"
       ]
     },
     {
-      "id": "REQ-2",
-      "requirement": "Ensure the deployed frontend is using fresh generated backend bindings and is redeployed so Live cannot call removed legacy APIs.",
-      "reason": "No generated declaration files (e.g., frontend/src/declarations/backend/backend.did.d.ts) or redeploy steps/scripts were modified; only project_state.json was updated and indicates this is pending.",
+      "id": "REQ-4",
+      "requirement": "Rebuild/redeploy the Live frontend using freshly generated backend TypeScript bindings and confirm `frontend/src/declarations/backend/backend.did.d.ts` does not include `getAllSurgeryCases`.",
+      "reason": "No generated declarations or build/binding artifacts were modified; only `project_state.json` changed, so there is no evidence of refreshed bindings or removal of `getAllSurgeryCases` from `backend.did.d.ts`.",
       "evidence": [
         "project_state.json"
       ]
     }
   ],
-  "hallucinated_features": [],
-  "confidence": 0.91,
+  "hallucinated_features": [
+    {
+      "description": "Added/updated internal project tracking entries (AR-1..AR-5) in `project_state.json`, including incorrect mappings to non-existent requirement IDs (REQ-1/REQ-2) and pending audit tasks.",
+      "reason": "The BuildRequest only asks to fix frontend case-loading and regenerate bindings; it does not request changes to `project_state.json` or creation of audit-request metadata.",
+      "evidence": [
+        "project_state.json"
+      ]
+    }
+  ],
+  "confidence": 0.86,
   "changed_files": [
     "project_state.json"
   ]

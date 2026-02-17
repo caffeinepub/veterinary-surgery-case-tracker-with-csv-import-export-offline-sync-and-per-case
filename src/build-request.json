@@ -1,56 +1,67 @@
 {
   "kind": "build_request",
-  "title": "Fix case-loading hooks to avoid deprecated getAllSurgeryCases calls",
+  "title": "Fix live 'Server Cases Loading Failed' by removing any legacy case-loading calls and redeploying with fresh backend bindings",
   "projectName": "Surgery Case Tracker",
   "priority": "high",
   "requirements": [
     {
-      "id": "REQ-1",
-      "text": "Audit all frontend case-loading hooks and flows to ensure there are zero runtime call paths that invoke the deprecated backend method `getAllSurgeryCases()`, and update any remaining references to use the paginated API `getSurgeryCases(start, limit)` (directly or via existing pagination helpers).",
+      "id": "REQ-3",
+      "text": "Inspect `frontend/src/components/cases/CaseList.tsx` and any directly invoked case-loading flows it depends on (via `useCasesStore()` / `useGetSurgeryCasesPaginated()`) to ensure there are zero runtime call paths that invoke the deprecated backend method `getAllSurgeryCases()`. Replace any remaining legacy calls with the paginated API `getSurgeryCases(start, limit)` (directly or via the existing pagination helper).",
       "target": "frontend",
       "source": {
         "messageIds": [
           "msg-1"
         ],
         "quotes": [
-          "Check the case-loading hooks."
+          "Open CaseList.tsx"
         ]
       },
       "acceptanceCriteria": [
-        "A repo-wide search over `frontend/src` (excluding generated declarations) finds no references to `getAllSurgeryCases`.",
-        "All server-case loading continues to work via pagination (e.g., `useGetSurgeryCasesPaginated` and any sync loaders use `actor.getSurgeryCases(start, limit)`).",
-        "The production/live UI no longer shows the banner 'Server Cases Loading Failed' when loading server cases (assuming backend is reachable and user is authenticated)."
+        "A repo-wide search (excluding generated declarations) finds no references to `getAllSurgeryCases` under `frontend/src`.",
+        "Case loading in `CaseList.tsx` uses the existing store/query path that ultimately calls `actor.getSurgeryCases(start, limit)` and not `getAllSurgeryCases()`.",
+        "The live error banner 'Server Cases Loading Failed' no longer appears due to a missing/removed backend method when the user is authenticated and attempts to load server cases."
       ]
     },
     {
-      "id": "REQ-2",
-      "text": "Ensure the deployed frontend is using fresh generated backend bindings and is redeployed so that Live cannot call removed legacy APIs.",
+      "id": "REQ-4",
+      "text": "Ensure the deployed Live frontend is rebuilt and redeployed using freshly generated backend TypeScript bindings so it cannot call removed legacy APIs. Follow the existing clean rebuild flow and confirm the generated bindings do not include `getAllSurgeryCases`.",
       "target": "frontend",
       "source": {
         "messageIds": [
           "msg-1"
         ],
         "quotes": [
-          "Check the case-loading hooks."
+          "Server Cases Loading Failed\nThe backend encountered an error processing your request. Please try again or contact support if the issue persists.\n\nRetry\nLocal cases are still available below",
+          "that is happening on the live app website"
         ]
       },
       "acceptanceCriteria": [
-        "`frontend/src/declarations/backend/backend.did.d.ts` does not include `getAllSurgeryCases`.",
-        "Frontend build succeeds without TypeScript errors related to missing backend methods.",
-        "Documented redeploy steps (or existing scripts) are followed/validated so the Live deployment uses updated bindings and correct backend canister interface."
+        "`frontend/src/declarations/backend/backend.did.d.ts` (generated from the deployed backend) does not contain `getAllSurgeryCases`.",
+        "After redeploying the frontend with fresh bindings, the Live site loads server cases successfully (no backend-method-missing error), and the retry action in the error banner is no longer needed for the legacy-method failure scenario."
       ]
     }
   ],
   "constraints": [
-    "Do not edit files under frontend/src/components/ui (shadcn components); compose them instead.",
-    "Do not edit immutable hook files: frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useInternetIdentity.tsx, frontend/src/hooks/useActor.ts, frontend/src/main.tsx."
+    "Do not edit files under `frontend/src/components/ui` (compose them instead).",
+    "Do not modify immutable hook files: `frontend/src/hooks/useInternetIdentity.ts`, `frontend/src/hooks/useInternetIdentity.tsx`, `frontend/src/hooks/useActor.ts`, `frontend/src/main.tsx`.",
+    "Backend remains single-actor; only add a migration file if state schema upgrades are required."
   ],
   "nonGoals": [
-    "Adding new case-management features beyond fixing the broken server case loading.",
-    "Changing backend data models or reintroducing the removed `getAllSurgeryCases` method."
+    "Adding new product features unrelated to fixing the live server case loading failure.",
+    "Introducing external databases, third-party auth providers, or realtime/websocket features."
   ],
   "imageRequirements": {
     "required": [],
     "edits": []
+  },
+  "userProfileUpdate": {
+    "goalsToAdd": [],
+    "goalsToRemove": [],
+    "preferencesToAdd": [],
+    "preferencesToRemove": [],
+    "miscToAdd": [],
+    "miscToRemove": [],
+    "fieldsToSet": {},
+    "fieldsToDelete": []
   }
 }
