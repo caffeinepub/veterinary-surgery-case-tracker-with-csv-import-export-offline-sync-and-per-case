@@ -1,0 +1,72 @@
+{
+  "kind": "coverage_report",
+  "version": "1.0",
+  "generatedAt": "2026-02-18T04:48:38.733Z",
+  "sources": {
+    "buildRequest": true,
+    "implementationPlan": true
+  },
+  "requirements": {
+    "total": 3,
+    "implemented": 3,
+    "items": [
+      {
+        "id": "REQ-1",
+        "summary": "Add a new cartoon-style app icon depicting the heads of a dog and cat, store it as generated static assets under frontend/public/assets/generated, and update the app to use it for browser/app icons (e.g., favicon).",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/public/assets/generated/app-icon-dog-cat.dim_512x512.png",
+          "frontend/public/assets/generated/app-icon-dog-cat.dim_192x192.png",
+          "frontend/public/assets/generated/app-icon-dog-cat.dim_32x32.png",
+          "frontend/index.html"
+        ],
+        "matchedFiles": [
+          "frontend/public/assets/generated/app-icon-dog-cat.dim_512x512.png",
+          "frontend/public/assets/generated/app-icon-dog-cat.dim_192x192.png",
+          "frontend/public/assets/generated/app-icon-dog-cat.dim_32x32.png",
+          "frontend/index.html"
+        ]
+      },
+      {
+        "id": "REQ-2",
+        "summary": "Update the patient card UI (surgery case card) so the Arrival date is displayed in the top-right corner of the card header area instead of in the demographics grid.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/cases/CaseCard.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/cases/CaseCard.tsx"
+        ]
+      },
+      {
+        "id": "REQ-3",
+        "summary": "Add an Age field to the patient card (surgery case card) that calculates the pet’s age from the stored Date of Birth and displays it in years and months.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/utils/dates.ts",
+          "frontend/src/components/cases/CaseCard.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/utils/dates.ts",
+          "frontend/src/components/cases/CaseCard.tsx"
+        ]
+      }
+    ]
+  },
+  "changedFiles": [
+    "build-request.json",
+    "feature_evidence.json",
+    "frontend-file-summaries.txt",
+    "frontend-implementation-plan.json",
+    "frontend/index.html",
+    "frontend/public/assets/generated/app-icon-dog-cat.dim_192x192.png",
+    "frontend/public/assets/generated/app-icon-dog-cat.dim_32x32.png",
+    "frontend/public/assets/generated/app-icon-dog-cat.dim_512x512.png",
+    "frontend/src/components/cases/CaseCard.tsx",
+    "frontend/src/utils/dates.ts",
+    "project_state.json",
+    "scratch/component-selection.json",
+    "spec.md",
+    "spec_vs_diff_report.json"
+  ]
+}

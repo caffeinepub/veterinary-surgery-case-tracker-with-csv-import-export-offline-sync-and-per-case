@@ -1,0 +1,51 @@
+{
+  "kind": "spec_vs_diff_report",
+  "version": "1.0",
+  "generatedAt": "2026-02-18T04:48:38.730Z",
+  "summary": "REQ-1 is only partially implemented (index.html references new icons, but the required generated icon image files are not present in the diff). REQ-2 appears to move Arrival date into the card header top-right, but the diff is truncated so removal from the demographics grid cannot be fully verified. REQ-3 adds an age calculation utility and computes age in CaseCard, but the diff does not show the Age field actually being rendered in the demographics section (truncation). Also, project_state.json was modified to add new_feature_requests entries that were not part of the BuildRequest.",
+  "missing_requirements": [
+    {
+      "id": "REQ-1",
+      "requirement": "Add new cartoon-style app icon assets under frontend/public/assets/generated with exact filenames app-icon-dog-cat.dim_512x512.png, app-icon-dog-cat.dim_192x192.png, app-icon-dog-cat.dim_32x32.png.",
+      "reason": "The diff shows no added files, so the required PNG assets are not evidenced as existing under frontend/public/assets/generated.",
+      "evidence": [
+        "File diff summary: \"Added: 0\"",
+        "frontend/index.html"
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "requirement": "Ensure the Arrival date no longer appears in the demographics grid section of CaseCard.tsx (only in the top-right header) and remains MM/DD/YYYY formatted.",
+      "reason": "CaseCard.tsx is truncated; while it shows Arrival date in a right-aligned header area, the diff does not conclusively show removal from the demographics grid section.",
+      "evidence": [
+        "frontend/src/components/cases/CaseCard.tsx (truncated)"
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "requirement": "Display an \"Age\" field in the demographics section of the patient card, derived from DOB, shown as years and months (e.g., \"2y 3m\"), suppressed/blank if DOB missing/invalid, and never negative.",
+      "reason": "calculateAge() is added and CaseCard computes `age`, but the truncated CaseCard diff does not show an \"Age\" row/value being rendered in the demographics section.",
+      "evidence": [
+        "frontend/src/utils/dates.ts (truncated)",
+        "frontend/src/components/cases/CaseCard.tsx (truncated)"
+      ]
+    }
+  ],
+  "hallucinated_features": [
+    {
+      "description": "Added/updated project_state.json to include new_feature_requests entries (AR-1 through AR-6) marked pending.",
+      "reason": "The BuildRequest did not ask to modify project_state.json or add internal tracking entries; this appears unrelated to the requested frontend icon and CaseCard UI changes.",
+      "evidence": [
+        "project_state.json"
+      ]
+    }
+  ],
+  "confidence": 0.62,
+  "changed_files": [
+    "frontend-file-summaries.txt",
+    "frontend/index.html",
+    "frontend/src/components/cases/CaseCard.tsx",
+    "frontend/src/utils/dates.ts",
+    "project_state.json"
+  ]
+}

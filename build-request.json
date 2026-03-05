@@ -1,0 +1,82 @@
+{
+  "kind": "build_request",
+  "title": "Update app icon and enhance patient card demographics",
+  "projectName": "VetCase Tracker",
+  "priority": "normal",
+  "requirements": [
+    {
+      "id": "REQ-1",
+      "text": "Add a new cartoon-style app icon depicting the heads of a dog and cat, store it as generated static assets under frontend/public/assets/generated, and update the app to use it for browser/app icons (e.g., favicon).",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "Change the app icon to a cartoon head of a dog and cat"
+        ]
+      },
+      "acceptanceCriteria": [
+        "New icon image files exist under frontend/public/assets/generated with the exact filenames specified in imageRequirements.required.",
+        "frontend/index.html references the new icon(s) so the browser tab/favicon updates accordingly.",
+        "After redeploy, the browser favicon reflects the new dog+cat cartoon head icon."
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "text": "Update the patient card UI (surgery case card) so the Arrival date is displayed in the top-right corner of the card header area instead of in the demographics grid.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "move the arrival date to the top right corner of the patient card"
+        ]
+      },
+      "acceptanceCriteria": [
+        "In frontend/src/components/cases/CaseCard.tsx, the Arrival date no longer appears in the demographics grid section.",
+        "The Arrival date is visible at the top-right of the card header area (aligned to the right within the header region) for each case card.",
+        "The Arrival date remains formatted consistently with the existing date formatting (MM/DD/YYYY)."
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "text": "Add an Age field to the patient card (surgery case card) that calculates the pet’s age from the stored Date of Birth and displays it in years and months.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "add a field to the patient card where the Age of the pet is calculated in years and months"
+        ]
+      },
+      "acceptanceCriteria": [
+        "If a valid DOB exists, the patient card shows an \"Age:\" row/value in the demographics section with a human-readable value like \"2y 3m\" (years and months).",
+        "If DOB is missing/invalid, the Age field is not shown (or shows a clear placeholder such as an empty string) and no runtime errors occur.",
+        "Age calculation uses the current date and does not display negative values (future DOBs should result in a safe non-negative display or suppressed field)."
+      ]
+    }
+  ],
+  "constraints": [],
+  "nonGoals": [],
+  "imageRequirements": {
+    "required": [
+      "Cartoon icon of a dog and cat heads, clean vector-like style, transparent background (app-icon-dog-cat.dim_512x512.png)",
+      "Cartoon icon of a dog and cat heads, clean vector-like style, transparent background (app-icon-dog-cat.dim_192x192.png)",
+      "Cartoon icon of a dog and cat heads, clean vector-like style, transparent background (app-icon-dog-cat.dim_32x32.png)"
+    ],
+    "edits": []
+  },
+  "userProfileUpdate": {
+    "goalsToAdd": [],
+    "goalsToRemove": [],
+    "preferencesToAdd": [],
+    "preferencesToRemove": [],
+    "miscToAdd": [],
+    "miscToRemove": [],
+    "fieldsToSet": {},
+    "fieldsToDelete": []
+  }
+}

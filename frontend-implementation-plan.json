@@ -1,0 +1,75 @@
+{
+  "kind": "implementation_plan",
+  "version": "1.0",
+  "title": "VetCase Tracker: new dog+cat app icon + patient card demographic tweaks",
+  "requirements": [
+    {
+      "id": "REQ-1",
+      "summary": "Add generated dog+cat cartoon icon assets and wire them as the browser/app icons (favicon).",
+      "acceptanceCriteria": [
+        "New icon image files exist under frontend/public/assets/generated with the exact filenames specified in imageRequirements.required.",
+        "frontend/index.html references the new icon(s) so the browser tab/favicon updates accordingly.",
+        "After redeploy, the browser favicon reflects the new dog+cat cartoon head icon."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/public/assets/generated/app-icon-dog-cat.dim_512x512.png",
+          "operation": "create",
+          "description": "Add the required generated static asset for the dog+cat cartoon app icon (512x512, transparent background)."
+        },
+        {
+          "path": "frontend/public/assets/generated/app-icon-dog-cat.dim_192x192.png",
+          "operation": "create",
+          "description": "Add the required generated static asset for the dog+cat cartoon app icon (192x192, transparent background)."
+        },
+        {
+          "path": "frontend/public/assets/generated/app-icon-dog-cat.dim_32x32.png",
+          "operation": "create",
+          "description": "Add the required generated static asset for the dog+cat cartoon app icon (32x32, transparent background)."
+        },
+        {
+          "path": "frontend/index.html",
+          "operation": "modify",
+          "description": "Reference the new icon assets for browser/app icons (e.g., favicon) using the generated files at frontend/public/assets/generated/app-icon-dog-cat.dim_32x32.png and, where appropriate, frontend/public/assets/generated/app-icon-dog-cat.dim_192x192.png and frontend/public/assets/generated/app-icon-dog-cat.dim_512x512.png."
+        }
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "summary": "Move the Arrival date display into the case card header (top-right) and remove it from the demographics grid.",
+      "acceptanceCriteria": [
+        "In frontend/src/components/cases/CaseCard.tsx, the Arrival date no longer appears in the demographics grid section.",
+        "The Arrival date is visible at the top-right of the card header area (aligned to the right within the header region) for each case card.",
+        "The Arrival date remains formatted consistently with the existing date formatting (MM/DD/YYYY)."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/cases/CaseCard.tsx",
+          "operation": "modify",
+          "description": "Update the card header layout so the existing formatted arrival date is rendered in the header’s top-right area, and remove the current Arrival row from the demographics grid while preserving the existing MM/DD/YYYY formatting."
+        }
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "summary": "Add a computed Age field (years + months) to the case card demographics based on stored Date of Birth.",
+      "acceptanceCriteria": [
+        "If a valid DOB exists, the patient card shows an \"Age:\" row/value in the demographics section with a human-readable value like \"2y 3m\" (years and months).",
+        "If DOB is missing/invalid, the Age field is not shown (or shows a clear placeholder such as an empty string) and no runtime errors occur.",
+        "Age calculation uses the current date and does not display negative values (future DOBs should result in a safe non-negative display or suppressed field)."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/utils/dates.ts",
+          "operation": "modify",
+          "description": "Add a date-of-birth age calculation helper that accepts a YYYY-MM-DD DOB string, validates it, computes a non-negative age in years and months relative to the current date, and returns a display-friendly string (or null/empty when invalid or future-dated)."
+        },
+        {
+          "path": "frontend/src/components/cases/CaseCard.tsx",
+          "operation": "modify",
+          "description": "Use the new DOB age helper to conditionally render an \"Age:\" row in the demographics section when DOB is valid and yields a non-negative age (e.g., \"2y 3m\"), and suppress the field cleanly when DOB is missing/invalid/future."
+        }
+      ]
+    }
+  ]
+}

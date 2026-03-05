@@ -1,0 +1,66 @@
+{
+  "kind": "feature_evidence_report",
+  "features": [
+    {
+      "featureId": "feature-add-a-new-cartoon-style-app-icon-depicting-the-heads-of-a-dog-and-cat-store-it-as-generated-static-assets-under-frontend-public-assets-generated-and-update-the-app-to-use-it-for-browser-app-icons-e-g-favicon",
+      "featureTitle": "Add a new cartoon-style app icon depicting the heads of a dog and cat, store it as generated static assets under frontend/public/assets/generated, and update the app to use it for browser/app icons (e.g., favicon).",
+      "files": [
+        "frontend/index.html"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "camera@1.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-1"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-update-the-patient-card-ui-surgery-case-card-so-the-arrival-date-is-displayed-in-the-top-right-corner-of-the-card-header-area-instead-of-in-the-demographics-grid",
+      "featureTitle": "Update the patient card UI (surgery case card) so the Arrival date is displayed in the top-right corner of the card header area instead of in the demographics grid.",
+      "files": [
+        "frontend/src/components/cases/CaseCard.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "camera@1.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-2"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-add-an-age-field-to-the-patient-card-surgery-case-card-that-calculates-the-pet-s-age-from-the-stored-date-of-birth-and-displays-it-in-years-and-months",
+      "featureTitle": "Add an Age field to the patient card (surgery case card) that calculates the pet’s age from the stored Date of Birth and displays it in years and months.",
+      "files": [
+        "frontend/src/components/cases/CaseCard.tsx",
+        "frontend/src/utils/dates.ts"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "camera@1.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-3"
+      ],
+      "confidence": "high"
+    }
+  ]
+}

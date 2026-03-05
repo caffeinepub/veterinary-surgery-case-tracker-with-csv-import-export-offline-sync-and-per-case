@@ -1,0 +1,58 @@
+{
+  "schemaVersion": "1.0.0",
+  "projectStateVersion": 3,
+  "summary": "New project",
+  "architectural_notes": [],
+  "known_issues": [],
+  "isFixRequest": false,
+  "imageRequirements": "## Required Images\n- Cartoon icon of a dog and cat heads, clean vector-like style, transparent background (app-icon-dog-cat.dim_512x512.png)\n- Cartoon icon of a dog and cat heads, clean vector-like style, transparent background (app-icon-dog-cat.dim_192x192.png)\n- Cartoon icon of a dog and cat heads, clean vector-like style, transparent background (app-icon-dog-cat.dim_32x32.png)",
+  "existing_features": [
+    {
+      "id": "feature-add-a-new-cartoon-style-app-icon-depicting-the-heads-of-a-dog-and-cat-store-it-as-generated-static-assets-under-frontend-public-assets-generated-and-update-the-app-to-use-it-for-browser-app-icons-e-g-favicon",
+      "title": "Add a new cartoon-style app icon depicting the heads of a dog and cat, store it as generated static assets under frontend/public/assets/generated, and update the app to use it for browser/app icons (e.g., favicon).",
+      "reqIds": [
+        "REQ-1"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-the-patient-card-ui-surgery-case-card-so-the-arrival-date-is-displayed-in-the-top-right-corner-of-the-card-header-area-instead-of-in-the-demographics-grid",
+      "title": "Update the patient card UI (surgery case card) so the Arrival date is displayed in the top-right corner of the card header area instead of in the demographics grid.",
+      "reqIds": [
+        "REQ-2"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-an-age-field-to-the-patient-card-surgery-case-card-that-calculates-the-pet-s-age-from-the-stored-date-of-birth-and-displays-it-in-years-and-months",
+      "title": "Add an Age field to the patient card (surgery case card) that calculates the pet’s age from the stored Date of Birth and displays it in years and months.",
+      "reqIds": [
+        "REQ-3"
+      ],
+      "version": 1
+    }
+  ],
+  "new_feature_requests": [
+    {
+      "id": "AR-1",
+      "summary": "Change the app icon to a cartoon head of a dog and cat",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-2",
+      "summary": "Move the arrival date to the top right corner of the patient card",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-3",
+      "summary": "Add a patient card field that calculates pet age in years and months",
+      "reqIds": [],
+      "status": "pending"
+    }
+  ],
+  "projectName": "VetCase Tracker",
+  "clarification_mode": "instant",
+  "clarification_rounds": 0
+}
